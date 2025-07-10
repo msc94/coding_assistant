@@ -48,7 +48,6 @@ This might be necessary if you encounter new information that changes your under
 It might also be necessary if the output of one of the agents is not satisfactory.
 It is your responsibility to make sure that the task is completed.
 Note that only in exceptional cases you should start reading files yourself.
-When you want to query information about the codebase, always use a research agent, even though you think it is easier to do so.
 
 Note that the planning agent is not a software architect.
 Therefore, it should already be clear how to implement the task on a high level before handing it to the planning agent.
@@ -60,13 +59,8 @@ It needs to know at which files it needs to look at, which functions are relevan
 Note that the developer agent needs a very detailed plan to be able to implement the task.
 Think of the agent as a junior engineer that needs to be told exactly what to do.
 
-Note that the agents do not have access to each other's output.
-You will have to provide ALL the necessary context to the agents via their task.
-For example, you need to forward the full results of your research to the planning agents.
-Another example would be that you need to fully forward the implementation plan from the planning agent to the developer agent.
-Please also forward the full output of the developer agent to the research agent for verification.
-In short it is of utmost importance that you provide all the necessary context to the agents.
-It is better to provide too much context than too little.
+You are responsible for removing any unrelated or too verbose information from the notebook.
+The notebook should only contain information that is relevant to the task and relevant to all agents.
 
 If something is unclear, you can ask the user for clarification.
 This should be exceptional and not the norm.
@@ -95,10 +89,10 @@ def create_orchestrator_tools():
     return tools
 
 
-def run_orchestrator_agent(task: str, ask_user_for_feedback: bool):
+def run_orchestrator_agent(task: str, notebook: dict, ask_user_for_feedback: bool):
     agent = create_agent(
         prompt=create_context_prunning_prompt_function(ORCHESTRATOR_PROMPT),
         tools=create_orchestrator_tools(),
         model=get_global_config().model_factory(),
     )
-    return run_agent(agent, task, name="Orchestrator", ask_user_for_feedback=ask_user_for_feedback)
+    return run_agent(agent, task, notebook=notebook, name="Orchestrator", ask_user_for_feedback=ask_user_for_feedback)

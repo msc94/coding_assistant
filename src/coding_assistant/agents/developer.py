@@ -1,7 +1,9 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Annotated
 
+from langgraph.prebuilt import InjectedState
 from langchain_core.tools import tool
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_community.agent_toolkits import FileManagementToolkit
@@ -25,13 +27,13 @@ You are an developer agent. Your responsibility is to carry out a given implemen
 
 {COMMON_AGENT_PROMPT}
 
-Note that it is not your responsibility to plan the implementation.
+It is not your responsibility to plan the implementation.
 It is also not your responsibility to make decisions about the software architecture.
 
 You should receive very detailed instructions on how to implement the task.
 If it is unclear on how exactly to implement the task, you should reject the task.
 
-Note that it is your responsibility to implement the task as closely as possible to the given implementation plan.
+It is your responsibility to implement the task as closely as possible to the given implementation plan.
 Implementation of the task always means that you need to change files.
 Again, you are responsible for changing the files on disk, and you need to use write_files.
 
@@ -56,20 +58,21 @@ def create_developer_tools():
     return tools
 
 
-def run_developer_agent(plan: str):
+def run_developer_agent(plan: str, notebook: dict, ask_user_for_feedback: bool):
     agent = create_agent(
         prompt=create_context_prunning_prompt_function(DEVELOPER_PROMPT),
         tools=create_developer_tools(),
         model=get_global_config().model_factory(),
     )
-    return run_agent(agent, plan, name="Developer")
+    return run_agent(agent, plan, name="Developer", notebook=notebook, ask_user_for_feedback=ask_user_for_feedback)
 
 
 @tool
-def develop(plan: str) -> str:
+def develop(plan: str, state: Annotated[dict, InjectedState]) -> str:
     """
-    Implement an imeplementation plan.
-    The plan needs to be a detailed plan in markdown format.
+    Start a developer agent to implement a given plan.
+    The plan needs to be a detailed and in markdown format.
     The output will be a detailed description of what has been implemented in markdown format.
     """
-    return run_developer_agent(plan)
+    notebook = state["notebook"]
+    return run_developer_agent(plan, notebook=notebook, ask_user_for_feedback=True)

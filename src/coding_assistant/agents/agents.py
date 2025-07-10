@@ -21,20 +21,19 @@ console = Console()
 
 
 class MyAgentState(AgentState):
-    notebook: dict = {}
+    notebook: dict
     task: str
 
 
-def _format_system_prompt_with_current_state(system_prompt, state):
-    notebook_facts = ""
-
-    if not state["notebook"]:
-        notebook_facts = "Empty"
+def _format_notebook(notebook):
+    if not notebook:
+        return "Empty"
     else:
-        for key, fact in enumerate(state["notebook"]):
-            notebook_facts += f"Key: {key}\nFact: {fact}\n\n"
+        return "\n\n".join([f"- Key: {key}\n- Fact: {fact}" for key, fact in enumerate(notebook)])
 
-    notebook_facts = notebook_facts.strip()
+
+def _format_system_prompt_with_current_state(system_prompt, state):
+    notebook_facts = _format_notebook(state["notebook"])
     return system_prompt.format(notebook_facts=notebook_facts, task=state["task"])
 
 
@@ -57,16 +56,16 @@ def create_context_prunning_prompt_function(system_prompt: str, system_message_t
             raise ValueError(f"Unknown system message type: {system_message_type}")
 
         current_messages = [system_message] + state["messages"]
-        current_messages = trim_messages(
-            current_messages,
-            strategy="last",
-            token_counter=get_global_config().model_factory(),
-            max_tokens=50_000,
-            start_on="human",
-            end_on=("human", "tool"),
-            include_system=True,
-            allow_partial=False,
-        )
+        # current_messages = trim_messages(
+        #     current_messages,
+        #     strategy="last",
+        #     token_counter=get_global_config().model_factory(),
+        #     max_tokens=50_000,
+        #     start_on="human",
+        #     end_on=("human", "tool"),
+        #     include_system=True,
+        #     allow_partial=False,
+        # )
 
         return current_messages
 
@@ -110,10 +109,11 @@ class InterruptibleSection(object):
         self.interrupt_requested = True
 
 
-def run_agent(agent, task, name, ask_user_for_feedback=False):
-    console.print(Panel(Markdown(task), title=f"Agent task: {name}", border_style="green"))
+def run_agent(agent, task, name, notebook, ask_user_for_feedback):
+    info = task + "\n\nNotebook:\n" + _format_notebook(notebook)
+    console.print(Panel(Markdown(info), title=f"Agent task: {name}", border_style="green"))
     config = RunnableConfig(configurable={"thread_id": "thread"}, recursion_limit=50)
-    input: MyAgentState = {"messages": HumanMessage(content=task), "notebook": dict(), "task": task}
+    input: MyAgentState = {"messages": HumanMessage(content=task), "notebook": notebook, "task": task}
 
     latest = None
 
@@ -143,7 +143,10 @@ def run_agent(agent, task, name, ask_user_for_feedback=False):
             break
 
         # Ask user for feedback
-        feedback = Prompt.ask("Feedback")
+        feedback = Prompt.ask("Feedback", default="exit")
+        if feedback == "exit":
+            break
+
         input = {"messages": HumanMessage(content=feedback)}
 
     return latest.content
