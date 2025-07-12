@@ -19,7 +19,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.logging import RichHandler
 
-from coding_assistant.agents.tools import OrchestratorTool
+from coding_assistant.agents.main_compat import run_orchestrator_agent, OrchestratorToolCompat
 from coding_assistant.cache import (
     get_conversation_summaries,
     get_latest_orchestrator_history_file,
@@ -184,7 +184,7 @@ async def run_orchestrator_agent(
     agent_callbacks: AgentCallbacks,
 ):
     with tracer.start_as_current_span("run_root_agent"):
-        tool = OrchestratorTool(
+        tool = OrchestratorToolCompat(
             config,
             mcp_servers,
             history=history,
