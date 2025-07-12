@@ -1,4 +1,4 @@
-"""New main entry point using the refactored architecture."""
+"""Agent orchestration and runner functionality."""
 
 import asyncio
 import logging
@@ -28,7 +28,7 @@ async def run_orchestrator_agent(
     working_directory: Path,
     agent_callbacks: AgentCallbacks,
 ):
-    """Run orchestrator agent using the new architecture."""
+    """Run orchestrator agent using the agent architecture."""
     with tracer.start_as_current_span("run_orchestrator_agent_new"):
         # Create orchestrator
         orchestrator = AgentOrchestrator(
@@ -67,8 +67,8 @@ async def run_orchestrator_agent(
         return output.result
 
 
-class OrchestratorToolCompat:
-    """Compatibility wrapper for the old OrchestratorTool interface."""
+class OrchestratorTool:
+    """Agent orchestration tool for running agents."""
     
     def __init__(
         self,
@@ -85,7 +85,7 @@ class OrchestratorToolCompat:
         self.summary = ""
     
     async def execute(self, parameters: dict) -> str:
-        """Execute orchestrator using new architecture."""
+        """Execute orchestrator agent."""
         # Create orchestrator
         orchestrator = AgentOrchestrator(
             config=self._config,
@@ -103,7 +103,7 @@ class OrchestratorToolCompat:
         
         output = await orchestrator.run_agent(agent)
         
-        # Update compatibility fields
+        # Update interface fields
         self.history = agent.history
         self.summary = output.summary
         

@@ -1,10 +1,10 @@
-"""Test the refactored agent architecture."""
+"""Test the agent architecture."""
 from unittest.mock import MagicMock, patch
 import pytest
 
 from coding_assistant.agents.agent import Agent, fill_parameters
 from coding_assistant.agents.orchestration import AgentOrchestrator
-from coding_assistant.agents.main_compat import OrchestratorToolCompat
+from coding_assistant.agents.runner import OrchestratorTool
 from coding_assistant.agents.callbacks import NullCallbacks
 from coding_assistant.config import Config
 
@@ -100,11 +100,11 @@ async def test_agent_state_management():
 
 
 @pytest.mark.asyncio
-async def test_orchestrator_tool_compat_basic():
-    """Test compatibility layer for OrchestratorTool."""
+async def test_orchestrator_tool_basic():
+    """Test basic functionality of OrchestratorTool."""
     config = create_test_config()
     
-    tool = OrchestratorToolCompat(
+    tool = OrchestratorTool(
         config=config,
         mcp_servers=[],
         agent_callbacks=NullCallbacks(),

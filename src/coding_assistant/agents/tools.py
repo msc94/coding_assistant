@@ -1,4 +1,4 @@
-"""Refactored agent tools with cleaner separation of concerns."""
+"""Agent tools with clean separation of concerns."""
 
 import asyncio
 import subprocess
