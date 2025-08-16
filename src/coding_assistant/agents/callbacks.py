@@ -150,7 +150,8 @@ class RichCallbacks(AgentCallbacks):
 
     def _format_tool_result(self, result: str):
         if self._is_json(result):
-            return JSON(result, indent=2)
+            data = json.loads(result)
+            return Pretty(data, expand_all=True, indent_size=2)
         return Markdown(f"```\n{result}\n```")
 
     def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict, result: str):
