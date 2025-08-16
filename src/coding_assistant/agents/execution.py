@@ -16,7 +16,7 @@ from coding_assistant.agents.interrupts import InterruptibleSection
 from coding_assistant.agents.parameters import format_parameters
 from coding_assistant.agents.types import Agent, AgentOutput, FinishTaskResult, ShortenConversationResult, TextResult
 from coding_assistant.llm.adapters import execute_tool_call, get_tools
-from coding_assistant.llm.model import complete
+from coding_assistant.llm.model import complete as default_complete
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
@@ -176,6 +176,8 @@ async def do_single_step(
     agent_callbacks: AgentCallbacks,
     shorten_conversation_at_tokens: int,
     no_truncate_tools: set[str],
+    *,
+    completer=default_complete,
 ):
     trace.get_current_span().set_attribute("agent.name", agent.name)
 
@@ -192,7 +194,7 @@ async def do_single_step(
         raise RuntimeError("Agent needs to have history in order to run a step.")
     trace.get_current_span().set_attribute("agent.history", json.dumps(agent.history))
 
-    completion = await complete(
+    completion = await completer(
         agent.history,
         model=agent.model,
         tools=tools,
@@ -239,6 +241,8 @@ async def run_agent_loop(
     agent_callbacks: AgentCallbacks,
     shorten_conversation_at_tokens: int,
     no_truncate_tools: set[str],
+    *,
+    completer=default_complete,
 ) -> AgentOutput:
     if agent.output:
         raise RuntimeError("Agent already has a result or summary.")
@@ -259,6 +263,7 @@ async def run_agent_loop(
                     agent_callbacks,
                     shorten_conversation_at_tokens,
                     no_truncate_tools,
+                    completer=completer,
                 )
 
             if interruptible_section.was_interrupted:

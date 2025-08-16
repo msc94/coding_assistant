@@ -4,11 +4,10 @@ import pytest
 
 from coding_assistant.agents.callbacks import NullCallbacks
 from coding_assistant.agents.execution import do_single_step
-from coding_assistant.agents.types import Agent, TextResult
+from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, make_test_agent, no_feedback
+from coding_assistant.agents.types import Agent, TextResult, Tool
 from coding_assistant.llm.model import Completion
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
-
-from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, no_feedback, make_test_agent
 
 
 class FakeMessage:
@@ -44,7 +43,7 @@ class FakeCompleter:
         return Completion(message=self.message, tokens=self.tokens)
 
 
-class DummyTool:
+class DummyTool(Tool):
     def name(self):
         return "dummy"
 
@@ -63,10 +62,10 @@ async def test_do_single_step_adds_shorten_prompt_on_token_threshold(monkeypatch
     # Build a message that has no tool calls (so we also test that branch), with high token usage
     fake_message = FakeMessage(content="hi")
     completer = FakeCompleter(fake_message, tokens=999999)
-    monkeypatch.setattr("coding_assistant.agents.execution.complete", completer, raising=True)
 
-
-    agent = make_test_agent(tools=[DummyTool(), FinishTaskTool(), ShortenConversation()], history=[{"role": "user", "content": "start"}])
+    agent = make_test_agent(
+        tools=[DummyTool(), FinishTaskTool(), ShortenConversation()], history=[{"role": "user", "content": "start"}]
+    )
 
     # Running a single step should append the assistant message and then a user message prompting to shorten
     msg = await do_single_step(
@@ -74,6 +73,7 @@ async def test_do_single_step_adds_shorten_prompt_on_token_threshold(monkeypatch
         NullCallbacks(),
         shorten_conversation_at_tokens=1000,  # much below completer.tokens
         no_truncate_tools=set(),
+        completer=completer,
     )
 
     assert msg.content == "hi"

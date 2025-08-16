@@ -1,14 +1,13 @@
 import json
+
 import pytest
 
 from coding_assistant.agents.callbacks import NullCallbacks
 from coding_assistant.agents.execution import run_agent_loop
+from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, make_test_agent, no_feedback
 from coding_assistant.agents.types import Agent, TextResult, Tool
 from coding_assistant.llm.model import Completion
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
-
-
-from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, no_feedback, make_test_agent
 
 
 class FakeMessage:
@@ -80,17 +79,14 @@ async def test_tool_selection_then_finish(monkeypatch):
             json.dumps({"result": "done", "summary": "sum"}),
         ),
     )
-    completer = FakeCompleter([
-        FakeMessage(tool_calls=[echo_call]),
-        FakeMessage(tool_calls=[finish_call]),
-    ])
-
-    # Patch the model.complete used by execution
-    monkeypatch.setattr(
-        "coding_assistant.agents.execution.complete",
-        completer,
-        raising=True,
+    completer = FakeCompleter(
+        [
+            FakeMessage(tool_calls=[echo_call]),
+            FakeMessage(tool_calls=[finish_call]),
+        ]
     )
+
+    # Pass the completer via dependency injection
 
     fake_tool = FakeEchoTool()
 
@@ -101,6 +97,7 @@ async def test_tool_selection_then_finish(monkeypatch):
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
+        completer=completer,
     )
 
     assert output.result == "done"
@@ -120,17 +117,12 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
             json.dumps({"result": "ok", "summary": "s"}),
         ),
     )
-    completer = FakeCompleter([
-        FakeMessage(tool_calls=[unknown_call]),
-        FakeMessage(tool_calls=[finish_call]),
-    ])
-
-    monkeypatch.setattr(
-        "coding_assistant.agents.execution.complete",
-        completer,
-        raising=True,
+    completer = FakeCompleter(
+        [
+            FakeMessage(tool_calls=[unknown_call]),
+            FakeMessage(tool_calls=[finish_call]),
+        ]
     )
-
 
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
@@ -139,6 +131,7 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
+        completer=completer,
     )
 
     # Check that an error tool message was appended for the unknown tool
@@ -158,17 +151,12 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
             json.dumps({"result": "r", "summary": "s"}),
         ),
     )
-    completer = FakeCompleter([
-        FakeMessage(content="Hello"),
-        FakeMessage(tool_calls=[finish_call]),
-    ])
-
-    monkeypatch.setattr(
-        "coding_assistant.agents.execution.complete",
-        completer,
-        raising=True,
+    completer = FakeCompleter(
+        [
+            FakeMessage(content="Hello"),
+            FakeMessage(tool_calls=[finish_call]),
+        ]
     )
-
 
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
@@ -177,6 +165,7 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
+        completer=completer,
     )
 
     # Verify the corrective user message was appended
