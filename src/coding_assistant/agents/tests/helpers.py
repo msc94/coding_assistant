@@ -35,10 +35,6 @@ def make_test_agent(
     tool_confirmation_patterns: list[str] | None = None,
     history: list[dict] | None = None,
 ) -> Agent:
-    """Create a minimal Agent instance for tests with sensible defaults.
-
-    You can override any field via keyword arguments.
-    """
     return Agent(
         name=name,
         model=model,
