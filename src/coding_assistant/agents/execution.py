@@ -66,7 +66,7 @@ def _create_start_message(agent: Agent) -> str:
         if server.instructions:
             message += "\n\n" + MCP_INSTRUCTIONS_TEMPLATE.format(
                 name=server.name,
-                instructions=textwrap.indent(server.instructions, "> "),
+                instructions=server.instructions,
             )
 
     return message
