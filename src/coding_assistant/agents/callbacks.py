@@ -148,10 +148,25 @@ class RichCallbacks(AgentCallbacks):
         except json.JSONDecodeError:
             return False
 
-    def _format_tool_result(self, result: str):
+    def _format_tool_result(self, result: str, tool_name: str):
+        if tool_name == "execute_shell_command":
+            data = json.loads(result)
+
+            result = ""
+            result += f"RC: {data['returncode']}"
+
+            if data["stderr"]:
+                result += f"\n\n###### stderr\n\n```\n{data['stderr']}\n```"
+
+            if data["stdout"]:
+                result += f"\n\n###### stdout\n\n```\n{data['stdout']}\n```"
+
+            return Markdown(result)
+
         if self._is_json(result):
             data = json.loads(result)
             return Pretty(data, expand_all=True, indent_size=2)
+
         return Markdown(f"```\n{result}\n```")
 
     def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict, result: str):
@@ -161,7 +176,7 @@ class RichCallbacks(AgentCallbacks):
             # Arguments
             Padding(Pretty(arguments, expand_all=True, indent_size=2), (1, 0, 0, 0)),
             # Result
-            Padding(self._format_tool_result(result), (1, 0, 0, 0)),
+            Padding(self._format_tool_result(result, tool_name), (1, 0, 0, 0)),
         )
         print(
             Panel(
