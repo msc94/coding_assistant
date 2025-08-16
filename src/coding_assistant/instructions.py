@@ -15,12 +15,12 @@ INSTRUCTIONS = """
 - When the user asks a question, be *very* sure before starting a web search that this is what the user wants.
 - If you output text, use markdown formatting where appropriate.
 - Use shell commands for common tasks, such as:
-    - `eza` or `ls` for listing files in a directory
-    - `git` for running git commands
-    - `fd` or `find` for searching files
-    - `rg` or `grep` for searching text in files
-    - `gh` for interfacing with GitHub
-    - `pwd` to get the project root
+    - `eza` or `ls` for listing files in a directory.
+    - `git` for running git commands.
+    - `fd` or `find` for searching files.
+    - `rg` or `grep` for searching text in files.
+    - `gh` for interfacing with GitHub.
+    - `pwd` to get the project root.
 """.strip()
 
 PLANNING_INSTRUCTIONS = """
