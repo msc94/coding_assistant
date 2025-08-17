@@ -264,14 +264,6 @@ async def test_feedback_loop_then_finish():
         ]
     )
 
-    state = {"given_feedback": False}
-
-    async def feedback_once(_agent):
-        if not state["given_feedback"]:
-            state["given_feedback"] = True
-            return "Please improve"
-        return None
-
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
     output = await run_agent_loop(
@@ -281,7 +273,9 @@ async def test_feedback_loop_then_finish():
         no_truncate_tools=set(),
         enable_user_feedback=True,
         completer=completer,
-        ui=make_ui_mock(ask_sequence=[(f"Feedback for {agent.name}", "Please improve"), (f"Feedback for {agent.name}", "Ok")]),
+        ui=make_ui_mock(
+            ask_sequence=[(f"Feedback for {agent.name}", "Please improve"), (f"Feedback for {agent.name}", "Ok")]
+        ),
     )
 
     assert output.result == "second"
