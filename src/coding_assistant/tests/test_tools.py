@@ -14,7 +14,7 @@ async def test_execute_shell_command_tool_timeout():
 
 @pytest.mark.asyncio
 async def test_execute_shell_command_tool_confirmation_yes():
-    ui = make_ui_mock(confirm_value=True)
+    ui = make_ui_mock(confirm_sequence=[("Execute `echo 'Hello'`?", True)])
     tool = ExecuteShellCommandTool(shell_confirmation_patterns=["echo"], ui=ui)
     result = await tool.execute({"command": "echo 'Hello'"})
 
@@ -24,7 +24,7 @@ async def test_execute_shell_command_tool_confirmation_yes():
 
 @pytest.mark.asyncio
 async def test_execute_shell_command_tool_confirmation_yes_with_whitespace():
-    ui = make_ui_mock(confirm_value=False)
+    ui = make_ui_mock(confirm_sequence=[("Execute `echo 'Hello'`?", False)])
     tool = ExecuteShellCommandTool(shell_confirmation_patterns=["echo"], ui=ui)
     result = await tool.execute({"command": "  echo 'Hello'"})
     assert result.content == "Command execution denied."
@@ -32,7 +32,7 @@ async def test_execute_shell_command_tool_confirmation_yes_with_whitespace():
 
 @pytest.mark.asyncio
 async def test_execute_shell_command_tool_confirmation_no():
-    ui = make_ui_mock(confirm_value=False)
+    ui = make_ui_mock(confirm_sequence=[("Execute `echo 'Hello'`?", False)])
     tool = ExecuteShellCommandTool(shell_confirmation_patterns=["echo"], ui=ui)
     result = await tool.execute({"command": "echo 'Hello'"})
     assert result.content == "Command execution denied."
@@ -40,7 +40,7 @@ async def test_execute_shell_command_tool_confirmation_no():
 
 @pytest.mark.asyncio
 async def test_execute_shell_command_tool_no_match():
-    ui = make_ui_mock(confirm_value=True)
+    ui = make_ui_mock()
     tool = ExecuteShellCommandTool(shell_confirmation_patterns=["ls"], ui=ui)
     result = await tool.execute({"command": "echo 'Hello'"})
 
@@ -51,7 +51,7 @@ async def test_execute_shell_command_tool_no_match():
 
 @pytest.mark.asyncio
 async def test_ask_client_tool_enabled():
-    ui = make_ui_mock(ask_value="yes")
+    ui = make_ui_mock(ask_sequence=[("Do you want to proceed?", "yes")])
     tool = AskClientTool(enabled=True, ui=ui)
     result = await tool.execute({"question": "Do you want to proceed?", "default_answer": "no"})
     assert result.content == "yes"
