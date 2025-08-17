@@ -16,6 +16,7 @@ from coding_assistant.agents.parameters import format_parameters
 from coding_assistant.agents.types import Agent, AgentOutput, FinishTaskResult, ShortenConversationResult, TextResult
 from coding_assistant.llm.adapters import execute_tool_call, get_tools
 from coding_assistant.llm.model import complete as default_complete
+from coding_assistant.ui import UI
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
@@ -112,7 +113,7 @@ async def handle_tool_call(
     agent_callbacks: AgentCallbacks,
     no_truncate_tools: set[str],
     *,
-    ui=None,
+    ui: UI,
 ):
     function_name = tool_call.function.name
     function_args = json.loads(tool_call.function.arguments or "{}")
@@ -120,11 +121,6 @@ async def handle_tool_call(
     for pattern in agent.tool_confirmation_patterns:
         if re.search(pattern, function_name):
             question = f"Execute tool `{function_name}` with arguments `{function_args}`?"
-            if ui is None:
-                # Lazy import to avoid a hard dependency here
-                from coding_assistant.ui import PromptToolkitUI
-
-                ui = PromptToolkitUI()
             answer = await ui.confirm(question)
             if not answer:
                 append_tool_message(
@@ -183,8 +179,8 @@ async def do_single_step(
     shorten_conversation_at_tokens: int,
     no_truncate_tools: set[str],
     *,
-    completer=default_complete,
-    ui=None,
+    completer,
+    ui: UI,
 ):
     trace.get_current_span().set_attribute("agent.name", agent.name)
 
@@ -249,8 +245,8 @@ async def run_agent_loop(
     shorten_conversation_at_tokens: int,
     no_truncate_tools: set[str],
     *,
-    completer=default_complete,
-    ui=None,
+    completer,
+    ui: UI,
 ) -> AgentOutput:
     if agent.output:
         raise RuntimeError("Agent already has a result or summary.")
