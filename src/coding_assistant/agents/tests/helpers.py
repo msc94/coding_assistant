@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from typing import Iterable, Sequence
 from unittest.mock import AsyncMock, Mock
@@ -6,6 +7,7 @@ from coding_assistant.agents.parameters import Parameter
 from coding_assistant.agents.types import Agent, Tool
 from coding_assistant.tools.mcp import MCPServer
 from coding_assistant.ui import UI
+from coding_assistant.llm.model import Completion
 
 
 @dataclass
@@ -21,8 +23,62 @@ class FakeToolCall:
 
 
 async def no_feedback(_: Agent):
-    """A feedback function that returns no feedback (used in tests)."""
     return None
+
+
+class FakeMessage:
+    def __init__(self, content: str | None = None, tool_calls: list["FakeToolCall"] | None = None):
+        self.role = "assistant"
+        self.content = content
+        self.tool_calls = tool_calls or []
+
+    def model_dump(self):
+        data: dict[str, object] = {"role": self.role}
+        if self.content is not None:
+            data["content"] = self.content
+        if self.tool_calls:
+            data["tool_calls"] = [
+                {
+                    "id": tc.id,
+                    "function": {"name": tc.function.name, "arguments": tc.function.arguments},
+                }
+                for tc in self.tool_calls
+            ]
+        return data
+
+    def model_dump_json(self):
+        return json.dumps(self.model_dump())
+
+
+class FakeCompleter:
+    def __init__(self, message_or_script, tokens: int | list[int] | None = None):
+        if isinstance(message_or_script, list):
+            self.script = list(message_or_script)
+            if tokens is None:
+                self._tokens_list = [42] * len(self.script)
+            else:
+                assert isinstance(tokens, list), "For script mode, tokens must be a list of ints"
+                assert len(tokens) == len(self.script), "tokens length must match script length"
+                self._tokens_list = list(tokens)
+            self._single = False
+        else:
+            self.message = message_or_script
+            if isinstance(tokens, int):
+                self._tokens = tokens
+            else:
+                self._tokens = 10
+            self._single = True
+
+    async def __call__(self, messages, model, tools, callbacks):
+        if self._single:
+            return Completion(message=self.message, tokens=self._tokens)
+        if not self.script:
+            raise AssertionError("FakeCompleter script exhausted")
+        action = self.script.pop(0)
+        toks = self._tokens_list.pop(0)
+        if isinstance(action, Exception):
+            raise action
+        return Completion(message=action, tokens=toks)
 
 
 def make_ui_mock(

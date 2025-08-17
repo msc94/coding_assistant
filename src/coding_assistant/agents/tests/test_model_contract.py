@@ -4,43 +4,20 @@ import pytest
 
 from coding_assistant.agents.callbacks import NullCallbacks
 from coding_assistant.agents.execution import do_single_step
-from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, make_test_agent, no_feedback, make_ui_mock
+from coding_assistant.agents.tests.helpers import (
+    FakeFunction,
+    FakeToolCall,
+    FakeMessage,
+    FakeCompleter,
+    make_test_agent,
+    no_feedback,
+    make_ui_mock,
+)
 from coding_assistant.agents.types import Agent, TextResult, Tool
-from coding_assistant.llm.model import Completion
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
-class FakeMessage:
-    def __init__(self, content: str | None = None, tool_calls: list[FakeToolCall] | None = None):
-        self.role = "assistant"
-        self.content = content
-        self.tool_calls = tool_calls or []
-
-    def model_dump(self):
-        data = {"role": self.role}
-        if self.content is not None:
-            data["content"] = self.content
-        if self.tool_calls:
-            data["tool_calls"] = [
-                {
-                    "id": tc.id,
-                    "function": {"name": tc.function.name, "arguments": tc.function.arguments},
-                }
-                for tc in self.tool_calls
-            ]
-        return data
-
-    def model_dump_json(self):
-        return json.dumps(self.model_dump())
-
-
-class FakeCompleter:
-    def __init__(self, message: FakeMessage, tokens: int = 10):
-        self.message = message
-        self.tokens = tokens
-
-    async def __call__(self, messages, model, tools, callbacks):
-        return Completion(message=self.message, tokens=self.tokens)
+"""Use shared FakeMessage/FakeCompleter from helpers."""
 
 
 class DummyTool(Tool):

@@ -4,50 +4,20 @@ import pytest
 
 from coding_assistant.agents.callbacks import NullCallbacks
 from coding_assistant.agents.execution import run_agent_loop
-from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, make_test_agent, no_feedback, make_ui_mock
+from coding_assistant.agents.tests.helpers import (
+    FakeFunction,
+    FakeToolCall,
+    FakeMessage,
+    FakeCompleter,
+    make_test_agent,
+    no_feedback,
+    make_ui_mock,
+)
 from coding_assistant.agents.types import Agent, TextResult, Tool
-from coding_assistant.llm.model import Completion
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
-class FakeMessage:
-    def __init__(self, content: str | None = None, tool_calls: list[FakeToolCall] | None = None):
-        self.role = "assistant"
-        self.content = content
-        self.tool_calls = tool_calls or []
-
-    def model_dump(self):
-        data = {"role": self.role}
-        if self.content is not None:
-            data["content"] = self.content
-        if self.tool_calls:
-            data["tool_calls"] = [
-                {
-                    "id": tc.id,
-                    "function": {"name": tc.function.name, "arguments": tc.function.arguments},
-                }
-                for tc in self.tool_calls
-            ]
-        return data
-
-    def model_dump_json(self):
-        return json.dumps(self.model_dump())
-
-
-class FakeCompleter:
-    def __init__(self, script: list[FakeMessage | Exception], tokens: list[int] | None = None):
-        self.script = list(script)
-        self.tokens = list(tokens) if tokens is not None else [42] * len(script)
-        assert len(self.tokens) == len(self.script)
-
-    async def __call__(self, messages, model, tools, callbacks):
-        if not self.script:
-            raise AssertionError("FakeCompleter script exhausted")
-        action = self.script.pop(0)
-        toks = self.tokens.pop(0)
-        if isinstance(action, Exception):
-            raise action
-        return Completion(message=action, tokens=toks)
+"""Use shared FakeMessage/FakeCompleter from helpers."""
 
 
 class FakeEchoTool(Tool):
