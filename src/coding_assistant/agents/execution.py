@@ -15,7 +15,6 @@ from coding_assistant.agents.interrupts import InterruptibleSection
 from coding_assistant.agents.parameters import format_parameters
 from coding_assistant.agents.types import Agent, AgentOutput, FinishTaskResult, ShortenConversationResult, TextResult
 from coding_assistant.llm.adapters import execute_tool_call, get_tools
-from coding_assistant.llm.model import complete as default_complete
 from coding_assistant.ui import UI
 
 logger = logging.getLogger(__name__)
@@ -273,8 +272,7 @@ async def run_agent_loop(
 
             if interruptible_section.was_interrupted:
                 logger.info(f"Agent '{agent.name}' was interrupted during execution.")
-
-                feedback = await asyncio.to_thread(prompt, "Feedback: ")
+                feedback = await ui.ask("Feedback: ")
                 formatted_feedback = FEEDBACK_TEMPLATE.format(
                     feedback=textwrap.indent(feedback, "> "),
                 )

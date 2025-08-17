@@ -21,6 +21,7 @@ from coding_assistant.agents.types import (
     Tool,
 )
 from coding_assistant.config import Config
+from coding_assistant.llm.model import complete
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +135,7 @@ class OrchestratorTool(Tool):
                 self._agent_callbacks,
                 self._config.shorten_conversation_at_tokens,
                 self._config.no_truncate_tools,
+                completer=complete,
                 ui=PromptToolkitUI(),
             )
             self.summary = output.summary
@@ -212,6 +214,7 @@ class AgentTool(Tool):
             self._agent_callbacks,
             self._config.shorten_conversation_at_tokens,
             self._config.no_truncate_tools,
+            completer=complete,
             ui=PromptToolkitUI(),
         )
         return TextResult(content=output.result)
@@ -368,6 +371,8 @@ class FeedbackTool(Tool):
             self._agent_callbacks,
             self._config.shorten_conversation_at_tokens,
             self._config.no_truncate_tools,
+            completer=complete,
+            ui=PromptToolkitUI(),
         )
         return TextResult(content=output.result)
 
