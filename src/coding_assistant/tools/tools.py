@@ -25,6 +25,23 @@ from coding_assistant.config import Config
 logger = logging.getLogger(__name__)
 
 
+class UI:
+    async def ask(self, prompt_text: str, default: str | None = None) -> str:  # pragma: no cover - interface stub
+        raise NotImplementedError
+
+    async def confirm(self, prompt_text: str) -> bool:  # pragma: no cover - interface stub
+        raise NotImplementedError
+
+
+class PromptToolkitUI(UI):
+    async def ask(self, prompt_text: str, default: str | None = None) -> str:
+        print(prompt_text)
+        return await PromptSession().prompt_async("> ", default=default or "")
+
+    async def confirm(self, prompt_text: str) -> bool:
+        return await create_confirm_session(prompt_text).prompt_async()
+
+
 async def _get_feedback(
     agent: Agent,
     config: Config,
@@ -215,8 +232,9 @@ class AskClientSchema(BaseModel):
 
 
 class AskClientTool(Tool):
-    def __init__(self, enabled: bool):
+    def __init__(self, enabled: bool, ui: UI | None = None):
         self.enabled = enabled
+        self._ui = ui or PromptToolkitUI()
 
     def name(self) -> str:
         return "ask_client"
@@ -238,8 +256,7 @@ class AskClientTool(Tool):
         question = parameters["question"]
         default_answer = parameters.get("default_answer")
 
-        print(question)
-        answer = await PromptSession().prompt_async("> ", default=default_answer or "")
+        answer = await self._ui.ask(question, default=default_answer or "")
         return TextResult(content=str(answer))
 
 
@@ -252,8 +269,10 @@ class ExecuteShellCommandTool(Tool):
     def __init__(
         self,
         shell_confirmation_patterns: Optional[List[str]] = None,
+        ui: UI | None = None,
     ):
         self._shell_confirmation_patterns = shell_confirmation_patterns or []
+        self._ui = ui or PromptToolkitUI()
 
     def name(self) -> str:
         return "execute_shell_command"
@@ -273,7 +292,7 @@ class ExecuteShellCommandTool(Tool):
         for pattern in self._shell_confirmation_patterns:
             if re.search(pattern, command):
                 question = f"Execute `{command}`?"
-                answer = await create_confirm_session(question).prompt_async()
+                answer = await self._ui.confirm(question)
                 if not answer:
                     return TextResult(content="Command execution denied.")
                 break
