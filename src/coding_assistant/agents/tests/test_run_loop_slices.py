@@ -239,7 +239,6 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
 
 @pytest.mark.asyncio
 async def test_feedback_loop_then_finish():
-    # First, the agent finishes with an initial result.
     finish_call_1 = FakeToolCall(
         "1",
         FakeFunction(
@@ -247,7 +246,7 @@ async def test_feedback_loop_then_finish():
             json.dumps({"result": "first", "summary": "s1"}),
         ),
     )
-    # After feedback is applied, the agent finishes again with an improved result.
+
     finish_call_2 = FakeToolCall(
         "2",
         FakeFunction(
@@ -256,17 +255,18 @@ async def test_feedback_loop_then_finish():
         ),
     )
 
-    completer = FakeCompleter([
-        FakeMessage(tool_calls=[finish_call_1]),
-        FakeMessage(tool_calls=[finish_call_2]),
-    ])
+    completer = FakeCompleter(
+        [
+            FakeMessage(tool_calls=[finish_call_1]),
+            FakeMessage(tool_calls=[finish_call_2]),
+        ]
+    )
 
-    # feedback_function returns a message once, then None to finish.
-    state = {"count": 0}
+    state = {"given_feedback": False}
 
     async def feedback_once(_agent):
-        if state["count"] == 0:
-            state["count"] += 1
+        if not state["given_feedback"]:
+            state["given_feedback"] = True
             return "Please improve"
         return None
 
@@ -284,17 +284,55 @@ async def test_feedback_loop_then_finish():
         ui=make_ui_mock(),
     )
 
-    # Final output should be the second (improved) result
     assert output.result == "second"
     assert output.summary == "s2"
 
-    # Verify a feedback message was injected into history
-    feedback_msgs = [
-        m
-        for m in agent.history
-        if m.get("role") == "user"
-        and isinstance(m.get("content"), str)
-        and "Your client has provided the following feedback on your work:" in m["content"]
+    expected_feedback_text = (
+        "Your client has provided the following feedback on your work:\n\n"
+        "> Please improve\n\n"
+        "Please rework your result to address the feedback.\n"
+        "Afterwards, call the `finish_task` tool again to signal that you are done."
+    )
+
+    assert agent.history[1:] == [
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "1",
+                    "function": {
+                        "name": "finish_task",
+                        "arguments": '{"result": "first", "summary": "s1"}',
+                    },
+                }
+            ],
+        },
+        {
+            "tool_call_id": "1",
+            "role": "tool",
+            "name": "finish_task",
+            "content": "Agent output set.",
+        },
+        {
+            "role": "user",
+            "content": expected_feedback_text,
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "2",
+                    "function": {
+                        "name": "finish_task",
+                        "arguments": '{"result": "second", "summary": "s2"}',
+                    },
+                }
+            ],
+        },
+        {
+            "tool_call_id": "2",
+            "role": "tool",
+            "name": "finish_task",
+            "content": "Agent output set.",
+        },
     ]
-    assert feedback_msgs, "Expected feedback message injected into agent history"
-    assert "> Please improve" in feedback_msgs[-1]["content"]
