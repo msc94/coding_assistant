@@ -22,10 +22,6 @@ class FakeToolCall:
     function: FakeFunction
 
 
-async def no_feedback(_: Agent):
-    return None  # deprecated; retained for backward compatibility in tests that import it
-
-
 class FakeMessage:
     def __init__(self, content: str | None = None, tool_calls: list[FakeToolCall] | None = None):
         self.role = "assistant"
