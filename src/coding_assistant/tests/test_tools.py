@@ -4,6 +4,7 @@ import pytest
 
 from coding_assistant.agents.tests.helpers import make_ui_mock
 from coding_assistant.tools.tools import AskClientTool, ExecuteShellCommandTool
+from coding_assistant.ui import NullUI
 
 
 @pytest.mark.asyncio
@@ -60,7 +61,7 @@ async def test_ask_client_tool_enabled():
 
 @pytest.mark.asyncio
 async def test_ask_client_tool_disabled():
-    tool = AskClientTool(enabled=False)
+    tool = AskClientTool(enabled=False, ui=NullUI())
     result = await tool.execute({"question": "Do you want to proceed?", "default_answer": "no"})
     assert (
         result.content
