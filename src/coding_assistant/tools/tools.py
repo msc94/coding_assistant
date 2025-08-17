@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks
 from coding_assistant.agents.execution import run_agent_loop
-from coding_assistant.agents.parameters import fill_parameters, format_parameters
+from coding_assistant.agents.parameters import fill_parameters
 from coding_assistant.agents.types import (
     Agent,
     AgentOutput,
@@ -24,20 +24,7 @@ from coding_assistant.ui import UI, NullUI
 logger = logging.getLogger(__name__)
 
 
-async def _get_feedback(
-    agent: Agent,
-    enable_user_feedback: bool,
-    ui: UI,
-) -> str | None:
-    if not agent.output:
-        raise ValueError("Agent has no result to provide feedback on.")
-
-    feedback: str | None = None
-
-    if enable_user_feedback:
-        feedback = await ui.ask(f"Feedback for {agent.name}", default="Ok")
-
-    return feedback if feedback and feedback != "Ok" else None
+# Feedback is now handled directly in run_agent_loop; no helper needed here.
 
 
 class LaunchOrchestratorAgentSchema(BaseModel):
@@ -91,11 +78,6 @@ class OrchestratorTool(Tool):
             ],
             model=self._config.expert_model,
             tool_confirmation_patterns=self._config.tool_confirmation_patterns,
-            feedback_function=lambda agent: _get_feedback(
-                agent=agent,
-                enable_user_feedback=self._config.enable_user_feedback,
-                ui=self._ui,
-            ),
         )
 
         try:
@@ -104,6 +86,7 @@ class OrchestratorTool(Tool):
                 self._agent_callbacks,
                 self._config.shorten_conversation_at_tokens,
                 self._config.no_truncate_tools,
+                enable_user_feedback=self._config.enable_user_feedback,
                 completer=complete,
                 ui=self._ui,
             )
@@ -167,11 +150,6 @@ class AgentTool(Tool):
             ],
             model=self.get_model(parameters),
             tool_confirmation_patterns=self._config.tool_confirmation_patterns,
-            feedback_function=lambda agent: _get_feedback(
-                agent=agent,
-                enable_user_feedback=self._config.enable_user_feedback,
-                ui=self._ui,
-            ),
         )
 
         output = await run_agent_loop(
@@ -179,6 +157,7 @@ class AgentTool(Tool):
             self._agent_callbacks,
             self._config.shorten_conversation_at_tokens,
             self._config.no_truncate_tools,
+            enable_user_feedback=self._config.enable_user_feedback,
             completer=complete,
             ui=self._ui,
         )

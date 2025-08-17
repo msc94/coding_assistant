@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Awaitable, Callable, Protocol
+from typing import Awaitable, Protocol
 
 from coding_assistant.agents.callbacks import AgentCallbacks
 from coding_assistant.agents.parameters import Parameter
@@ -63,10 +63,6 @@ class Agent:
 
     description: str
     parameters: list[Parameter]
-
-    # This is a function that can validate an agents output.
-    # If it returns a string, it will be given to the agent as feedback.
-    feedback_function: Callable
 
     tools: list[Tool]
     mcp_servers: list[MCPServer]

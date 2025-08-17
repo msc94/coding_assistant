@@ -11,7 +11,6 @@ from coding_assistant.agents.tests.helpers import (
     FakeToolCall,
     make_test_agent,
     make_ui_mock,
-    no_feedback,
 )
 from coding_assistant.agents.types import Agent, TextResult, Tool
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
@@ -270,18 +269,16 @@ async def test_feedback_loop_then_finish():
             return "Please improve"
         return None
 
-    agent = make_test_agent(
-        tools=[FinishTaskTool(), ShortenConversation()],
-        feedback_function=feedback_once,
-    )
+    agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
     output = await run_agent_loop(
         agent,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
+        enable_user_feedback=True,
         completer=completer,
-        ui=make_ui_mock(),
+        ui=make_ui_mock(ask_sequence=[(f"Feedback for {agent.name}", "Please improve"), (f"Feedback for {agent.name}", "Ok")]),
     )
 
     assert output.result == "second"

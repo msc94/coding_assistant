@@ -23,7 +23,7 @@ class FakeToolCall:
 
 
 async def no_feedback(_: Agent):
-    return None
+    return None  # deprecated; retained for backward compatibility in tests that import it
 
 
 class FakeMessage:
@@ -114,7 +114,6 @@ def make_test_agent(
     model: str = "TestMode",
     description: str = "TestDescription",
     parameters: Sequence[Parameter] | None = None,
-    feedback_function=no_feedback,
     tools: Iterable[Tool] | None = None,
     mcp_servers: list[MCPServer] | None = None,
     tool_confirmation_patterns: list[str] | None = None,
@@ -125,7 +124,6 @@ def make_test_agent(
         model=model,
         description=description,
         parameters=list(parameters) if parameters is not None else [],
-        feedback_function=feedback_function,
         tools=list(tools) if tools is not None else [],
         mcp_servers=list(mcp_servers) if mcp_servers is not None else [],
         tool_confirmation_patterns=list(tool_confirmation_patterns) if tool_confirmation_patterns is not None else [],
