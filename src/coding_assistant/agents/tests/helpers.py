@@ -30,16 +30,6 @@ def make_ui_mock(
     ask_sequence: list[tuple[str, str]] | None = None,
     confirm_sequence: list[tuple[str, bool]] | None = None,
 ) -> UI:
-    """
-    Create a strict UI mock that validates every prompt against an expected sequence.
-
-    Parameters:
-    - ask_sequence: list of (expected_prompt, return_value) pairs; consumed in order by UI.ask.
-    - confirm_sequence: list of (expected_prompt, return_value) pairs; consumed in order by UI.confirm.
-
-    If a prompt arrives that doesn't match the next expected one or a method is
-    called more times than expected, an AssertionError is raised.
-    """
     ui = Mock()
 
     # Use local copies so tests can inspect remaining expectations after calls if needed
