@@ -17,7 +17,8 @@ def fix_input_schema(input_schema: dict):
     """
 
     for prop in input_schema.get("properties", {}).values():
-        if (format := prop.get("format")) and format == "uri":
+        fmt = prop.get("format")
+        if fmt == "uri":
             # Gemini API does not support `format: uri`, so we remove it
             prop.pop("format", None)
 

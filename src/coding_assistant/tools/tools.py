@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks
+from coding_assistant.agents.callbacks import AgentCallbacks
 from coding_assistant.agents.execution import run_agent_loop
 from coding_assistant.agents.parameters import fill_parameters
 from coding_assistant.agents.types import (
