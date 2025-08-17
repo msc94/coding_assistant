@@ -11,7 +11,14 @@ from coding_assistant.agents.callbacks import AgentCallbacks
 from coding_assistant.agents.history import append_assistant_message, append_tool_message, append_user_message
 from coding_assistant.agents.interrupts import InterruptibleSection
 from coding_assistant.agents.parameters import format_parameters
-from coding_assistant.agents.types import Agent, AgentOutput, FinishTaskResult, ShortenConversationResult, TextResult
+from coding_assistant.agents.types import (
+    Agent,
+    AgentOutput,
+    FinishTaskResult,
+    ShortenConversationResult,
+    TextResult,
+    Completer,
+)
 from coding_assistant.llm.adapters import execute_tool_call, get_tools
 from coding_assistant.ui import UI
 
@@ -176,7 +183,7 @@ async def do_single_step(
     shorten_conversation_at_tokens: int,
     no_truncate_tools: set[str],
     *,
-    completer,
+    completer: Completer,
     ui: UI,
 ):
     trace.get_current_span().set_attribute("agent.name", agent.name)
@@ -242,7 +249,7 @@ async def run_agent_loop(
     shorten_conversation_at_tokens: int,
     no_truncate_tools: set[str],
     *,
-    completer,
+    completer: Completer,
     ui: UI,
 ) -> AgentOutput:
     if agent.output:
