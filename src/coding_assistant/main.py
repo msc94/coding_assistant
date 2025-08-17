@@ -57,8 +57,8 @@ def parse_args():
         help="Resume from a specific orchestrator history file.",
     )
     parser.add_argument("--print-mcp-tools", action="store_true", help="Print all available tools from MCP servers.")
-    parser.add_argument("--model", type=str, default="gpt-4.1", help="Model to use for the orchestrator agent.")
-    parser.add_argument("--expert-model", type=str, default="gpt-4.1", help="Expert model to use.")
+    parser.add_argument("--model", type=str, default="gpt-5", help="Model to use for the orchestrator agent.")
+    parser.add_argument("--expert-model", type=str, default="gpt-5", help="Expert model to use.")
     parser.add_argument(
         "--user-feedback",
         action=BooleanOptionalAction,
