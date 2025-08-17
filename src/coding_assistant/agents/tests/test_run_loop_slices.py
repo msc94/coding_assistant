@@ -92,12 +92,15 @@ async def test_tool_selection_then_finish(monkeypatch):
 
     agent = make_test_agent(tools=[fake_tool, FinishTaskTool(), ShortenConversation()])
 
+    from coding_assistant.agents.tests.helpers import DummyUI
+
     output = await run_agent_loop(
         agent,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
         completer=completer,
+        ui=DummyUI(),
     )
 
     assert output.result == "done"
@@ -126,12 +129,15 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
 
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
+    from coding_assistant.agents.tests.helpers import DummyUI
+
     output = await run_agent_loop(
         agent,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
         completer=completer,
+        ui=DummyUI(),
     )
 
     # Check that an error tool message was appended for the unknown tool
@@ -160,12 +166,15 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
 
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
+    from coding_assistant.agents.tests.helpers import DummyUI
+
     output = await run_agent_loop(
         agent,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
         completer=completer,
+        ui=DummyUI(),
     )
 
     # Verify the corrective user message was appended

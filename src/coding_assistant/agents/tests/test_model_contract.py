@@ -68,12 +68,15 @@ async def test_do_single_step_adds_shorten_prompt_on_token_threshold(monkeypatch
     )
 
     # Running a single step should append the assistant message and then a user message prompting to shorten
+    from coding_assistant.agents.tests.helpers import DummyUI
+
     msg = await do_single_step(
         agent,
         NullCallbacks(),
         shorten_conversation_at_tokens=1000,  # much below completer.tokens
         no_truncate_tools=set(),
         completer=completer,
+        ui=DummyUI(),
     )
 
     assert msg.content == "hi"

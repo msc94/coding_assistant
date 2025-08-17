@@ -4,6 +4,7 @@ from typing import Iterable, Sequence
 from coding_assistant.agents.parameters import Parameter
 from coding_assistant.agents.types import Agent, Tool
 from coding_assistant.tools.mcp import MCPServer
+from coding_assistant.ui import UI
 
 
 @dataclass
@@ -21,6 +22,14 @@ class FakeToolCall:
 async def no_feedback(_: Agent):
     """A feedback function that returns no feedback (used in tests)."""
     return None
+
+
+class DummyUI(UI):
+    async def ask(self, prompt_text: str, default: str | None = None) -> str:
+        return default or ""
+
+    async def confirm(self, prompt_text: str) -> bool:
+        return True
 
 
 def make_test_agent(
