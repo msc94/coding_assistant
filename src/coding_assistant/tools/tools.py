@@ -26,7 +26,7 @@ from coding_assistant.llm.model import complete
 logger = logging.getLogger(__name__)
 
 
-from coding_assistant.ui import UI, PromptToolkitUI
+from coding_assistant.ui import UI, NullUI
 
 
 async def _get_feedback(
@@ -88,7 +88,7 @@ class OrchestratorTool(Tool):
         self._mcp_servers = mcp_servers or []
         self._history = history
         self._agent_callbacks = agent_callbacks or NullCallbacks()
-        self._ui = ui or PromptToolkitUI()
+        self._ui = ui or NullUI()
 
     def name(self) -> str:
         return "launch_orchestrator_agent"
@@ -171,7 +171,7 @@ class AgentTool(Tool):
         self._config = config
         self._mcp_servers = mcp_servers or []
         self._agent_callbacks = agent_callbacks or NullCallbacks()
-        self._ui = ui or PromptToolkitUI()
+        self._ui = ui or NullUI()
 
     def name(self) -> str:
         return "launch_agent"
@@ -234,7 +234,7 @@ class AskClientSchema(BaseModel):
 class AskClientTool(Tool):
     def __init__(self, enabled: bool, ui: UI | None = None):
         self.enabled = enabled
-        self._ui = ui or PromptToolkitUI()
+        self._ui = ui or NullUI()
 
     def name(self) -> str:
         return "ask_client"
@@ -272,7 +272,7 @@ class ExecuteShellCommandTool(Tool):
         ui: UI | None = None,
     ):
         self._shell_confirmation_patterns = shell_confirmation_patterns or []
-        self._ui = ui or PromptToolkitUI()
+        self._ui = ui or NullUI()
 
     def name(self) -> str:
         return "execute_shell_command"
@@ -340,7 +340,7 @@ class FeedbackTool(Tool):
         self._config = config
         self._mcp_servers = mcp_servers or []
         self._agent_callbacks = agent_callbacks or NullCallbacks()
-        self._ui = ui or PromptToolkitUI()
+        self._ui = ui or NullUI()
 
     def name(self) -> str:
         return "launch_feedback_agent"
