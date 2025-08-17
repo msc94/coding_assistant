@@ -4,7 +4,7 @@ import pytest
 
 from coding_assistant.agents.callbacks import NullCallbacks
 from coding_assistant.agents.execution import do_single_step
-from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, make_test_agent, no_feedback
+from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, make_test_agent, no_feedback, make_ui_mock
 from coding_assistant.agents.types import Agent, TextResult, Tool
 from coding_assistant.llm.model import Completion
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
@@ -68,7 +68,6 @@ async def test_do_single_step_adds_shorten_prompt_on_token_threshold(monkeypatch
     )
 
     # Running a single step should append the assistant message and then a user message prompting to shorten
-    from coding_assistant.agents.tests.helpers import DummyUI
 
     msg = await do_single_step(
         agent,
@@ -76,7 +75,7 @@ async def test_do_single_step_adds_shorten_prompt_on_token_threshold(monkeypatch
         shorten_conversation_at_tokens=1000,  # much below completer.tokens
         no_truncate_tools=set(),
         completer=completer,
-        ui=DummyUI(),
+        ui=make_ui_mock(),
     )
 
     assert msg.content == "hi"

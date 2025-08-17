@@ -1,15 +1,18 @@
+from abc import ABC, abstractmethod
 from typing import Optional
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.shortcuts import create_confirm_session
 
 
-class UI:
-    async def ask(self, prompt_text: str, default: Optional[str] = None) -> str:  # pragma: no cover - interface stub
-        raise NotImplementedError
+class UI(ABC):
+    @abstractmethod
+    async def ask(self, prompt_text: str, default: Optional[str] = None) -> str:
+        pass
 
-    async def confirm(self, prompt_text: str) -> bool:  # pragma: no cover - interface stub
-        raise NotImplementedError
+    @abstractmethod
+    async def confirm(self, prompt_text: str) -> bool:
+        pass
 
 
 class PromptToolkitUI(UI):

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Iterable, Sequence
+from unittest.mock import AsyncMock, Mock
 
 from coding_assistant.agents.parameters import Parameter
 from coding_assistant.agents.types import Agent, Tool
@@ -24,12 +25,19 @@ async def no_feedback(_: Agent):
     return None
 
 
-class DummyUI(UI):
-    async def ask(self, prompt_text: str, default: str | None = None) -> str:
-        return default or ""
+def make_ui_mock(*, ask_value: str | None = None, confirm_value: bool = True) -> UI:
+    ui = Mock()
 
-    async def confirm(self, prompt_text: str) -> bool:
-        return True
+    async def _ask(prompt_text: str, default: str | None = None) -> str:
+        return ask_value if ask_value is not None else (default or "")
+
+    async def _confirm(prompt_text: str) -> bool:
+        return bool(confirm_value)
+
+    ui.ask = AsyncMock(side_effect=_ask)
+    ui.confirm = AsyncMock(side_effect=_confirm)
+
+    return ui
 
 
 def make_test_agent(

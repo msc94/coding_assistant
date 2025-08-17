@@ -4,7 +4,7 @@ import pytest
 
 from coding_assistant.agents.callbacks import NullCallbacks
 from coding_assistant.agents.execution import run_agent_loop
-from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, make_test_agent, no_feedback
+from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, make_test_agent, no_feedback, make_ui_mock
 from coding_assistant.agents.types import Agent, TextResult, Tool
 from coding_assistant.llm.model import Completion
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
@@ -92,15 +92,13 @@ async def test_tool_selection_then_finish(monkeypatch):
 
     agent = make_test_agent(tools=[fake_tool, FinishTaskTool(), ShortenConversation()])
 
-    from coding_assistant.agents.tests.helpers import DummyUI
-
     output = await run_agent_loop(
         agent,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
         completer=completer,
-        ui=DummyUI(),
+        ui=make_ui_mock(),
     )
 
     assert output.result == "done"
@@ -129,15 +127,13 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
 
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
-    from coding_assistant.agents.tests.helpers import DummyUI
-
     output = await run_agent_loop(
         agent,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
         completer=completer,
-        ui=DummyUI(),
+        ui=make_ui_mock(),
     )
 
     # Check that an error tool message was appended for the unknown tool
@@ -166,15 +162,13 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
 
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
-    from coding_assistant.agents.tests.helpers import DummyUI
-
     output = await run_agent_loop(
         agent,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
         completer=completer,
-        ui=DummyUI(),
+        ui=make_ui_mock(),
     )
 
     # Verify the corrective user message was appended

@@ -1,20 +1,6 @@
-from unittest.mock import AsyncMock, patch
-
-from coding_assistant.ui import UI
-
-
-class TestUI(UI):
-    def __init__(self, confirm_value: bool):
-        self.confirm_value = confirm_value
-
-    async def ask(self, prompt_text: str, default: str | None = None) -> str:
-        return default or ""
-
-    async def confirm(self, prompt_text: str) -> bool:
-        return self.confirm_value
-
 import pytest
 
+from coding_assistant.agents.tests.helpers import make_ui_mock
 from coding_assistant.config import Config
 from coding_assistant.tools.tools import FeedbackTool, OrchestratorTool
 
@@ -141,7 +127,7 @@ async def test_orchestrator_tool_instructions():
 def _create_confirmation_orchestrator(confirm_value: bool):
     config = create_test_config()
     config.shell_confirmation_patterns = ["^echo"]
-    tool = OrchestratorTool(config=config, ui=TestUI(confirm_value))
+    tool = OrchestratorTool(config=config, ui=make_ui_mock(confirm_value=confirm_value))
     parameters = {
         "task": "Execute shell command 'echo Hello World' and verbatim output stdout. If the command execution is denied, output 'Command execution denied.'",
     }
@@ -169,7 +155,7 @@ async def test_shell_confirmation_negative():
 def _create_tool_confirmation_orchestrator(confirm_value: bool):
     config = create_test_config()
     config.tool_confirmation_patterns = ["^execute_shell_command"]
-    tool = OrchestratorTool(config=config, ui=TestUI(confirm_value))
+    tool = OrchestratorTool(config=config, ui=make_ui_mock(confirm_value=confirm_value))
     parameters = {
         "task": "Use the execute_shell_command to echo 'Hello, World!' and verbatim output stdout. If the tool execution is denied, output 'Tool execution denied.'",
     }
@@ -180,7 +166,6 @@ def _create_tool_confirmation_orchestrator(confirm_value: bool):
 @pytest.mark.asyncio
 async def test_tool_confirmation_positive():
     tool, parameters = _create_tool_confirmation_orchestrator(confirm_value=True)
-
     result = await tool.execute(parameters=parameters)
     assert result.content.strip() == "Hello, World!"
 
@@ -189,6 +174,5 @@ async def test_tool_confirmation_positive():
 @pytest.mark.asyncio
 async def test_tool_confirmation_negative():
     tool, parameters = _create_tool_confirmation_orchestrator(confirm_value=False)
-
     result = await tool.execute(parameters=parameters)
     assert result.content.strip() == "Tool execution denied."
