@@ -3,6 +3,7 @@ import json
 import logging
 import re
 import textwrap
+from abc import ABC, abstractmethod, abstractproperty
 from typing import List, Optional
 
 from prompt_toolkit import PromptSession, prompt
@@ -25,12 +26,14 @@ from coding_assistant.config import Config
 logger = logging.getLogger(__name__)
 
 
-class UI:
-    async def ask(self, prompt_text: str, default: str | None = None) -> str:  # pragma: no cover - interface stub
-        raise NotImplementedError
+class UI(ABC):
+    @abstractmethod
+    async def ask(self, prompt_text: str, default: str | None = None) -> str:
+        pass
 
-    async def confirm(self, prompt_text: str) -> bool:  # pragma: no cover - interface stub
-        raise NotImplementedError
+    @abstractmethod
+    async def confirm(self, prompt_text: str) -> bool:
+        pass
 
 
 class PromptToolkitUI(UI):
