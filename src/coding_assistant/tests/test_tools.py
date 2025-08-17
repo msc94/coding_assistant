@@ -1,8 +1,9 @@
 import json
+
 import pytest
 
-from coding_assistant.tools.tools import AskClientTool, ExecuteShellCommandTool
 from coding_assistant.agents.tests.helpers import make_ui_mock
+from coding_assistant.tools.tools import AskClientTool, ExecuteShellCommandTool
 
 
 @pytest.mark.asyncio

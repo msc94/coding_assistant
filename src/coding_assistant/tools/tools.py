@@ -44,7 +44,7 @@ async def _get_feedback(
     feedback = "Ok"
 
     if enable_feedback_agent:
-        feedback_tool = FeedbackTool(config, mcp_servers, agent_callbacks)
+        feedback_tool = FeedbackTool(config, mcp_servers, agent_callbacks, ui=ui)
         formatted_parameters = textwrap.indent(format_parameters(agent.parameters), "  ")
         agent_feedback_result = await feedback_tool.execute(
             parameters={

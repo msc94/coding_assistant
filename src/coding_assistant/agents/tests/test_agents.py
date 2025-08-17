@@ -126,8 +126,12 @@ async def test_orchestrator_tool_instructions():
 
 def _create_confirmation_orchestrator(confirm_value: bool):
     config = create_test_config()
+    # Avoid launching feedback agent in tests (it would use real PromptToolkit UI)
+    config.enable_feedback_agent = False
     config.shell_confirmation_patterns = ["^echo"]
-    tool = OrchestratorTool(config=config, ui=make_ui_mock(confirm_value=confirm_value))
+    # The shell tool asks: Execute `echo Hello World`?
+    ui = make_ui_mock(confirm_sequence=[("Execute `echo Hello World`?", confirm_value)])
+    tool = OrchestratorTool(config=config, ui=ui)
     parameters = {
         "task": "Execute shell command 'echo Hello World' and verbatim output stdout. If the command execution is denied, output 'Command execution denied.'",
     }
@@ -154,8 +158,19 @@ async def test_shell_confirmation_negative():
 
 def _create_tool_confirmation_orchestrator(confirm_value: bool):
     config = create_test_config()
+    # Avoid launching feedback agent in tests (it would use real PromptToolkit UI)
+    config.enable_feedback_agent = False
     config.tool_confirmation_patterns = ["^execute_shell_command"]
-    tool = OrchestratorTool(config=config, ui=make_ui_mock(confirm_value=confirm_value))
+    # The agent framework asks before executing the tool, including arguments dict string repr.
+    ui = make_ui_mock(
+        confirm_sequence=[
+            (
+                "Execute tool `execute_shell_command` with arguments `{'command': \"echo 'Hello, World!'\", 'timeout': 10}`?",
+                confirm_value,
+            )
+        ]
+    )
+    tool = OrchestratorTool(config=config, ui=ui)
     parameters = {
         "task": "Use the execute_shell_command to echo 'Hello, World!' and verbatim output stdout. If the tool execution is denied, output 'Tool execution denied.'",
     }
