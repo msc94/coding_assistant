@@ -96,9 +96,7 @@ def make_ui_mock(
         assert ask_seq is not None, "UI.ask was called but no ask_sequence was provided"
         assert len(ask_seq) > 0, "UI.ask was called more times than expected"
         expected_prompt, value = ask_seq.pop(0)
-        assert (
-            prompt_text == expected_prompt
-        ), f"Unexpected ask prompt. Expected: {expected_prompt!r}, got: {prompt_text!r}"
+        assert prompt_text == expected_prompt, f"Unexpected ask prompt. Expected: {expected_prompt}, got: {prompt_text}"
         return value
 
     async def _confirm(prompt_text: str) -> bool:
@@ -107,7 +105,7 @@ def make_ui_mock(
         expected_prompt, value = confirm_seq.pop(0)
         assert (
             prompt_text == expected_prompt
-        ), f"Unexpected confirm prompt. Expected: {expected_prompt!r}, got: {prompt_text!r}"
+        ), f"Unexpected confirm prompt. Expected: {expected_prompt}, got: {prompt_text}"
         return bool(value)
 
     ui.ask = AsyncMock(side_effect=_ask)
