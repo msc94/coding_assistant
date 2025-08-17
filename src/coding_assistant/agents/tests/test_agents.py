@@ -3,6 +3,8 @@ import pytest
 from coding_assistant.agents.tests.helpers import make_ui_mock
 from coding_assistant.config import Config
 from coding_assistant.tools.tools import FeedbackTool, OrchestratorTool
+from coding_assistant.agents.callbacks import NullCallbacks
+from coding_assistant.ui import NullUI
 
 # This file contains integration tests using the real LLM API.
 
@@ -28,7 +30,7 @@ def create_test_config() -> Config:
 @pytest.mark.asyncio
 async def test_feedback_tool_execute_ok():
     config = create_test_config()
-    tool = FeedbackTool(config=config)
+    tool = FeedbackTool(config=config, mcp_servers=[], agent_callbacks=NullCallbacks(), ui=NullUI())
     result = await tool.execute(
         parameters={
             "description": "The agent will only give correct answers",
@@ -43,7 +45,7 @@ async def test_feedback_tool_execute_ok():
 @pytest.mark.asyncio
 async def test_feedback_tool_execute_wrong():
     config = create_test_config()
-    tool = FeedbackTool(config=config)
+    tool = FeedbackTool(config=config, mcp_servers=[], agent_callbacks=NullCallbacks(), ui=NullUI())
     result = await tool.execute(
         parameters={
             "description": "The agent will only give correct answers",
@@ -58,7 +60,7 @@ async def test_feedback_tool_execute_wrong():
 @pytest.mark.asyncio
 async def test_feedback_tool_execute_no_result():
     config = create_test_config()
-    tool = FeedbackTool(config=config)
+    tool = FeedbackTool(config=config, mcp_servers=[], agent_callbacks=NullCallbacks(), ui=NullUI())
     result = await tool.execute(
         parameters={
             "description": "The agent will only give correct answers",
@@ -73,7 +75,7 @@ async def test_feedback_tool_execute_no_result():
 @pytest.mark.asyncio
 async def test_feedback_tool_after_feedback():
     config = create_test_config()
-    tool = FeedbackTool(config=config)
+    tool = FeedbackTool(config=config, mcp_servers=[], agent_callbacks=NullCallbacks(), ui=NullUI())
     result = await tool.execute(
         parameters={
             "description": "The agent will only give correct answers",
@@ -89,7 +91,7 @@ async def test_feedback_tool_after_feedback():
 @pytest.mark.asyncio
 async def test_orchestrator_tool():
     config = create_test_config()
-    tool = OrchestratorTool(config=config)
+    tool = OrchestratorTool(config=config, mcp_servers=[], history=None, agent_callbacks=NullCallbacks(), ui=NullUI())
     result = await tool.execute(parameters={"task": "Say 'Hello, World!'"})
     assert result.content == "Hello, World!"
 
@@ -98,12 +100,12 @@ async def test_orchestrator_tool():
 @pytest.mark.asyncio
 async def test_orchestrator_tool_resume():
     config = create_test_config()
-    first = OrchestratorTool(config=config)
+    first = OrchestratorTool(config=config, mcp_servers=[], history=None, agent_callbacks=NullCallbacks(), ui=NullUI())
 
     result = await first.execute(parameters={"task": "Say 'Hello, World!'"})
     assert result.content == "Hello, World!"
 
-    second = OrchestratorTool(config=config, history=first.history)
+    second = OrchestratorTool(config=config, mcp_servers=[], history=first.history, agent_callbacks=NullCallbacks(), ui=NullUI())
     result = await second.execute(
         parameters={"task": "Re-do your previous task, just translate your output to German."}
     )
@@ -114,7 +116,7 @@ async def test_orchestrator_tool_resume():
 @pytest.mark.asyncio
 async def test_orchestrator_tool_instructions():
     config = create_test_config()
-    tool = OrchestratorTool(config=config)
+    tool = OrchestratorTool(config=config, mcp_servers=[], history=None, agent_callbacks=NullCallbacks(), ui=NullUI())
     result = await tool.execute(
         parameters={
             "task": "Say 'Hello, World!'",
@@ -134,7 +136,7 @@ def _create_confirmation_orchestrator(confirm_value: bool):
             ("Execute `echo Hello World`?", confirm_value),
         ]
     )
-    tool = OrchestratorTool(config=config, ui=ui)
+    tool = OrchestratorTool(config=config, mcp_servers=[], history=None, agent_callbacks=NullCallbacks(), ui=ui)
     parameters = {
         "task": "Execute shell command 'echo Hello World' with a timeout of 10 seconds and verbatim output stdout. If the command execution is denied, output 'Command execution denied.'",
     }
@@ -170,7 +172,7 @@ def _create_tool_confirmation_orchestrator(confirm_value: bool):
             ),
         ]
     )
-    tool = OrchestratorTool(config=config, ui=ui)
+    tool = OrchestratorTool(config=config, mcp_servers=[], history=None, agent_callbacks=NullCallbacks(), ui=ui)
     parameters = {
         "task": "Use the execute_shell_command to echo 'Hello, World!' with a timeout of 10 seconds and verbatim output stdout. If the tool execution is denied, output 'Tool execution denied.'",
     }

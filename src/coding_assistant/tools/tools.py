@@ -36,7 +36,7 @@ async def _get_feedback(
     enable_feedback_agent: bool,
     enable_user_feedback: bool,
     ui: UI,
-    agent_callbacks: Optional[AgentCallbacks],
+    agent_callbacks: AgentCallbacks,
 ) -> str | None:
     if not agent.output:
         raise ValueError("Agent has no result to provide feedback on.")
@@ -44,7 +44,9 @@ async def _get_feedback(
     feedback = "Ok"
 
     if enable_feedback_agent:
-        feedback_tool = FeedbackTool(config, mcp_servers, agent_callbacks, ui=ui)
+        feedback_tool = FeedbackTool(
+            config=config, mcp_servers=mcp_servers, agent_callbacks=agent_callbacks or NullCallbacks(), ui=ui
+        )
         formatted_parameters = textwrap.indent(format_parameters(agent.parameters), "  ")
         agent_feedback_result = await feedback_tool.execute(
             parameters={
@@ -76,19 +78,14 @@ class LaunchOrchestratorAgentSchema(BaseModel):
 
 class OrchestratorTool(Tool):
     def __init__(
-        self,
-        config: Config,
-        mcp_servers: list | None = None,
-        history: list | None = None,
-        agent_callbacks: Optional[AgentCallbacks] = None,
-        ui: UI | None = None,
+        self, config: Config, mcp_servers: list, history: list | None, agent_callbacks: AgentCallbacks, ui: UI
     ):
         super().__init__()
         self._config = config
-        self._mcp_servers = mcp_servers or []
+        self._mcp_servers = mcp_servers
         self._history = history
-        self._agent_callbacks = agent_callbacks or NullCallbacks()
-        self._ui = ui or NullUI()
+        self._agent_callbacks = agent_callbacks
+        self._ui = ui
 
     def name(self) -> str:
         return "launch_orchestrator_agent"
@@ -110,7 +107,7 @@ class OrchestratorTool(Tool):
             ),
             mcp_servers=self._mcp_servers,
             tools=[
-                AgentTool(self._config, self._mcp_servers, self._agent_callbacks, ui=self._ui),
+                AgentTool(self._config, self._mcp_servers, self._agent_callbacks, self._ui),
                 AskClientTool(self._config.enable_ask_user, ui=self._ui),
                 ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=self._ui),
                 FinishTaskTool(),
@@ -160,18 +157,12 @@ class LaunchAgentSchema(BaseModel):
 
 
 class AgentTool(Tool):
-    def __init__(
-        self,
-        config: Config,
-        mcp_servers: list | None = None,
-        agent_callbacks: Optional[AgentCallbacks] = None,
-        ui: UI | None = None,
-    ):
+    def __init__(self, config: Config, mcp_servers: list, agent_callbacks: AgentCallbacks, ui: UI):
         super().__init__()
         self._config = config
-        self._mcp_servers = mcp_servers or []
-        self._agent_callbacks = agent_callbacks or NullCallbacks()
-        self._ui = ui or NullUI()
+        self._mcp_servers = mcp_servers
+        self._agent_callbacks = agent_callbacks
+        self._ui = ui
 
     def name(self) -> str:
         return "launch_agent"
@@ -232,9 +223,9 @@ class AskClientSchema(BaseModel):
 
 
 class AskClientTool(Tool):
-    def __init__(self, enabled: bool, ui: UI | None = None):
+    def __init__(self, enabled: bool, ui: UI):
         self.enabled = enabled
-        self._ui = ui or NullUI()
+        self._ui = ui
 
     def name(self) -> str:
         return "ask_client"
@@ -329,18 +320,12 @@ class LaunchFeedbackAgentSchema(BaseModel):
 
 
 class FeedbackTool(Tool):
-    def __init__(
-        self,
-        config: Config,
-        mcp_servers: list | None = None,
-        agent_callbacks: Optional[AgentCallbacks] = None,
-        ui: UI | None = None,
-    ):
+    def __init__(self, config: Config, mcp_servers: list, agent_callbacks: AgentCallbacks, ui: UI):
         super().__init__()
         self._config = config
-        self._mcp_servers = mcp_servers or []
-        self._agent_callbacks = agent_callbacks or NullCallbacks()
-        self._ui = ui or NullUI()
+        self._mcp_servers = mcp_servers
+        self._agent_callbacks = agent_callbacks
+        self._ui = ui
 
     def name(self) -> str:
         return "launch_feedback_agent"
