@@ -235,3 +235,66 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
         },
     ]
     assert output.result == "r"
+
+
+@pytest.mark.asyncio
+async def test_feedback_loop_then_finish():
+    # First, the agent finishes with an initial result.
+    finish_call_1 = FakeToolCall(
+        "1",
+        FakeFunction(
+            "finish_task",
+            json.dumps({"result": "first", "summary": "s1"}),
+        ),
+    )
+    # After feedback is applied, the agent finishes again with an improved result.
+    finish_call_2 = FakeToolCall(
+        "2",
+        FakeFunction(
+            "finish_task",
+            json.dumps({"result": "second", "summary": "s2"}),
+        ),
+    )
+
+    completer = FakeCompleter([
+        FakeMessage(tool_calls=[finish_call_1]),
+        FakeMessage(tool_calls=[finish_call_2]),
+    ])
+
+    # feedback_function returns a message once, then None to finish.
+    state = {"count": 0}
+
+    async def feedback_once(_agent):
+        if state["count"] == 0:
+            state["count"] += 1
+            return "Please improve"
+        return None
+
+    agent = make_test_agent(
+        tools=[FinishTaskTool(), ShortenConversation()],
+        feedback_function=feedback_once,
+    )
+
+    output = await run_agent_loop(
+        agent,
+        NullCallbacks(),
+        shorten_conversation_at_tokens=200_000,
+        no_truncate_tools=set(),
+        completer=completer,
+        ui=make_ui_mock(),
+    )
+
+    # Final output should be the second (improved) result
+    assert output.result == "second"
+    assert output.summary == "s2"
+
+    # Verify a feedback message was injected into history
+    feedback_msgs = [
+        m
+        for m in agent.history
+        if m.get("role") == "user"
+        and isinstance(m.get("content"), str)
+        and "Your client has provided the following feedback on your work:" in m["content"]
+    ]
+    assert feedback_msgs, "Expected feedback message injected into agent history"
+    assert "> Please improve" in feedback_msgs[-1]["content"]
