@@ -60,6 +60,7 @@ async def test_tool_selection_then_finish():
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
+        enable_user_feedback=False,
         completer=completer,
         ui=make_ui_mock(),
     )
@@ -133,6 +134,7 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
+        enable_user_feedback=False,
         completer=completer,
         ui=make_ui_mock(),
     )
@@ -201,6 +203,7 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         no_truncate_tools=set(),
+        enable_user_feedback=False,
         completer=completer,
         ui=make_ui_mock(),
     )
