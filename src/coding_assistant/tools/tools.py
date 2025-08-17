@@ -35,7 +35,8 @@ async def _get_feedback(
     mcp_servers: list,
     enable_feedback_agent: bool,
     enable_user_feedback: bool,
-    agent_callbacks: Optional[AgentCallbacks] = None,
+    ui: UI,
+    agent_callbacks: Optional[AgentCallbacks],
 ) -> str | None:
     if not agent.output:
         raise ValueError("Agent has no result to provide feedback on.")
@@ -60,7 +61,7 @@ async def _get_feedback(
         from coding_assistant.ui import PromptToolkitUI
 
         print(f"Feedback for {agent.name}")
-        feedback = await PromptToolkitUI().ask("> ", default=feedback)
+        feedback = await ui.ask(f"Feedback for {agent.name}")
 
     return feedback if feedback != "Ok" else None
 
@@ -128,6 +129,7 @@ class OrchestratorTool(Tool):
                 enable_feedback_agent=self._config.enable_feedback_agent,
                 enable_user_feedback=self._config.enable_user_feedback,
                 agent_callbacks=self._agent_callbacks,
+                ui=self._ui,
             ),
         )
 
@@ -163,7 +165,11 @@ class LaunchAgentSchema(BaseModel):
 
 class AgentTool(Tool):
     def __init__(
-        self, config: Config, mcp_servers: list | None = None, agent_callbacks: Optional[AgentCallbacks] = None, ui: UI | None = None
+        self,
+        config: Config,
+        mcp_servers: list | None = None,
+        agent_callbacks: Optional[AgentCallbacks] = None,
+        ui: UI | None = None,
     ):
         super().__init__()
         self._config = config
@@ -209,6 +215,7 @@ class AgentTool(Tool):
                 enable_feedback_agent=self._config.enable_feedback_agent,
                 enable_user_feedback=self._config.enable_user_feedback,
                 agent_callbacks=self._agent_callbacks,
+                ui=self._ui,
             ),
         )
 
@@ -327,7 +334,11 @@ class LaunchFeedbackAgentSchema(BaseModel):
 
 class FeedbackTool(Tool):
     def __init__(
-        self, config: Config, mcp_servers: list | None = None, agent_callbacks: Optional[AgentCallbacks] = None, ui: UI | None = None
+        self,
+        config: Config,
+        mcp_servers: list | None = None,
+        agent_callbacks: Optional[AgentCallbacks] = None,
+        ui: UI | None = None,
     ):
         super().__init__()
         self._config = config
@@ -367,6 +378,7 @@ class FeedbackTool(Tool):
                 enable_feedback_agent=False,
                 enable_user_feedback=False,
                 agent_callbacks=self._agent_callbacks,
+                ui=self._ui,
             ),
         )
 

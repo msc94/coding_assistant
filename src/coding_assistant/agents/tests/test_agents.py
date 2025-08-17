@@ -138,10 +138,10 @@ async def test_orchestrator_tool_instructions():
     assert result.content == "Servus, World!"
 
 
-def _create_confirmation_orchestrator():
+def _create_confirmation_orchestrator(confirm_value: bool):
     config = create_test_config()
     config.shell_confirmation_patterns = ["^echo"]
-    tool = OrchestratorTool(config=config)
+    tool = OrchestratorTool(config=config, ui=TestUI(confirm_value))
     parameters = {
         "task": "Execute shell command 'echo Hello World' and verbatim output stdout. If the command execution is denied, output 'Command execution denied.'",
     }
@@ -151,7 +151,7 @@ def _create_confirmation_orchestrator():
 @pytest.mark.slow
 @pytest.mark.asyncio
 async def test_shell_confirmation_positive():
-    tool, parameters = _create_confirmation_orchestrator()
+    tool, parameters = _create_confirmation_orchestrator(confirm_value=True)
 
     result = await tool.execute(parameters=parameters)
     assert result.content.strip() == "Hello World"
@@ -160,16 +160,16 @@ async def test_shell_confirmation_positive():
 @pytest.mark.slow
 @pytest.mark.asyncio
 async def test_shell_confirmation_negative():
-    tool, parameters = _create_confirmation_orchestrator()
+    tool, parameters = _create_confirmation_orchestrator(confirm_value=False)
 
     result = await tool.execute(parameters=parameters)
     assert result.content.strip() == "Command execution denied."
 
 
-def _create_tool_confirmation_orchestrator():
+def _create_tool_confirmation_orchestrator(confirm_value: bool):
     config = create_test_config()
     config.tool_confirmation_patterns = ["^execute_shell_command"]
-    tool = OrchestratorTool(config=config)
+    tool = OrchestratorTool(config=config, ui=TestUI(confirm_value))
     parameters = {
         "task": "Use the execute_shell_command to echo 'Hello, World!' and verbatim output stdout. If the tool execution is denied, output 'Tool execution denied.'",
     }
@@ -179,7 +179,7 @@ def _create_tool_confirmation_orchestrator():
 @pytest.mark.slow
 @pytest.mark.asyncio
 async def test_tool_confirmation_positive():
-    tool, parameters = _create_tool_confirmation_orchestrator()
+    tool, parameters = _create_tool_confirmation_orchestrator(confirm_value=True)
 
     result = await tool.execute(parameters=parameters)
     assert result.content.strip() == "Hello, World!"
@@ -188,7 +188,7 @@ async def test_tool_confirmation_positive():
 @pytest.mark.slow
 @pytest.mark.asyncio
 async def test_tool_confirmation_negative():
-    tool, parameters = _create_tool_confirmation_orchestrator()
+    tool, parameters = _create_tool_confirmation_orchestrator(confirm_value=False)
 
     result = await tool.execute(parameters=parameters)
     assert result.content.strip() == "Tool execution denied."
