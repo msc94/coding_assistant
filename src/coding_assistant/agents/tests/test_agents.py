@@ -172,7 +172,7 @@ def _create_tool_confirmation_orchestrator(confirm_value: bool):
     )
     tool = OrchestratorTool(config=config, ui=ui)
     parameters = {
-        "task": "Use the execute_shell_command to echo 'Hello, World!' and verbatim output stdout. If the tool execution is denied, output 'Tool execution denied.'",
+        "task": "Use the execute_shell_command to echo 'Hello, World!' with a timeout of 10 seconds and verbatim output stdout. If the tool execution is denied, output 'Tool execution denied.'",
     }
     return tool, parameters
 
