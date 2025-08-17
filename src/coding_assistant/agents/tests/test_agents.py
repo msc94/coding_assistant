@@ -1,5 +1,18 @@
 from unittest.mock import AsyncMock, patch
 
+from coding_assistant.ui import UI
+
+
+class TestUI(UI):
+    def __init__(self, confirm_value: bool):
+        self.confirm_value = confirm_value
+
+    async def ask(self, prompt_text: str, default: str | None = None) -> str:
+        return default or ""
+
+    async def confirm(self, prompt_text: str) -> bool:
+        return self.confirm_value
+
 import pytest
 
 from coding_assistant.config import Config
@@ -140,13 +153,8 @@ def _create_confirmation_orchestrator():
 async def test_shell_confirmation_positive():
     tool, parameters = _create_confirmation_orchestrator()
 
-    with patch("coding_assistant.tools.tools.create_confirm_session") as mock_create_confirm:
-        mock_session = AsyncMock()
-        mock_session.prompt_async.return_value = True
-        mock_create_confirm.return_value = mock_session
-
-        result = await tool.execute(parameters=parameters)
-        assert result.content.strip() == "Hello World"
+    result = await tool.execute(parameters=parameters)
+    assert result.content.strip() == "Hello World"
 
 
 @pytest.mark.slow
@@ -154,13 +162,8 @@ async def test_shell_confirmation_positive():
 async def test_shell_confirmation_negative():
     tool, parameters = _create_confirmation_orchestrator()
 
-    with patch("coding_assistant.tools.tools.create_confirm_session") as mock_create_confirm:
-        mock_session = AsyncMock()
-        mock_session.prompt_async.return_value = False
-        mock_create_confirm.return_value = mock_session
-
-        result = await tool.execute(parameters=parameters)
-        assert result.content.strip() == "Command execution denied."
+    result = await tool.execute(parameters=parameters)
+    assert result.content.strip() == "Command execution denied."
 
 
 def _create_tool_confirmation_orchestrator():
@@ -178,13 +181,8 @@ def _create_tool_confirmation_orchestrator():
 async def test_tool_confirmation_positive():
     tool, parameters = _create_tool_confirmation_orchestrator()
 
-    with patch("coding_assistant.agents.execution.create_confirm_session") as mock_create_confirm:
-        mock_session = AsyncMock()
-        mock_session.prompt_async.return_value = True
-        mock_create_confirm.return_value = mock_session
-
-        result = await tool.execute(parameters=parameters)
-        assert result.content.strip() == "Hello, World!"
+    result = await tool.execute(parameters=parameters)
+    assert result.content.strip() == "Hello, World!"
 
 
 @pytest.mark.slow
@@ -192,10 +190,5 @@ async def test_tool_confirmation_positive():
 async def test_tool_confirmation_negative():
     tool, parameters = _create_tool_confirmation_orchestrator()
 
-    with patch("coding_assistant.agents.execution.create_confirm_session") as mock_create_confirm:
-        mock_session = AsyncMock()
-        mock_session.prompt_async.return_value = False
-        mock_create_confirm.return_value = mock_session
-
-        result = await tool.execute(parameters=parameters)
-        assert result.content.strip() == "Tool execution denied."
+    result = await tool.execute(parameters=parameters)
+    assert result.content.strip() == "Tool execution denied."

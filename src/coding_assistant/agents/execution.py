@@ -8,7 +8,6 @@ import textwrap
 
 from opentelemetry import trace
 from prompt_toolkit import prompt
-from prompt_toolkit.shortcuts import create_confirm_session
 
 from coding_assistant.agents.callbacks import AgentCallbacks
 from coding_assistant.agents.history import append_assistant_message, append_tool_message, append_user_message
@@ -112,6 +111,8 @@ async def handle_tool_call(
     agent: Agent,
     agent_callbacks: AgentCallbacks,
     no_truncate_tools: set[str],
+    *,
+    ui=None,
 ):
     function_name = tool_call.function.name
     function_args = json.loads(tool_call.function.arguments or "{}")
@@ -119,7 +120,12 @@ async def handle_tool_call(
     for pattern in agent.tool_confirmation_patterns:
         if re.search(pattern, function_name):
             question = f"Execute tool `{function_name}` with arguments `{function_args}`?"
-            answer = await create_confirm_session(question).prompt_async()
+            if ui is None:
+                # Lazy import to avoid a hard dependency here
+                from coding_assistant.ui import PromptToolkitUI
+
+                ui = PromptToolkitUI()
+            answer = await ui.confirm(question)
             if not answer:
                 append_tool_message(
                     agent.history,
@@ -178,6 +184,7 @@ async def do_single_step(
     no_truncate_tools: set[str],
     *,
     completer=default_complete,
+    ui=None,
 ):
     trace.get_current_span().set_attribute("agent.name", agent.name)
 
@@ -214,7 +221,7 @@ async def do_single_step(
 
     if message.tool_calls:
         for tool_call in message.tool_calls:
-            await handle_tool_call(tool_call, agent, agent_callbacks, no_truncate_tools)
+            await handle_tool_call(tool_call, agent, agent_callbacks, no_truncate_tools, ui=ui)
     else:
         append_user_message(
             agent.history,
@@ -243,6 +250,7 @@ async def run_agent_loop(
     no_truncate_tools: set[str],
     *,
     completer=default_complete,
+    ui=None,
 ) -> AgentOutput:
     if agent.output:
         raise RuntimeError("Agent already has a result or summary.")
@@ -264,6 +272,7 @@ async def run_agent_loop(
                     shorten_conversation_at_tokens,
                     no_truncate_tools,
                     completer=completer,
+                    ui=ui,
                 )
 
             if interruptible_section.was_interrupted:

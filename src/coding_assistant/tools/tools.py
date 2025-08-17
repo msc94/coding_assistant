@@ -6,8 +6,7 @@ import textwrap
 from abc import ABC, abstractmethod, abstractproperty
 from typing import List, Optional
 
-from prompt_toolkit import PromptSession, prompt
-from prompt_toolkit.shortcuts import create_confirm_session
+from prompt_toolkit import prompt
 from pydantic import BaseModel, Field
 
 from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks
@@ -26,23 +25,7 @@ from coding_assistant.config import Config
 logger = logging.getLogger(__name__)
 
 
-class UI(ABC):
-    @abstractmethod
-    async def ask(self, prompt_text: str, default: str | None = None) -> str:
-        pass
-
-    @abstractmethod
-    async def confirm(self, prompt_text: str) -> bool:
-        pass
-
-
-class PromptToolkitUI(UI):
-    async def ask(self, prompt_text: str, default: str | None = None) -> str:
-        print(prompt_text)
-        return await PromptSession().prompt_async("> ", default=default or "")
-
-    async def confirm(self, prompt_text: str) -> bool:
-        return await create_confirm_session(prompt_text).prompt_async()
+from coding_assistant.ui import UI, PromptToolkitUI
 
 
 async def _get_feedback(
@@ -72,8 +55,11 @@ async def _get_feedback(
         feedback = agent_feedback_result.content
 
     if enable_user_feedback:
+        # Use the UI abstraction for user feedback
+        from coding_assistant.ui import PromptToolkitUI
+
         print(f"Feedback for {agent.name}")
-        feedback = await PromptSession().prompt_async("> ", default=feedback)
+        feedback = await PromptToolkitUI().ask("> ", default=feedback)
 
     return feedback if feedback != "Ok" else None
 
@@ -148,6 +134,7 @@ class OrchestratorTool(Tool):
                 self._agent_callbacks,
                 self._config.shorten_conversation_at_tokens,
                 self._config.no_truncate_tools,
+                ui=PromptToolkitUI(),
             )
             self.summary = output.summary
             return TextResult(content=output.result)
@@ -225,6 +212,7 @@ class AgentTool(Tool):
             self._agent_callbacks,
             self._config.shorten_conversation_at_tokens,
             self._config.no_truncate_tools,
+            ui=PromptToolkitUI(),
         )
         return TextResult(content=output.result)
 
