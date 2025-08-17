@@ -51,33 +51,27 @@ class FakeMessage:
 
 
 class FakeCompleter:
-    def __init__(self, message_or_script, tokens: int | list[int] | None = None):
-        if isinstance(message_or_script, list):
-            self.script = list(message_or_script)
-            if tokens is None:
-                self._tokens_list = [42] * len(self.script)
-            else:
-                assert isinstance(tokens, list), "For script mode, tokens must be a list of ints"
-                assert len(tokens) == len(self.script), "tokens length must match script length"
-                self._tokens_list = list(tokens)
-            self._single = False
-        else:
-            self.message = message_or_script
-            if isinstance(tokens, int):
-                self._tokens = tokens
-            else:
-                self._tokens = 10
-            self._single = True
+    def __init__(self, script):
+        assert isinstance(script, list), "FakeCompleter now only accepts a list of messages or exceptions"
+        self.script = list(script)
 
     async def __call__(self, messages, model, tools, callbacks):
-        if self._single:
-            return Completion(message=self.message, tokens=self._tokens)
         if not self.script:
             raise AssertionError("FakeCompleter script exhausted")
         action = self.script.pop(0)
-        toks = self._tokens_list.pop(0)
         if isinstance(action, Exception):
             raise action
+
+        # Compute tokens as number of characters in the returned message representation
+        try:
+            text = action.model_dump_json()
+        except Exception:
+            try:
+                text = json.dumps(action)
+            except Exception:
+                text = str(action)
+        toks = len(text)
+
         return Completion(message=action, tokens=toks)
 
 
