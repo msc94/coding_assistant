@@ -57,11 +57,7 @@ async def _get_feedback(
         feedback = agent_feedback_result.content
 
     if enable_user_feedback:
-        # Use the UI abstraction for user feedback
-        from coding_assistant.ui import PromptToolkitUI
-
-        print(f"Feedback for {agent.name}")
-        feedback = await ui.ask(f"Feedback for {agent.name}")
+        feedback = await ui.ask(f"Feedback for {agent.name}", default=feedback)
 
     return feedback if feedback != "Ok" else None
 
