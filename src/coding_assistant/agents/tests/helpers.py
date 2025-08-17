@@ -27,7 +27,7 @@ async def no_feedback(_: Agent):
 
 
 class FakeMessage:
-    def __init__(self, content: str | None = None, tool_calls: list["FakeToolCall"] | None = None):
+    def __init__(self, content: str | None = None, tool_calls: list[FakeToolCall] | None = None):
         self.role = "assistant"
         self.content = content
         self.tool_calls = tool_calls or []
@@ -52,27 +52,24 @@ class FakeMessage:
 
 class FakeCompleter:
     def __init__(self, script):
-        assert isinstance(script, list), "FakeCompleter now only accepts a list of messages or exceptions"
         self.script = list(script)
+        self._total_tokens = 0
 
-    async def __call__(self, messages, model, tools, callbacks):
+    async def __call__(self, messages, *, model, tools, callbacks):
         if not self.script:
             raise AssertionError("FakeCompleter script exhausted")
+
         action = self.script.pop(0)
+
         if isinstance(action, Exception):
             raise action
 
-        # Compute tokens as number of characters in the returned message representation
-        try:
-            text = action.model_dump_json()
-        except Exception:
-            try:
-                text = json.dumps(action)
-            except Exception:
-                text = str(action)
-        toks = len(text)
+        text = action.model_dump_json()
 
-        return Completion(message=action, tokens=toks)
+        toks = len(text)
+        self._total_tokens += toks
+
+        return Completion(message=action, tokens=self._total_tokens)
 
 
 def make_ui_mock(

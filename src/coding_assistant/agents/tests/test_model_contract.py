@@ -35,11 +35,33 @@ async def test_do_single_step_adds_shorten_prompt_on_token_threshold():
     msg = await do_single_step(
         agent,
         NullCallbacks(),
-        shorten_conversation_at_tokens=1000,  # much below completer.tokens
+        shorten_conversation_at_tokens=1000,
         no_truncate_tools=set(),
         completer=completer,
         ui=make_ui_mock(),
     )
 
-    assert msg.content == "hi"
-    assert any(h.get("role") == "user" and "summarize" in h.get("content", "") for h in agent.history)
+    assert msg.content == fake_message.content
+
+    expected_history = [
+        {"role": "user", "content": "start"},
+        {"role": "assistant", "content": fake_message.content},
+        {
+            "role": "user",
+            "content": (
+                "I detected a step from you without any tool calls. This is not allowed. "
+                "If you want to ask the client something, please use the `ask_user` tool. "
+                "If you are done with your task, please call the `finish_task` tool to signal that you are done. "
+                "Otherwise, continue your work."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                "Your conversation history has grown too large. "
+                "Please summarize it by using the `shorten_conversation` tool."
+            ),
+        },
+    ]
+
+    assert agent.history == expected_history
