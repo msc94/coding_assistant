@@ -60,12 +60,6 @@ def parse_args():
     parser.add_argument("--model", type=str, default="gpt-4.1", help="Model to use for the orchestrator agent.")
     parser.add_argument("--expert-model", type=str, default="gpt-4.1", help="Expert model to use.")
     parser.add_argument(
-        "--feedback-agent",
-        action=BooleanOptionalAction,
-        default=False,
-        help="Enable the feedback agent.",
-    )
-    parser.add_argument(
         "--user-feedback",
         action=BooleanOptionalAction,
         default=True,
@@ -169,7 +163,6 @@ def create_config_from_args(args) -> Config:
     return Config(
         model=args.model,
         expert_model=args.expert_model,
-        enable_feedback_agent=args.feedback_agent,
         enable_user_feedback=args.user_feedback,
         shorten_conversation_at_tokens=args.shorten_conversation_at_tokens,
         enable_ask_user=args.ask_user,
