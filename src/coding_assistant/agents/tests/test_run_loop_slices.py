@@ -5,19 +5,16 @@ import pytest
 from coding_assistant.agents.callbacks import NullCallbacks
 from coding_assistant.agents.execution import run_agent_loop
 from coding_assistant.agents.tests.helpers import (
-    FakeFunction,
-    FakeToolCall,
-    FakeMessage,
     FakeCompleter,
+    FakeFunction,
+    FakeMessage,
+    FakeToolCall,
     make_test_agent,
-    no_feedback,
     make_ui_mock,
+    no_feedback,
 )
 from coding_assistant.agents.types import Agent, TextResult, Tool
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
-
-
-"""Use shared FakeMessage/FakeCompleter from helpers."""
 
 
 class FakeEchoTool(Tool):
@@ -39,8 +36,7 @@ class FakeEchoTool(Tool):
 
 
 @pytest.mark.asyncio
-async def test_tool_selection_then_finish(monkeypatch):
-    # Script: call echo tool, then finish_task
+async def test_tool_selection_then_finish():
     echo_call = FakeToolCall("1", FakeFunction("fake.echo", json.dumps({"text": "hi"})))
     finish_call = FakeToolCall(
         "2",
@@ -49,6 +45,7 @@ async def test_tool_selection_then_finish(monkeypatch):
             json.dumps({"result": "done", "summary": "sum"}),
         ),
     )
+
     completer = FakeCompleter(
         [
             FakeMessage(tool_calls=[echo_call]),
@@ -56,10 +53,7 @@ async def test_tool_selection_then_finish(monkeypatch):
         ]
     )
 
-    # Pass the completer via dependency injection
-
     fake_tool = FakeEchoTool()
-
     agent = make_test_agent(tools=[fake_tool, FinishTaskTool(), ShortenConversation()])
 
     output = await run_agent_loop(
@@ -74,8 +68,45 @@ async def test_tool_selection_then_finish(monkeypatch):
     assert output.result == "done"
     assert output.summary == "sum"
     assert fake_tool.called_with == {"text": "hi"}
-    # Ensure the tool result was appended to history
-    assert any(h.get("role") == "tool" and h.get("content") == "echo: hi" for h in agent.history)
+
+    assert agent.history[1:] == [
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "1",
+                    "function": {
+                        "name": "fake.echo",
+                        "arguments": '{"text": "hi"}',
+                    },
+                }
+            ],
+        },
+        {
+            "tool_call_id": "1",
+            "role": "tool",
+            "name": "fake.echo",
+            "content": "echo: hi",
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "2",
+                    "function": {
+                        "name": "finish_task",
+                        "arguments": '{"result": "done", "summary": "sum"}',
+                    },
+                }
+            ],
+        },
+        {
+            "tool_call_id": "2",
+            "role": "tool",
+            "name": "finish_task",
+            "content": "Agent output set.",
+        },
+    ]
 
 
 @pytest.mark.asyncio
@@ -88,6 +119,7 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
             json.dumps({"result": "ok", "summary": "s"}),
         ),
     )
+
     completer = FakeCompleter(
         [
             FakeMessage(tool_calls=[unknown_call]),
@@ -106,16 +138,49 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
         ui=make_ui_mock(),
     )
 
-    # Check that an error tool message was appended for the unknown tool
-    assert any(
-        h.get("role") == "tool" and str(h.get("content")).startswith("Error executing tool:") for h in agent.history
-    )
+    assert agent.history[1:] == [
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "1",
+                    "function": {
+                        "name": "unknown.tool",
+                        "arguments": "{}",
+                    },
+                }
+            ],
+        },
+        {
+            "tool_call_id": "1",
+            "role": "tool",
+            "name": "unknown.tool",
+            "content": "Error executing tool: Tool unknown.tool not found in agent tools.",
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "2",
+                    "function": {
+                        "name": "finish_task",
+                        "arguments": '{"result": "ok", "summary": "s"}',
+                    },
+                }
+            ],
+        },
+        {
+            "tool_call_id": "2",
+            "role": "tool",
+            "name": "finish_task",
+            "content": "Agent output set.",
+        },
+    ]
     assert output.result == "ok"
 
 
 @pytest.mark.asyncio
 async def test_assistant_message_without_tool_calls_prompts_correction(monkeypatch):
-    # First assistant message has no tool calls
     finish_call = FakeToolCall(
         "2",
         FakeFunction(
@@ -141,11 +206,32 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
         ui=make_ui_mock(),
     )
 
-    # Verify the corrective user message was appended
-    assert any(
-        h.get("role") == "user" and "I detected a step from you without any tool calls" in h.get("content", "")
-        for h in agent.history
-    )
-    # Assistant content should have been recorded too
-    assert any(h.get("role") == "assistant" and h.get("content") == "Hello" for h in agent.history)
+    assert agent.history[1:] == [
+        {
+            "role": "assistant",
+            "content": "Hello",
+        },
+        {
+            "role": "user",
+            "content": "I detected a step from you without any tool calls. This is not allowed. If you want to ask the client something, please use the `ask_user` tool. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
+        },
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "2",
+                    "function": {
+                        "name": "finish_task",
+                        "arguments": '{"result": "r", "summary": "s"}',
+                    },
+                }
+            ],
+        },
+        {
+            "tool_call_id": "2",
+            "role": "tool",
+            "name": "finish_task",
+            "content": "Agent output set.",
+        },
+    ]
     assert output.result == "r"

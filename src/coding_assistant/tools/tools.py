@@ -3,10 +3,8 @@ import json
 import logging
 import re
 import textwrap
-from abc import ABC, abstractmethod, abstractproperty
 from typing import List, Optional
 
-from prompt_toolkit import prompt
 from pydantic import BaseModel, Field
 
 from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks
@@ -44,9 +42,7 @@ async def _get_feedback(
     feedback = "Ok"
 
     if enable_feedback_agent:
-        feedback_tool = FeedbackTool(
-            config=config, mcp_servers=mcp_servers, agent_callbacks=agent_callbacks or NullCallbacks(), ui=ui
-        )
+        feedback_tool = FeedbackTool(config=config, mcp_servers=mcp_servers, agent_callbacks=agent_callbacks, ui=ui)
         formatted_parameters = textwrap.indent(format_parameters(agent.parameters), "  ")
         agent_feedback_result = await feedback_tool.execute(
             parameters={

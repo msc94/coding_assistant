@@ -3,11 +3,9 @@ import dataclasses
 import json
 import logging
 import re
-import sys
 import textwrap
 
 from opentelemetry import trace
-from prompt_toolkit import prompt
 
 from coding_assistant.agents.callbacks import AgentCallbacks
 from coding_assistant.agents.history import append_assistant_message, append_tool_message, append_user_message
