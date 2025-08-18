@@ -21,7 +21,7 @@ This document lists the key remaining test gaps for the agents/execution layer (
   - Add: `src/coding_assistant/agents/tests/test_model_contract.py::test_reasoning_is_forwarded_and_not_stored`
   - FakeCompleter returns a message with `reasoning_content`; assert `callbacks.on_assistant_reasoning` receives the content and reasoning is not stored in history.
 
-- [ ] do_single_step guard rails
+- [x] do_single_step guard rails
   - Add:
     - `test_requires_finish_tool`
     - `test_requires_shorten_tool`
