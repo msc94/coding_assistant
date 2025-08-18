@@ -45,7 +45,7 @@ This document lists the key remaining test gaps for the agents/execution layer (
   - Add: `src/coding_assistant/agents/tests/test_run_loop_slices.py::test_feedback_ok_does_not_reloop`
   - Ensure loop exits after first finish when `UI.ask` returns "Ok".
 
-- [ ] Start message includes MCP server instructions
+- [x] Start message includes MCP server instructions
   - Add: `src/coding_assistant/agents/tests/test_execution_start_message.py::test_start_message_includes_mcp_instructions`
   - Agent with a mocked MCP server that has instructions; assert the first user message includes the MCP instructions block.
 
