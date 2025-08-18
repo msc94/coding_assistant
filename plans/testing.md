@@ -17,7 +17,7 @@ This document lists the key remaining test gaps for the agents/execution layer (
   - Setup: `tool_confirmation_patterns=[r"^execute_shell_command"]`, UI.confirm False/True.
   - Assert denial writes a tool message "Tool execution denied." and does not run the tool; positive path runs it.
 
-- [ ] Reasoning content handling
+- [x] Reasoning content handling
   - Add: `src/coding_assistant/agents/tests/test_model_contract.py::test_reasoning_is_forwarded_and_not_stored`
   - FakeCompleter returns a message with `reasoning_content`; assert `callbacks.on_assistant_reasoning` receives the content and reasoning is not stored in history.
 
