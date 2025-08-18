@@ -114,3 +114,60 @@ async def test_reasoning_is_forwarded_and_not_stored():
     # Assert reasoning is not stored in history anywhere
     for entry in agent.history:
         assert "reasoning_content" not in entry
+
+
+@pytest.mark.asyncio
+async def test_requires_finish_tool():
+    # Missing finish_task tool
+    agent = make_test_agent(
+        tools=[DummyTool(), ShortenConversation()],
+        history=[{"role": "user", "content": "start"}],
+    )
+
+    with pytest.raises(RuntimeError, match=r"Agent needs to have a `finish_task` tool"):
+        await do_single_step(
+            agent,
+            NullCallbacks(),
+            shorten_conversation_at_tokens=1000,
+            no_truncate_tools=set(),
+            completer=FakeCompleter([FakeMessage(content="hi")]),
+            ui=make_ui_mock(),
+        )
+
+
+@pytest.mark.asyncio
+async def test_requires_shorten_tool():
+    # Missing shorten_conversation tool
+    agent = make_test_agent(
+        tools=[DummyTool(), FinishTaskTool()],
+        history=[{"role": "user", "content": "start"}],
+    )
+
+    with pytest.raises(RuntimeError, match=r"Agent needs to have a `shorten_conversation` tool"):
+        await do_single_step(
+            agent,
+            NullCallbacks(),
+            shorten_conversation_at_tokens=1000,
+            no_truncate_tools=set(),
+            completer=FakeCompleter([FakeMessage(content="hi")]),
+            ui=make_ui_mock(),
+        )
+
+
+@pytest.mark.asyncio
+async def test_requires_non_empty_history():
+    # Missing history
+    agent = make_test_agent(
+        tools=[DummyTool(), FinishTaskTool(), ShortenConversation()],
+        history=[],
+    )
+
+    with pytest.raises(RuntimeError, match=r"Agent needs to have history in order to run a step"):
+        await do_single_step(
+            agent,
+            NullCallbacks(),
+            shorten_conversation_at_tokens=1000,
+            no_truncate_tools=set(),
+            completer=FakeCompleter([FakeMessage(content="hi")]),
+            ui=make_ui_mock(),
+        )
