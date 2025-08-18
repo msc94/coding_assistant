@@ -1,9 +1,10 @@
 import pytest
 
 from coding_assistant.agents.callbacks import NullCallbacks
-from coding_assistant.agents.execution import handle_tool_call
+from coding_assistant.agents.execution import do_single_step, handle_tool_call
 from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, make_test_agent, make_ui_mock
-from coding_assistant.agents.types import Agent, TextResult, Tool
+from coding_assistant.agents.types import Agent, TextResult, Tool, ToolResult
+from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
 class FakeBigOutputTool(Tool):
@@ -102,3 +103,22 @@ async def test_tool_confirmation_denied_and_allowed():
         "name": "execute_shell_command",
         "content": "ran: echo 123",
     }
+
+
+
+@pytest.mark.asyncio
+async def test_unknown_result_type_raises():
+    class WeirdResult(ToolResult):
+        pass
+
+    class WeirdTool(Tool):
+        def name(self) -> str: return "weird"
+        def description(self) -> str: return ""
+        def parameters(self) -> dict: return {}
+        async def execute(self, parameters: dict) -> ToolResult: return WeirdResult()
+
+    agent = make_test_agent(model="TestModel", tools=[WeirdTool()])
+    tool_call = FakeToolCall(id="1", function=FakeFunction(name="weird", arguments="{}"))
+    with pytest.raises(TypeError, match=r"Unknown tool result type"):  # from handle_tool_call
+        await handle_tool_call(tool_call, agent, NullCallbacks(), no_truncate_tools=set(), ui=make_ui_mock())
+
