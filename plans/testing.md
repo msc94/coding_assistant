@@ -51,15 +51,15 @@ This document lists the key remaining test gaps for the agents/execution layer (
 
 ## Additional improvements
 
-- [ ] Robustness on invalid `tool_call.function.arguments`
+- [x] Robustness on invalid `tool_call.function.arguments`
   - Implementation: Catch `json.JSONDecodeError` in `handle_tool_call` and append a tool message describing the parse error instead of raising.
   - Test: `src/coding_assistant/agents/tests/test_execution.py::test_invalid_tool_arguments_reported`
 
-- [ ] Unexpected tool result type
+- [x] Unexpected tool result type
   - Add: `src/coding_assistant/agents/tests/test_execution.py::test_unknown_result_type_raises`
   - Create a fake tool returning an unsupported result type; assert `TypeError` from `handle_tool_call`.
 
-- [ ] Callback lifecycle assertions
+- [x] Callback lifecycle assertions
   - Add: `src/coding_assistant/agents/tests/test_callbacks_integration.py`
     - `test_on_agent_start_end_called_with_expected_args`
     - `test_on_tool_message_called_with_arguments_and_result`
