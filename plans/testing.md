@@ -33,15 +33,15 @@ This document lists the key remaining test gaps for the agents/execution layer (
   - Add: `src/coding_assistant/agents/tests/test_run_loop_slices.py::test_multiple_tool_calls_processed_in_order`
   - FakeCompleter returns one assistant message with two tool calls; assert both execute and history order is correct.
 
-- [ ] Interrupt flow inside run_agent_loop injects feedback and continues
+- [x] Interrupt flow inside run_agent_loop injects feedback and continues
   - Add: `src/coding_assistant/agents/tests/test_run_loop_slices.py::test_interrupt_feedback_injected_and_loop_continues`
   - Force `InterruptibleSection.was_interrupted=True` once; mock `UI.ask` to return feedback; assert FEEDBACK_TEMPLATE is appended and the loop continues to a final finish.
 
-- [ ] run_agent_loop rejects when agent.output already set
+- [x] run_agent_loop rejects when agent.output already set
   - Add: `src/coding_assistant/agents/tests/test_run_loop_slices.py::test_errors_if_output_already_set`
   - Pre-set `agent.output`; assert `RuntimeError`.
 
-- [ ] enable_user_feedback=True with immediate "Ok"
+- [x] enable_user_feedback=True with immediate "Ok"
   - Add: `src/coding_assistant/agents/tests/test_run_loop_slices.py::test_feedback_ok_does_not_reloop`
   - Ensure loop exits after first finish when `UI.ask` returns "Ok".
 
