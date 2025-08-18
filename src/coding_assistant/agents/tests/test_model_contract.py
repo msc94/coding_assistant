@@ -116,15 +116,17 @@ async def test_reasoning_is_forwarded_and_not_stored():
         assert "reasoning_content" not in entry
 
 
+# Guard rails for do_single_step
+
+
 @pytest.mark.asyncio
 async def test_requires_finish_tool():
-    # Missing finish_task tool
+    # Missing finish_task tool should raise
     agent = make_test_agent(
         tools=[DummyTool(), ShortenConversation()],
         history=[{"role": "user", "content": "start"}],
     )
-
-    with pytest.raises(RuntimeError, match=r"Agent needs to have a `finish_task` tool"):
+    with pytest.raises(RuntimeError, match="Agent needs to have a `finish_task` tool in order to run a step."):
         await do_single_step(
             agent,
             NullCallbacks(),
@@ -137,13 +139,12 @@ async def test_requires_finish_tool():
 
 @pytest.mark.asyncio
 async def test_requires_shorten_tool():
-    # Missing shorten_conversation tool
+    # Missing shorten_conversation tool should raise
     agent = make_test_agent(
         tools=[DummyTool(), FinishTaskTool()],
         history=[{"role": "user", "content": "start"}],
     )
-
-    with pytest.raises(RuntimeError, match=r"Agent needs to have a `shorten_conversation` tool"):
+    with pytest.raises(RuntimeError, match="Agent needs to have a `shorten_conversation` tool in order to run a step."):
         await do_single_step(
             agent,
             NullCallbacks(),
@@ -156,13 +157,9 @@ async def test_requires_shorten_tool():
 
 @pytest.mark.asyncio
 async def test_requires_non_empty_history():
-    # Missing history
-    agent = make_test_agent(
-        tools=[DummyTool(), FinishTaskTool(), ShortenConversation()],
-        history=[],
-    )
-
-    with pytest.raises(RuntimeError, match=r"Agent needs to have history in order to run a step"):
+    # Empty history should raise
+    agent = make_test_agent(tools=[DummyTool(), FinishTaskTool(), ShortenConversation()], history=[])
+    with pytest.raises(RuntimeError, match="Agent needs to have history in order to run a step."):
         await do_single_step(
             agent,
             NullCallbacks(),
