@@ -29,7 +29,7 @@ This document lists the key remaining test gaps for the agents/execution layer (
     - Location: `src/coding_assistant/agents/tests/test_model_contract.py`
   - Assert `RuntimeError` is raised in each missing precondition case.
 
-- [ ] Multiple tool calls handled in order within one step
+- [x] Multiple tool calls handled in order within one step
   - Add: `src/coding_assistant/agents/tests/test_run_loop_slices.py::test_multiple_tool_calls_processed_in_order`
   - FakeCompleter returns one assistant message with two tool calls; assert both execute and history order is correct.
 
