@@ -240,6 +240,92 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
 
 
 @pytest.mark.asyncio
+async def test_multiple_tool_calls_processed_in_order():
+    call1 = FakeToolCall("1", FakeFunction("fake.echo", json.dumps({"text": "first"})))
+    call2 = FakeToolCall("2", FakeFunction("fake.echo", json.dumps({"text": "second"})))
+    finish_call = FakeToolCall(
+        "3",
+        FakeFunction(
+            "finish_task",
+            json.dumps({"result": "ok", "summary": "s"}),
+        ),
+    )
+
+    completer = FakeCompleter([
+        FakeMessage(tool_calls=[call1, call2]),
+        FakeMessage(tool_calls=[finish_call]),
+    ])
+
+    echo_tool = FakeEchoTool()
+    agent = make_test_agent(tools=[echo_tool, FinishTaskTool(), ShortenConversation()])
+
+    output = await run_agent_loop(
+        agent,
+        NullCallbacks(),
+        shorten_conversation_at_tokens=200_000,
+        no_truncate_tools=set(),
+        enable_user_feedback=False,
+        completer=completer,
+        ui=make_ui_mock(),
+    )
+
+    assert output.result == "ok"
+    assert [m for m in agent.history[1:4]] == [
+        {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "1",
+                    "function": {
+                        "name": "fake.echo",
+                        "arguments": '{"text": "first"}',
+                    },
+                },
+                {
+                    "id": "2",
+                    "function": {
+                        "name": "fake.echo",
+                        "arguments": '{"text": "second"}',
+                    },
+                },
+            ],
+        },
+        {
+            "tool_call_id": "1",
+            "role": "tool",
+            "name": "fake.echo",
+            "content": "echo: first",
+        },
+        {
+            "tool_call_id": "2",
+            "role": "tool",
+            "name": "fake.echo",
+            "content": "echo: second",
+        },
+    ]
+
+    # Also verify the finish comes after both tool results
+    assert agent.history[4] == {
+        "role": "assistant",
+        "tool_calls": [
+            {
+                "id": "3",
+                "function": {
+                    "name": "finish_task",
+                    "arguments": '{"result": "ok", "summary": "s"}',
+                },
+            }
+        ],
+    }
+    assert agent.history[5] == {
+        "tool_call_id": "3",
+        "role": "tool",
+        "name": "finish_task",
+        "content": "Agent output set.",
+    }
+
+
+@pytest.mark.asyncio
 async def test_feedback_loop_then_finish():
     finish_call_1 = FakeToolCall(
         "1",
