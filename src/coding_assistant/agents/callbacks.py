@@ -107,8 +107,8 @@ class NullCallbacks(AgentCallbacks):
 
 class RichCallbacks(AgentCallbacks):
     def __init__(self, print_chunks: bool = True, print_reasoning: bool = True):
-        self.print_chunks = print_chunks
-        self.print_reasoning = print_reasoning
+        self._print_chunks = print_chunks
+        self._print_reasoning = print_reasoning
         self._live: Live | None = None
 
     def on_agent_start(self, agent_name: str, model: str, is_resuming: bool = False):
@@ -151,7 +151,7 @@ class RichCallbacks(AgentCallbacks):
         )
 
     def on_assistant_reasoning(self, agent_name: str, content: str):
-        if self.print_reasoning:
+        if self._print_reasoning:
             print(
                 Panel(
                     Markdown(content),
@@ -212,21 +212,30 @@ class RichCallbacks(AgentCallbacks):
         )
 
     def on_chunk(self, chunk: str):
-        if self.print_chunks:
+        if self._print_chunks:
             print(chunk, end="", flush=True)
 
     def on_chunks_end(self):
-        if self.print_chunks:
+        if self._print_chunks:
             print()
-
-    def _generate_tool_status(self, pending_tool_names: list[str]):
-        return Group(*[Status(name) for name in pending_tool_names])
 
     def on_tools_progress(self, pending_tool_names: list[str]):
         if pending_tool_names:
             if not self._live:
-                self._live = Live(self._generate_tool_status(pending_tool_names))
+                self._live = Live(
+                    Group(*[Status(name) for name in pending_tool_names]),
+                    auto_refresh=False,
+                    transient=True,
+                )
+                self._live.start()
             else:
-                self._live.update(self._generate_tool_status(pending_tool_names))
+                # Delete statuses that are not relevant anymore
+                g: Group = self._live.renderable
+                self._live.update(
+                    Group(*[status for status in g.renderables if status.status in pending_tool_names]),
+                    refresh=True,
+                )
         else:
+            if self._live:
+                self._live.stop()
             self._live = None
