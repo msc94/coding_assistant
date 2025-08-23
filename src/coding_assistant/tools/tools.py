@@ -68,7 +68,6 @@ class OrchestratorTool(Tool):
                 parameter_description=self.parameters(),
                 parameter_values=parameters,
             ),
-            mcp_servers=self._mcp_servers,
             tools=[
                 AgentTool(self._config, self._mcp_servers, self._agent_callbacks, self._ui),
                 AskClientTool(self._config.enable_ask_user, ui=self._ui),
@@ -89,6 +88,7 @@ class OrchestratorTool(Tool):
                 enable_user_feedback=self._config.enable_user_feedback,
                 completer=complete,
                 ui=self._ui,
+                mcp_servers=self._mcp_servers,
             )
             self.summary = output.summary
             return TextResult(content=output.result)
@@ -160,6 +160,7 @@ class AgentTool(Tool):
             enable_user_feedback=self._config.enable_user_feedback,
             completer=complete,
             ui=self._ui,
+            mcp_servers=self._mcp_servers,
         )
         return TextResult(content=output.result)
 
