@@ -89,8 +89,8 @@ class OrchestratorTool(Tool):
             output = await run_agent_loop(
                 orchestrator_agent,
                 self._agent_callbacks,
-                self._config.shorten_conversation_at_tokens,
-                self._config.no_truncate_tools,
+                shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
+                no_truncate_tools=self._config.no_truncate_tools,
                 enable_user_feedback=self._config.enable_user_feedback,
                 completer=complete,
                 ui=self._ui,
@@ -117,12 +117,12 @@ class LaunchAgentSchema(BaseModel):
 
 
 class AgentTool(Tool):
-    def __init__(self, config: Config, tools: list[Tool], agent_callbacks: AgentCallbacks, ui: UI):
+    def __init__(self, config: Config, tools: list[Tool]):
         super().__init__()
         self._config = config
         self._tools = tools
-        self._agent_callbacks = agent_callbacks
-        self._ui = ui
+        self._ui = DefaultAnswerUI()
+        self._agent_callbacks = NullCallbacks()
 
     def name(self) -> str:
         return "launch_agent"
@@ -149,8 +149,7 @@ class AgentTool(Tool):
             tools=[
                 FinishTaskTool(),
                 ShortenConversation(),
-                ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=DefaultAnswerUI()),
-                # AskClientTool(self._config.enable_ask_user, ui=self._ui),
+                ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=self._ui),
                 *self._tools,
             ],
             model=self.get_model(parameters),
@@ -158,12 +157,13 @@ class AgentTool(Tool):
         )
 
         output = await run_agent_loop(
-            agent,
-            self._agent_callbacks,
-            self._config.shorten_conversation_at_tokens,
-            self._config.no_truncate_tools,
+            agent=agent,
+            agent_callbacks=self._agent_callbacks,
+            shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
+            no_truncate_tools=self._config.no_truncate_tools,
             enable_user_feedback=False,
             completer=complete,
+            is_interruptible=False,
             ui=self._ui,
         )
         return TextResult(content=output.result)

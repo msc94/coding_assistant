@@ -1,5 +1,5 @@
-import dataclasses
 import asyncio
+import dataclasses
 import json
 import logging
 import re
@@ -260,13 +260,13 @@ async def do_single_step(
 async def run_agent_loop(
     agent: Agent,
     agent_callbacks: AgentCallbacks,
-    shorten_conversation_at_tokens: int,
-    no_truncate_tools: set[str],
     *,
     completer: Completer,
     ui: UI,
-    enable_user_feedback: bool,
-    is_interruptible: bool = True,
+    shorten_conversation_at_tokens: int = 200_000,
+    no_truncate_tools: set[str] = set(),
+    enable_user_feedback: bool = False,
+    is_interruptible: bool = False,
 ) -> AgentOutput:
     if agent.output:
         raise RuntimeError("Agent already has a result or summary.")
