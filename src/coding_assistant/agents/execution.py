@@ -109,17 +109,18 @@ async def handle_tool_call(
 ):
     function_name = tool_call.function.name
 
+    args_str = tool_call.function.arguments or "{}"
     try:
-        function_args = json.loads(tool_call.function.arguments)
-    except JSONDecodeError as e:
+        function_args = json.loads(args_str)
+    except (JSONDecodeError, TypeError) as e:
         append_tool_message(
             agent.history,
             agent_callbacks,
             agent.name,
             tool_call.id,
             function_name,
-            tool_call.function.arguments,
-            f"Error: Tool call arguments {tool_call.function.arguments} are not valid JSON: {e}",
+            args_str,
+            f"Error: Tool call arguments {args_str} are not valid JSON: {e}",
         )
         return
 
@@ -140,7 +141,7 @@ async def handle_tool_call(
                 return
 
     trace.get_current_span().set_attribute("function.name", function_name)
-    trace.get_current_span().set_attribute("function.args", tool_call.function.arguments)
+    trace.get_current_span().set_attribute("function.args", args_str)
 
     agent_callbacks.on_tool_start(agent.name, function_name, function_args)
 
