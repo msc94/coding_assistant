@@ -107,7 +107,7 @@ async def handle_tool_call(
     ui: UI,
 ):
     function_name = tool_call.function.name
-    function_args = json.loads(tool_call.function.arguments or "{}")
+    function_args = json.loads(tool_call.function.arguments)
 
     for pattern in agent.tool_confirmation_patterns:
         if re.search(pattern, function_name):

@@ -59,7 +59,7 @@ class OrchestratorTool(Tool):
         return "launch_orchestrator_agent"
 
     def description(self) -> str:
-        return "Launch an orchestrator agent to accomplish a given task. The agent can delegate tasks to other agents where it sees fit. For bigger tasks, the orchestrator agent will make a plan with multiple milestones to tackle the task and ask the user whether it is okay to proceed with the plan."
+        return "Launch an orchestrator agent to accomplish a given task. The agent will delegate tasks to sub-agents as it sees fit. The agent will run tools, especially sub-agents, in parallel where possible. For bigger tasks, the orchestrator agent will make a plan with multiple milestones to tackle the task and ask the user whether it is okay to proceed with the plan."
 
     def parameters(self) -> dict:
         return LaunchOrchestratorAgentSchema.model_json_schema()
