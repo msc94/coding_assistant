@@ -130,7 +130,6 @@ async def handle_tool_call(
     try:
         function_call_result = await execute_tool_call(function_name, function_args, list(agent.tools))
     except ValueError as e:
-        # `ValueError` indicates that the tool was not found.
         append_tool_message(
             agent.history,
             agent_callbacks,
@@ -160,6 +159,30 @@ async def handle_tool_call(
     append_tool_message(
         agent.history, agent_callbacks, agent.name, tool_call.id, function_name, function_args, tool_return_summary
     )
+
+
+@tracer.start_as_current_span("handle_tool_calls")
+async def handle_tool_calls(
+    message,
+    agent: Agent,
+    agent_callbacks: AgentCallbacks,
+    no_truncate_tools: set[str],
+    *,
+    ui: UI,
+):
+    tool_calls = message.tool_calls
+    trace.get_current_span().set_attribute("message.tool_calls", tool_calls)
+
+    if tool_calls:
+        for tool_call in tool_calls:
+            await handle_tool_call(tool_call, agent, agent_callbacks, no_truncate_tools, ui=ui)
+    else:
+        append_user_message(
+            agent.history,
+            agent_callbacks,
+            agent.name,
+            "I detected a step from you without any tool calls. This is not allowed. If you want to ask the client something, please use the `ask_user` tool. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
+        )
 
 
 @tracer.start_as_current_span("do_single_step")
@@ -204,17 +227,7 @@ async def do_single_step(
         del message.reasoning_content
 
     append_assistant_message(agent.history, agent_callbacks, agent.name, message)
-
-    if message.tool_calls:
-        for tool_call in message.tool_calls:
-            await handle_tool_call(tool_call, agent, agent_callbacks, no_truncate_tools, ui=ui)
-    else:
-        append_user_message(
-            agent.history,
-            agent_callbacks,
-            agent.name,
-            "I detected a step from you without any tool calls. This is not allowed. If you want to ask the client something, please use the `ask_user` tool. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
-        )
+    await handle_tool_calls(message, agent, agent_callbacks, no_truncate_tools, ui=ui)
 
     # Check conversation length and request shortening if needed
     if completion.tokens > shorten_conversation_at_tokens:
