@@ -31,3 +31,15 @@ class InterruptibleSection:
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         signal.signal(signal.SIGINT, self._original_handler)
+
+
+class NonInterruptibleSection:
+    def __enter__(self) -> "NonInterruptibleSection":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        pass
+
+    @property
+    def was_interrupted(self) -> bool:  # pragma: no cover - always false
+        return False

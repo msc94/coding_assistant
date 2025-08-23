@@ -9,7 +9,7 @@ from opentelemetry import trace
 
 from coding_assistant.agents.callbacks import AgentCallbacks
 from coding_assistant.agents.history import append_assistant_message, append_tool_message, append_user_message
-from coding_assistant.agents.interrupts import InterruptibleSection
+from coding_assistant.agents.interrupts import InterruptibleSection, NonInterruptibleSection
 from coding_assistant.agents.parameters import format_parameters
 from coding_assistant.agents.types import (
     Agent,
@@ -282,25 +282,8 @@ async def run_agent_loop(
 
     while True:
         while not agent.output:
-            if is_interruptible:
-                with InterruptibleSection() as interruptible_section:
-                    await do_single_step(
-                        agent,
-                        agent_callbacks,
-                        shorten_conversation_at_tokens,
-                        no_truncate_tools,
-                        completer=completer,
-                        ui=ui,
-                    )
-
-                if interruptible_section.was_interrupted:
-                    logger.info(f"Agent '{agent.name}' was interrupted during execution.")
-                    feedback = await ui.ask("Feedback: ")
-                    formatted_feedback = FEEDBACK_TEMPLATE.format(
-                        feedback=textwrap.indent(feedback, "> "),
-                    )
-                    append_user_message(agent.history, agent_callbacks, agent.name, formatted_feedback)
-            else:
+            section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
+            with section_cls() as interruptible_section:
                 await do_single_step(
                     agent,
                     agent_callbacks,
@@ -309,6 +292,14 @@ async def run_agent_loop(
                     completer=completer,
                     ui=ui,
                 )
+
+            if interruptible_section.was_interrupted:
+                logger.info(f"Agent '{agent.name}' was interrupted during execution.")
+                feedback = await ui.ask("Feedback: ")
+                formatted_feedback = FEEDBACK_TEMPLATE.format(
+                    feedback=textwrap.indent(feedback, "> "),
+                )
+                append_user_message(agent.history, agent_callbacks, agent.name, formatted_feedback)
 
         trace.get_current_span().set_attribute("agent.result", agent.output.result)
         trace.get_current_span().set_attribute("agent.summary", agent.output.summary)
