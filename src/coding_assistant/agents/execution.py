@@ -190,7 +190,7 @@ async def handle_tool_calls(
     for tool_call in tool_calls:
         task = asyncio.create_task(
             handle_tool_call(tool_call, agent, agent_callbacks, no_truncate_tools, ui=ui),
-            name=f"tool:{tool_call.function.name}:{tool_call.id}",
+            name=f"{tool_call.function.name} ({tool_call.id})",
         )
         aws.append(task)
 

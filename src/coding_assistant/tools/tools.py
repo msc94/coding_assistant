@@ -19,7 +19,7 @@ from coding_assistant.agents.types import (
 )
 from coding_assistant.config import Config
 from coding_assistant.llm.model import complete
-from coding_assistant.ui import UI, NullUI
+from coding_assistant.ui import UI, DefaultAnswerUI, NullUI
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +149,7 @@ class AgentTool(Tool):
             tools=[
                 FinishTaskTool(),
                 ShortenConversation(),
-                ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=self._ui),
+                ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=DefaultAnswerUI()),
                 # AskClientTool(self._config.enable_ask_user, ui=self._ui),
                 *self._tools,
             ],
