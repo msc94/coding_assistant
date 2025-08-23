@@ -141,14 +141,14 @@ class RichCallbacks(AgentCallbacks):
                 ),
             )
 
-    def _is_json(self, content: str):
+    def _try_parse_json(self, content: str):
         try:
             return json.loads(content)
         except json.JSONDecodeError:
             return None
 
     def _format_tool_result(self, result: str, tool_name: str):
-        if data := self._is_json(result):
+        if data := self._try_parse_json(result):
             if tool_name == "execute_shell_command":
                 result = f"RC: {data['returncode']}"
 
