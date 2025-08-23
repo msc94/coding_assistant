@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import textwrap
+from json import JSONDecodeError
 
 from opentelemetry import trace
 
@@ -107,7 +108,20 @@ async def handle_tool_call(
     ui: UI,
 ):
     function_name = tool_call.function.name
-    function_args = json.loads(tool_call.function.arguments)
+
+    try:
+        function_args = json.loads(tool_call.function.arguments)
+    except JSONDecodeError as e:
+        append_tool_message(
+            agent.history,
+            agent_callbacks,
+            agent.name,
+            tool_call.id,
+            function_name,
+            tool_call.function.arguments,
+            f"Error: Tool call arguments {tool_call.function.arguments} are not valid JSON: {e}",
+        )
+        return
 
     for pattern in agent.tool_confirmation_patterns:
         if re.search(pattern, function_name):
