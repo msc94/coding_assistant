@@ -24,7 +24,6 @@ INSTRUCTIONS = """
     - You are responsible for the work of the sub-agents. Review it before showing it to the client.
 - For big tasks, create a plan with multiple steps.
     - Ask the user for feedback on the plan before implementing it.
-    - Ask the plan for feedback after each step in the plan.
 """.strip()
 
 PLANNING_INSTRUCTIONS = """
