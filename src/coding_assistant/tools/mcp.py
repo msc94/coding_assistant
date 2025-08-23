@@ -55,7 +55,7 @@ class MCPWrappedTool(Tool):
         return TextResult(content=result.content)
 
 
-async def get_mcp_wrapped_tools(mcp_servers: list[MCPServer]) -> list[MCPWrappedTool]:
+async def get_mcp_wrapped_tools(mcp_servers: list[MCPServer]) -> list[Tool]:
     wrapped: List = []
     for server in mcp_servers:
         tools_response = await server.session.list_tools()

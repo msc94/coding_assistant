@@ -21,6 +21,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks, RichCallbacks
+from coding_assistant.agents.types import Tool
 from coding_assistant.config import Config, MCPServerConfig
 from coding_assistant.history import (
     get_conversation_summaries,
@@ -192,7 +193,7 @@ def setup_tracing(args):
 async def run_orchestrator_agent(
     task: str,
     config: Config,
-    tools: list,  # list[Tool]
+    tools: list[Tool],
     history: list | None,
     conversation_summaries: list[str],
     instructions: str | None,
@@ -287,10 +288,11 @@ async def _main(args):
     logger.info(f"Using MCP server configurations: {[s.name for s in mcp_server_configs]}")
 
     async with get_mcp_servers_from_config(mcp_server_configs, working_directory) as mcp_servers:
-        tools = await get_mcp_wrapped_tools(mcp_servers)
         if args.print_mcp_tools:
             await print_mcp_tools(mcp_servers)
             return
+
+        tools = await get_mcp_wrapped_tools(mcp_servers)
 
         if not args.task:
             raise ValueError("Task must be provided. Use --task to specify the task for the orchestrator agent.")
