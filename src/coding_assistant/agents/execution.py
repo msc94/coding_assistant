@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import textwrap
+from contextlib import nullcontext
 
 from opentelemetry import trace
 
@@ -282,26 +283,8 @@ async def run_agent_loop(
 
     while True:
         while not agent.output:
-            if is_interruptible:
-                with InterruptibleSection() as interruptible_section:
-                    await do_single_step(
-                        agent,
-                        agent_callbacks,
-                        shorten_conversation_at_tokens,
-                        no_truncate_tools,
-                        completer=completer,
-                        ui=ui,
-                    )
-
-                if interruptible_section.was_interrupted:
-                    logger.info(f"Agent '{agent.name}' was interrupted during execution.")
-                    feedback = await ui.ask("Feedback: ")
-                    formatted_feedback = FEEDBACK_TEMPLATE.format(
-                        feedback=textwrap.indent(feedback, "> "),
-                    )
-                    append_user_message(agent.history, agent_callbacks, agent.name, formatted_feedback)
-            else:
-                # Run a single step without interruption handling
+            ctx = InterruptibleSection() if is_interruptible else nullcontext()
+            with ctx as interruptible_section:
                 await do_single_step(
                     agent,
                     agent_callbacks,
@@ -310,6 +293,14 @@ async def run_agent_loop(
                     completer=completer,
                     ui=ui,
                 )
+
+            if is_interruptible and getattr(interruptible_section, "was_interrupted", False):
+                logger.info(f"Agent '{agent.name}' was interrupted during execution.")
+                feedback = await ui.ask("Feedback: ")
+                formatted_feedback = FEEDBACK_TEMPLATE.format(
+                    feedback=textwrap.indent(feedback, "> "),
+                )
+                append_user_message(agent.history, agent_callbacks, agent.name, formatted_feedback)
 
         trace.get_current_span().set_attribute("agent.result", agent.output.result)
         trace.get_current_span().set_attribute("agent.summary", agent.output.summary)
