@@ -188,7 +188,6 @@ async def handle_tool_calls(
     # Start all tool calls
     aws = []
     for tool_call in tool_calls:
-        agent_callbacks.on_tool_start(agent.name, tool_call.function.name, json.loads(tool_call.function.arguments))
         task = asyncio.create_task(
             handle_tool_call(tool_call, agent, agent_callbacks, no_truncate_tools, ui=ui),
             name=f"tool:{tool_call.function.name}:{tool_call.id}",
@@ -197,6 +196,7 @@ async def handle_tool_calls(
 
     while True:
         _, pending = await asyncio.wait(aws, return_when=asyncio.FIRST_COMPLETED, timeout=0.2)
+        agent_callbacks.on_tools_progress([t.get_name() for t in pending])
         if not pending:
             break
 

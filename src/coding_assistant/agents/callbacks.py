@@ -13,6 +13,8 @@ from rich.padding import Padding
 from rich.panel import Panel
 from rich.pretty import Pretty
 from rich.text import Text
+from rich.status import Status
+from rich.live import Live
 
 
 class AgentCallbacks(ABC):
@@ -54,6 +56,11 @@ class AgentCallbacks(ABC):
         pass
 
     @abstractmethod
+    def on_tools_progress(self, pending_tool_names: list[str]):
+        """Progress update with list of currently running (pending) tool names."""
+        pass
+
+    @abstractmethod
     def on_chunk(self, chunk: str):
         """Handle LLM chunks."""
         pass
@@ -88,6 +95,9 @@ class NullCallbacks(AgentCallbacks):
     def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict):
         pass
 
+    def on_tools_progress(self, pending_tool_names: list[str]):
+        pass
+
     def on_chunk(self, chunk: str):
         pass
 
@@ -99,6 +109,7 @@ class RichCallbacks(AgentCallbacks):
     def __init__(self, print_chunks: bool = True, print_reasoning: bool = True):
         self.print_chunks = print_chunks
         self.print_reasoning = print_reasoning
+        self._live: Live | None = None
 
     def on_agent_start(self, agent_name: str, model: str, is_resuming: bool = False):
         status = "resuming" if is_resuming else "starting"
@@ -207,3 +218,15 @@ class RichCallbacks(AgentCallbacks):
     def on_chunks_end(self):
         if self.print_chunks:
             print()
+
+    def _generate_tool_status(self, pending_tool_names: list[str]):
+        return Group(*[Status(name) for name in pending_tool_names])
+
+    def on_tools_progress(self, pending_tool_names: list[str]):
+        if pending_tool_names:
+            if not self._live:
+                self._live = Live(self._generate_tool_status(pending_tool_names))
+            else:
+                self._live.update(self._generate_tool_status(pending_tool_names))
+        else:
+            self._live = None
