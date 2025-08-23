@@ -52,7 +52,14 @@ class MCPWrappedTool(Tool):
 
     async def execute(self, parameters) -> TextResult:
         result = await self._session.call_tool(self._function_name, parameters)
-        return TextResult(content=result.content)
+
+        if len(result.content) != 1:
+            raise ValueError(f"Expected single result, got {len(result.content)}")
+
+        if not isinstance(result.content[0], TextResult):
+            raise ValueError(f"Expected TextResult, got {type(result.content[0])}")
+
+        return TextResult(content=result.content[0].content)
 
 
 async def get_mcp_wrapped_tools(mcp_servers: list[MCPServer]) -> list[Tool]:

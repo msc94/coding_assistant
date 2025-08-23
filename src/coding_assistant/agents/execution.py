@@ -153,14 +153,16 @@ async def handle_tool_call(
         TextResult: lambda r: _handle_text_result(r, function_name, no_truncate_tools),
     }
 
-    handler = result_handlers.get(type(function_call_result))
-    if handler:
-        tool_return_summary = handler(function_call_result)
-    else:
-        raise TypeError(f"Unknown tool result type: {type(function_call_result)}")
+    tool_return_summary = result_handlers[type(function_call_result)](function_call_result)
 
     append_tool_message(
-        agent.history, agent_callbacks, agent.name, tool_call.id, function_name, function_args, tool_return_summary
+        agent.history,
+        agent_callbacks,
+        agent.name,
+        tool_call.id,
+        function_name,
+        function_args,
+        tool_return_summary,
     )
 
 
@@ -194,7 +196,12 @@ async def handle_tool_calls(
         aws.append(task)
 
     while True:
-        _, pending = await asyncio.wait(aws, return_when=asyncio.FIRST_COMPLETED, timeout=0.2)
+        done, pending = await asyncio.wait(aws, return_when=asyncio.FIRST_COMPLETED, timeout=0.2)
+
+        # await the task, which will throw any exceptions stored in the future.
+        for task in done:
+            await task
+
         agent_callbacks.on_tools_progress([t.get_name() for t in pending])
         if not pending:
             break
