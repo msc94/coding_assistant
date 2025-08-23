@@ -192,7 +192,7 @@ def setup_tracing(args):
 async def run_orchestrator_agent(
     task: str,
     config: Config,
-    mcp_tools: list,  # list[Tool]
+    tools: list,  # list[Tool]
     history: list | None,
     conversation_summaries: list[str],
     instructions: str | None,
@@ -202,7 +202,7 @@ async def run_orchestrator_agent(
     with tracer.start_as_current_span("run_root_agent"):
         tool = OrchestratorTool(
             config=config,
-            mcp_tools=mcp_tools,
+            tools=tools,
             history=history,
             agent_callbacks=agent_callbacks,
             ui=PromptToolkitUI(),
@@ -287,7 +287,7 @@ async def _main(args):
     logger.info(f"Using MCP server configurations: {[s.name for s in mcp_server_configs]}")
 
     async with get_mcp_servers_from_config(mcp_server_configs, working_directory) as mcp_servers:
-        mcp_tools = await get_mcp_wrapped_tools(mcp_servers)
+        tools = await get_mcp_wrapped_tools(mcp_servers)
         if args.print_mcp_tools:
             await print_mcp_tools(mcp_servers)
             return
@@ -303,7 +303,7 @@ async def _main(args):
         await run_orchestrator_agent(
             task=args.task,
             config=config,
-            mcp_tools=mcp_tools,
+            tools=tools,
             history=resume_history,
             conversation_summaries=conversation_summaries,
             instructions=instructions,

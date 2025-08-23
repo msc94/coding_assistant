@@ -43,23 +43,14 @@ class OrchestratorTool(Tool):
     def __init__(
         self,
         config: Config,
-        mcp_tools: list[Tool],
+        tools: list[Tool],
         history: list | None,
         agent_callbacks: AgentCallbacks,
         ui: UI,
     ):
-        """Tool that launches an orchestrator agent.
-
-        Args:
-            config: Global configuration.
-            mcp_tools: A list of MCP wrapped tools (already adapted to Tool interface).
-            history: Optional existing history to resume from.
-            agent_callbacks: Callbacks for agent events.
-            ui: UI implementation.
-        """
         super().__init__()
         self._config = config
-        self._mcp_tools = list(mcp_tools)
+        self._tools = tools
         self._history = history
         self._agent_callbacks = agent_callbacks
         self._ui = ui
@@ -83,8 +74,8 @@ class OrchestratorTool(Tool):
                 parameter_values=parameters,
             ),
             tools=[
-                *self._mcp_tools,
-                AgentTool(self._config, self._mcp_tools, self._agent_callbacks, self._ui),
+                *self._tools,
+                AgentTool(self._config, self._tools, self._agent_callbacks, self._ui),
                 AskClientTool(self._config.enable_ask_user, ui=self._ui),
                 ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=self._ui),
                 FinishTaskTool(),
@@ -126,10 +117,10 @@ class LaunchAgentSchema(BaseModel):
 
 
 class AgentTool(Tool):
-    def __init__(self, config: Config, mcp_tools: list[Tool], agent_callbacks: AgentCallbacks, ui: UI):
+    def __init__(self, config: Config, tools: list[Tool], agent_callbacks: AgentCallbacks, ui: UI):
         super().__init__()
         self._config = config
-        self._mcp_tools = list(mcp_tools)
+        self._tools = tools
         self._agent_callbacks = agent_callbacks
         self._ui = ui
 
@@ -156,7 +147,7 @@ class AgentTool(Tool):
                 parameter_values=parameters,
             ),
             tools=[
-                *self._mcp_tools,
+                *self._tools,
                 ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=self._ui),
                 AskClientTool(self._config.enable_ask_user, ui=self._ui),
                 FinishTaskTool(),
