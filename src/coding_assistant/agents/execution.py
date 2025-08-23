@@ -127,6 +127,8 @@ async def handle_tool_call(
     trace.get_current_span().set_attribute("function.name", function_name)
     trace.get_current_span().set_attribute("function.args", tool_call.function.arguments)
 
+    agent_callbacks.on_tool_start(agent.name, function_name, function_args)
+
     try:
         function_call_result = await execute_tool_call(function_name, function_args, list(agent.tools))
     except ValueError as e:

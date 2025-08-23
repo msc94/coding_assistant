@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from coding_assistant.agents.callbacks import AgentCallbacks
+from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks
 from coding_assistant.agents.execution import run_agent_loop
 from coding_assistant.agents.parameters import fill_parameters
 from coding_assistant.agents.types import (
@@ -76,7 +76,7 @@ class OrchestratorTool(Tool):
             tools=[
                 FinishTaskTool(),
                 ShortenConversation(),
-                AgentTool(self._config, self._tools, self._agent_callbacks, self._ui),
+                AgentTool(self._config, self._tools, NullCallbacks(), self._ui),
                 AskClientTool(self._config.enable_ask_user, ui=self._ui),
                 ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=self._ui),
                 *self._tools,
@@ -150,7 +150,7 @@ class AgentTool(Tool):
                 FinishTaskTool(),
                 ShortenConversation(),
                 ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=self._ui),
-                AskClientTool(self._config.enable_ask_user, ui=self._ui),
+                # AskClientTool(self._config.enable_ask_user, ui=self._ui),
                 *self._tools,
             ],
             model=self.get_model(parameters),
