@@ -1,4 +1,5 @@
 import dataclasses
+import asyncio
 import json
 import logging
 import re
@@ -175,16 +176,29 @@ async def handle_tool_calls(
     tool_calls = message.tool_calls
     trace.get_current_span().set_attribute("message.tool_calls", tool_calls)
 
-    if tool_calls:
-        for tool_call in tool_calls:
-            await handle_tool_call(tool_call, agent, agent_callbacks, no_truncate_tools, ui=ui)
-    else:
+    if not tool_calls:
         append_user_message(
             agent.history,
             agent_callbacks,
             agent.name,
             "I detected a step from you without any tool calls. This is not allowed. If you want to ask the client something, please use the `ask_user` tool. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
         )
+        return
+
+    # Start all tool calls
+    aws = []
+    for tool_call in tool_calls:
+        agent_callbacks.on_tool_start(agent.name, tool_call.function.name, json.loads(tool_call.function.arguments))
+        task = asyncio.create_task(
+            handle_tool_call(tool_call, agent, agent_callbacks, no_truncate_tools, ui=ui),
+            name=f"tool:{tool_call.function.name}:{tool_call.id}",
+        )
+        aws.append(task)
+
+    while True:
+        _, pending = await asyncio.wait(aws, return_when=asyncio.FIRST_COMPLETED, timeout=0.2)
+        if not pending:
+            break
 
 
 @tracer.start_as_current_span("do_single_step")

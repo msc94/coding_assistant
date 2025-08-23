@@ -162,7 +162,7 @@ class AgentTool(Tool):
             self._agent_callbacks,
             self._config.shorten_conversation_at_tokens,
             self._config.no_truncate_tools,
-            enable_user_feedback=self._config.enable_user_feedback,
+            enable_user_feedback=False,
             completer=complete,
             ui=self._ui,
         )
