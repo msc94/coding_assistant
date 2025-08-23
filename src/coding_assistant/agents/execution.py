@@ -267,6 +267,7 @@ async def run_agent_loop(
     completer: Completer,
     ui: UI,
     enable_user_feedback: bool,
+    is_interruptible: bool = True,
 ) -> AgentOutput:
     if agent.output:
         raise RuntimeError("Agent already has a result or summary.")
@@ -281,7 +282,26 @@ async def run_agent_loop(
 
     while True:
         while not agent.output:
-            with InterruptibleSection() as interruptible_section:
+            if is_interruptible:
+                with InterruptibleSection() as interruptible_section:
+                    await do_single_step(
+                        agent,
+                        agent_callbacks,
+                        shorten_conversation_at_tokens,
+                        no_truncate_tools,
+                        completer=completer,
+                        ui=ui,
+                    )
+
+                if interruptible_section.was_interrupted:
+                    logger.info(f"Agent '{agent.name}' was interrupted during execution.")
+                    feedback = await ui.ask("Feedback: ")
+                    formatted_feedback = FEEDBACK_TEMPLATE.format(
+                        feedback=textwrap.indent(feedback, "> "),
+                    )
+                    append_user_message(agent.history, agent_callbacks, agent.name, formatted_feedback)
+            else:
+                # Run a single step without interruption handling
                 await do_single_step(
                     agent,
                     agent_callbacks,
@@ -290,14 +310,6 @@ async def run_agent_loop(
                     completer=completer,
                     ui=ui,
                 )
-
-            if interruptible_section.was_interrupted:
-                logger.info(f"Agent '{agent.name}' was interrupted during execution.")
-                feedback = await ui.ask("Feedback: ")
-                formatted_feedback = FEEDBACK_TEMPLATE.format(
-                    feedback=textwrap.indent(feedback, "> "),
-                )
-                append_user_message(agent.history, agent_callbacks, agent.name, formatted_feedback)
 
         trace.get_current_span().set_attribute("agent.result", agent.output.result)
         trace.get_current_span().set_attribute("agent.summary", agent.output.summary)

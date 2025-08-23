@@ -300,6 +300,47 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
     assert expected_feedback_text in [m.get("content") for m in agent.history if m.get("role") == "user"]
 
 
+    @pytest.mark.asyncio
+    async def test_interrupt_disabled_skips_feedback(monkeypatch):
+        # Fake InterruptibleSection that would signal interruption, but we disable it
+        class FakeInterruptAlways:
+            def __enter__(self): return self
+            def __exit__(self, exc_type, exc, tb): return False
+            @property
+            def was_interrupted(self): return True
+
+        from coding_assistant.agents import execution as execution_module
+        monkeypatch.setattr(execution_module, "InterruptibleSection", FakeInterruptAlways)
+
+        finish_call = FakeToolCall(
+            "1",
+            FakeFunction(
+                "finish_task",
+                json.dumps({"result": "done", "summary": "sum"}),
+            ),
+        )
+        completer = FakeCompleter([
+            FakeMessage(tool_calls=[finish_call]),
+        ])
+
+        agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
+
+        output = await run_agent_loop(
+            agent,
+            NullCallbacks(),
+            shorten_conversation_at_tokens=200_000,
+            no_truncate_tools=set(),
+            enable_user_feedback=False,
+            completer=completer,
+            ui=make_ui_mock(),
+            is_interruptible=False,
+        )
+
+        assert output.result == "done"
+        # Ensure no feedback prompt injected
+        assert not any("Feedback on your work" in (m.get("content") or "") for m in agent.history if m.get("role") == "user")
+
+
 @pytest.mark.asyncio
 async def test_errors_if_output_already_set():
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
