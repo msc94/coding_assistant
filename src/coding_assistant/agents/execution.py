@@ -185,7 +185,6 @@ async def handle_tool_calls(
         )
         return
 
-    # Start all tool calls
     aws = []
     for tool_call in tool_calls:
         task = asyncio.create_task(
