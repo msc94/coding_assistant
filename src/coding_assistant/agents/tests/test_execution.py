@@ -106,22 +106,26 @@ async def test_tool_confirmation_denied_and_allowed():
     }
 
 
-
 @pytest.mark.asyncio
 async def test_unknown_result_type_raises():
     class WeirdResult(ToolResult):
         pass
 
     class WeirdTool(Tool):
-        def name(self) -> str: return "weird"
-        def description(self) -> str: return ""
-        def parameters(self) -> dict: return {}
-        async def execute(self, parameters: dict) -> ToolResult: return WeirdResult()
+        def name(self) -> str:
+            return "weird"
+
+        def description(self) -> str:
+            return ""
+
+        def parameters(self) -> dict:
+            return {}
+
+        async def execute(self, parameters: dict) -> ToolResult:
+            return WeirdResult()
 
     agent = make_test_agent(model="TestModel", tools=[WeirdTool()])
     tool_call = FakeToolCall(id="1", function=FakeFunction(name="weird", arguments="{}"))
-    # Implementation now raises a KeyError when encountering an unknown ToolResult subclass.
-    # We assert on KeyError and that the class name appears in the message for minimal safety.
     with pytest.raises(KeyError, match=r"WeirdResult"):
         await handle_tool_call(tool_call, agent, NullCallbacks(), no_truncate_tools=set(), ui=make_ui_mock())
 
@@ -132,9 +136,14 @@ class ParallelSlowTool(Tool):
         self._delay = delay
         self._events = events
 
-    def name(self) -> str: return self._name
-    def description(self) -> str: return f"Sleep for {self._delay}s then return its name"
-    def parameters(self) -> dict: return {}
+    def name(self) -> str:
+        return self._name
+
+    def description(self) -> str:
+        return f"Sleep for {self._delay}s then return its name"
+
+    def parameters(self) -> dict:
+        return {}
 
     async def execute(self, parameters: dict) -> TextResult:
         self._events.append(("start", self._name, time.monotonic()))
@@ -154,10 +163,13 @@ async def test_multiple_tool_calls_are_parallel():
     agent = make_test_agent(tools=[t1, t2])
 
     from coding_assistant.agents.tests.helpers import FakeMessage  # local import to avoid circulars
-    msg = FakeMessage(tool_calls=[
-        FakeToolCall(id="1", function=FakeFunction(name="slow.one", arguments="{}")),
-        FakeToolCall(id="2", function=FakeFunction(name="slow.two", arguments="{}")),
-    ])
+
+    msg = FakeMessage(
+        tool_calls=[
+            FakeToolCall(id="1", function=FakeFunction(name="slow.one", arguments="{}")),
+            FakeToolCall(id="2", function=FakeFunction(name="slow.two", arguments="{}")),
+        ]
+    )
 
     start = time.monotonic()
     await handle_tool_call(msg.tool_calls[0], agent, NullCallbacks(), no_truncate_tools=set(), ui=make_ui_mock())
@@ -179,12 +191,10 @@ async def test_multiple_tool_calls_are_parallel():
     start_indices = [i for i, k in enumerate(kinds) if k == "start"]
     assert len(start_indices) == 2, "Both tools should have started"
     assert start_indices[1] < first_end_index, (
-        "Second tool did not start before the first finished; tools likely executed sequentially. Events: "
-        f"{events}"
+        "Second tool did not start before the first finished; tools likely executed sequentially. Events: " f"{events}"
     )
 
     # History should contain two tool messages (order may be any); validate both present
     tool_messages = [m for m in agent.history if m.get("role") == "tool"]
     names = sorted(m["name"] for m in tool_messages)
     assert names == ["slow.one", "slow.two"], f"Unexpected tool messages: {tool_messages}"
-

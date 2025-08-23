@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import re
+import textwrap
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
@@ -59,7 +60,7 @@ class OrchestratorTool(Tool):
         return "launch_orchestrator_agent"
 
     def description(self) -> str:
-        return "Launch an orchestrator agent to accomplish a given task. The agent will delegate tasks to sub-agents as it sees fit. The agent will run tools, especially sub-agents, in parallel where possible. For bigger tasks, the orchestrator agent will make a plan with multiple milestones to tackle the task and ask the user whether it is okay to proceed with the plan."
+        return "Launch an orchestrator agent to accomplish a given task."
 
     def parameters(self) -> dict:
         return LaunchOrchestratorAgentSchema.model_json_schema()
@@ -128,7 +129,7 @@ class AgentTool(Tool):
         return "launch_agent"
 
     def description(self) -> str:
-        return "Launch a sub-agent to work on a given task. Examples for tasks are researching a topic or question, or developing a feature according to an implementation plan. The agent will refuse to accept any tasks that are not clearly defined and miss context. It needs to be clear what to do and how to do it using **only** the information given in the task description."
+        return "Launch a sub-agent to work on a given task. The agent will refuse to accept any task that is not clearly defined and misses context. It needs to be clear what to do using **only** the information given in the task description."
 
     def parameters(self) -> dict:
         return LaunchAgentSchema.model_json_schema()
@@ -166,6 +167,7 @@ class AgentTool(Tool):
             is_interruptible=False,
             ui=self._ui,
         )
+
         return TextResult(content=output.result)
 
 
