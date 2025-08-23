@@ -220,21 +220,26 @@ class RichCallbacks(AgentCallbacks):
             print()
 
     def on_tools_progress(self, pending_tool_names: list[str]):
-        # if pending_tool_names:
-        #     if not self._live:
-        #         self._live = Live(
-        #             Group(*[Status(name) for name in pending_tool_names]),
-        #             auto_refresh=False,
-        #             transient=True,
-        #         )
-        #         self._live.start()
-        #     else:
-        #         g: Group = self._live.renderable
-        #         self._live.update(
-        #             Group(*[status for status in g.renderables if status.status in pending_tool_names]),
-        #             refresh=True,
-        #         )
-        # else:
-        #     if self._live:
-        #         self._live.stop()
-        #     self._live = None
+        _handle_tool_progress = False
+
+        if not _handle_tool_progress:
+            return
+
+        if pending_tool_names:
+            if not self._live:
+                self._live = Live(
+                    Group(*[Status(name) for name in pending_tool_names]),
+                    auto_refresh=False,
+                    transient=True,
+                )
+                self._live.start()
+            else:
+                g: Group = self._live.renderable
+                self._live.update(
+                    Group(*[status for status in g.renderables if status.status in pending_tool_names]),
+                    refresh=True,
+                )
+        else:
+            if self._live:
+                self._live.stop()
+            self._live = None
