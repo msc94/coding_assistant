@@ -301,7 +301,6 @@ async def run_agent_loop(
                     )
                     append_user_message(agent.history, agent_callbacks, agent.name, formatted_feedback)
             else:
-                # Run a single step without interruption handling
                 await do_single_step(
                     agent,
                     agent_callbacks,

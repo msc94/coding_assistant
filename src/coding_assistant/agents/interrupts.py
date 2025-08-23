@@ -22,7 +22,7 @@ class InterruptibleSection:
 
     def _signal_handler(self, signum: int, frame: Optional[FrameType]) -> None:
         self._was_interrupted += 1
-        if self._was_interrupted > 5:
+        if self._was_interrupted > 3:
             sys.exit(1)
 
     def __enter__(self) -> "InterruptibleSection":
