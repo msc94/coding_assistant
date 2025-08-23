@@ -270,10 +270,12 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
         ),
     )
 
-    completer = FakeCompleter([
-        FakeMessage(tool_calls=[echo_call]),  # interrupted after this step
-        FakeMessage(tool_calls=[finish_call]),
-    ])
+    completer = FakeCompleter(
+        [
+            FakeMessage(tool_calls=[echo_call]),  # interrupted after this step
+            FakeMessage(tool_calls=[finish_call]),
+        ]
+    )
 
     echo_tool = FakeEchoTool()
     agent = make_test_agent(tools=[echo_tool, FinishTaskTool(), ShortenConversation()])
@@ -293,23 +295,29 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
         enable_user_feedback=False,
         completer=completer,
         ui=make_ui_mock(ask_sequence=[("Feedback: ", "Please refine")]),
+        is_interruptible=True,
     )
 
     assert output.result == "done"
     # Feedback should be injected between first tool result and the next assistant call
     assert expected_feedback_text in [m.get("content") for m in agent.history if m.get("role") == "user"]
 
-
     @pytest.mark.asyncio
     async def test_interrupt_disabled_skips_feedback(monkeypatch):
         # Fake InterruptibleSection that would signal interruption, but we disable it
         class FakeInterruptAlways:
-            def __enter__(self): return self
-            def __exit__(self, exc_type, exc, tb): return False
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
             @property
-            def was_interrupted(self): return True
+            def was_interrupted(self):
+                return True
 
         from coding_assistant.agents import execution as execution_module
+
         monkeypatch.setattr(execution_module, "InterruptibleSection", FakeInterruptAlways)
 
         finish_call = FakeToolCall(
@@ -319,9 +327,11 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
                 json.dumps({"result": "done", "summary": "sum"}),
             ),
         )
-        completer = FakeCompleter([
-            FakeMessage(tool_calls=[finish_call]),
-        ])
+        completer = FakeCompleter(
+            [
+                FakeMessage(tool_calls=[finish_call]),
+            ]
+        )
 
         agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
@@ -338,7 +348,9 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
 
         assert output.result == "done"
         # Ensure no feedback prompt injected
-        assert not any("Feedback on your work" in (m.get("content") or "") for m in agent.history if m.get("role") == "user")
+        assert not any(
+            "Feedback on your work" in (m.get("content") or "") for m in agent.history if m.get("role") == "user"
+        )
 
 
 @pytest.mark.asyncio
@@ -395,10 +407,12 @@ async def test_multiple_tool_calls_processed_in_order():
         ),
     )
 
-    completer = FakeCompleter([
-        FakeMessage(tool_calls=[call1, call2]),
-        FakeMessage(tool_calls=[finish_call]),
-    ])
+    completer = FakeCompleter(
+        [
+            FakeMessage(tool_calls=[call1, call2]),
+            FakeMessage(tool_calls=[finish_call]),
+        ]
+    )
 
     echo_tool = FakeEchoTool()
     agent = make_test_agent(tools=[echo_tool, FinishTaskTool(), ShortenConversation()])

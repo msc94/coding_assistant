@@ -76,7 +76,7 @@ class OrchestratorTool(Tool):
             tools=[
                 FinishTaskTool(),
                 ShortenConversation(),
-                AgentTool(self._config, self._tools, NullCallbacks(), self._ui),
+                AgentTool(self._config, self._tools, DefaultAnswerUI(), NullCallbacks()),
                 AskClientTool(self._config.enable_ask_user, ui=self._ui),
                 ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=self._ui),
                 *self._tools,
@@ -117,12 +117,12 @@ class LaunchAgentSchema(BaseModel):
 
 
 class AgentTool(Tool):
-    def __init__(self, config: Config, tools: list[Tool]):
+    def __init__(self, config: Config, tools: list[Tool], ui: UI, agent_callbacks: AgentCallbacks):
         super().__init__()
         self._config = config
         self._tools = tools
-        self._ui = DefaultAnswerUI()
-        self._agent_callbacks = NullCallbacks()
+        self._ui = ui
+        self._agent_callbacks = agent_callbacks
 
     def name(self) -> str:
         return "launch_agent"
