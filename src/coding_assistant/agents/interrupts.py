@@ -41,5 +41,5 @@ class NonInterruptibleSection:
         pass
 
     @property
-    def was_interrupted(self) -> bool:  # pragma: no cover - always false
+    def was_interrupted(self) -> bool:
         return False

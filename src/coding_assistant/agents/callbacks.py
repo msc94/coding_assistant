@@ -229,7 +229,6 @@ class RichCallbacks(AgentCallbacks):
                 )
                 self._live.start()
             else:
-                # Delete statuses that are not relevant anymore
                 g: Group = self._live.renderable
                 self._live.update(
                     Group(*[status for status in g.renderables if status.status in pending_tool_names]),
