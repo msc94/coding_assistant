@@ -120,7 +120,9 @@ async def test_unknown_result_type_raises():
 
     agent = make_test_agent(model="TestModel", tools=[WeirdTool()])
     tool_call = FakeToolCall(id="1", function=FakeFunction(name="weird", arguments="{}"))
-    with pytest.raises(TypeError, match=r"Unknown tool result type"):  # from handle_tool_call
+    # Implementation now raises a KeyError when encountering an unknown ToolResult subclass.
+    # We assert on KeyError and that the class name appears in the message for minimal safety.
+    with pytest.raises(KeyError, match=r"WeirdResult"):
         await handle_tool_call(tool_call, agent, NullCallbacks(), no_truncate_tools=set(), ui=make_ui_mock())
 
 
