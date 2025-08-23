@@ -95,6 +95,7 @@ class OrchestratorTool(Tool):
                 enable_user_feedback=self._config.enable_user_feedback,
                 completer=complete,
                 ui=self._ui,
+                is_interruptible=True,
             )
             self.summary = output.summary
             return TextResult(content=output.result)
