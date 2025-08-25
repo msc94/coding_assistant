@@ -141,10 +141,12 @@ async def handle_tool_call(
                 return
 
     trace.get_current_span().set_attribute("function.name", function_name)
-    trace.get_current_span().set_attribute("function.args", args_str)
+    trace.get_current_span().set_attribute("function.args", json.dumps(function_args))
+
+    logger.info(f"[{tool_call.id}] [{agent.name}] Calling tool '{function_name}' with arguments {function_args}")
 
     try:
-        function_call_result = await execute_tool_call(function_name, function_args, list(agent.tools))
+        function_call_result = await execute_tool_call(function_name, function_args, agent.tools)
     except ValueError as e:
         append_tool_message(
             agent.history,
