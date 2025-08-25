@@ -49,11 +49,6 @@ class AgentCallbacks(ABC):
         pass
 
     @abstractmethod
-    def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict):
-        """Called right before a tool is executed."""
-        pass
-
-    @abstractmethod
     def on_chunk(self, chunk: str):
         """Handle LLM chunks."""
         pass
@@ -83,9 +78,6 @@ class NullCallbacks(AgentCallbacks):
         pass
 
     def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict, result: str):
-        pass
-
-    def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict):
         pass
 
     def on_chunk(self, chunk: str):
@@ -183,19 +175,6 @@ class RichCallbacks(AgentCallbacks):
             Panel(
                 render_group,
                 title=f"Agent {agent_name} tool call",
-                border_style="yellow",
-            ),
-        )
-
-    def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict):
-        render_group = Group(
-            Markdown(f"Name: `{tool_name}`"),
-            Padding(Pretty(arguments, expand_all=True, indent_size=2), (1, 0, 0, 0)),
-        )
-        print(
-            Panel(
-                render_group,
-                title=f"Agent {agent_name} tool start",
                 border_style="yellow",
             ),
         )

@@ -112,7 +112,7 @@ async def handle_tool_call(
     args_str = tool_call.function.arguments or "{}"
     try:
         function_args = json.loads(args_str)
-    except (JSONDecodeError, TypeError) as e:
+    except JSONDecodeError as e:
         append_tool_message(
             agent.history,
             agent_callbacks,
@@ -143,8 +143,6 @@ async def handle_tool_call(
     trace.get_current_span().set_attribute("function.name", function_name)
     trace.get_current_span().set_attribute("function.args", args_str)
 
-    agent_callbacks.on_tool_start(agent.name, function_name, function_args)
-
     try:
         function_call_result = await execute_tool_call(function_name, function_args, list(agent.tools))
     except ValueError as e:
@@ -159,7 +157,6 @@ async def handle_tool_call(
         )
         return
 
-    assert function_call_result is not None, f"Function {function_name} not implemented"
     trace.get_current_span().set_attribute("function.result", str(function_call_result))
 
     result_handlers = {
