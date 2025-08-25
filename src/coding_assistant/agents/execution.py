@@ -119,7 +119,7 @@ async def handle_tool_call(
             agent.name,
             tool_call.id,
             function_name,
-            args_str,
+            dict(),
             f"Error: Tool call arguments {args_str} are not valid JSON: {e}",
         )
         return
@@ -217,7 +217,6 @@ async def handle_tool_calls(
         for task in done:
             await task
 
-        agent_callbacks.on_tools_progress([t.get_name() for t in pending])
         if not pending:
             break
 
