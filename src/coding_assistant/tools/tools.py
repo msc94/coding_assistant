@@ -257,7 +257,10 @@ class ExecuteShellCommandTool(Tool):
         except asyncio.TimeoutError:
             return TextResult(content=f"Command timed out after {timeout} seconds.")
 
-        result = f"Returncode: {process.returncode}\n\n{stdout.decode()}"
+        if process.returncode != 0:
+            result = f"Returncode: {process.returncode}\n\n{stdout.decode()}"
+        else:
+            result = stdout.decode()
 
         if truncate_at is not None and len(result) > truncate_at:
             truncated = result[: max(0, truncate_at - 200)]
