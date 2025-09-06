@@ -7,7 +7,7 @@ uv --project (dirname (status filename)) run coding-assistant \
     --writable-sandbox-directories /tmp /dev/shm \
     --no-truncate-tools "^mcp_context7_get-library-docs" \
     --mcp-servers \
-        '{"name": "filesystem", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "/"]}' \
+        '{"name": "filesystem", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "{home_directory}"]}' \
         '{"name": "fetch", "command": "uvx", "args": ["mcp-server-fetch"]}' \
         '{"name": "context7", "command": "npx", "args": ["-y", "@upstash/context7-mcp"], "env": []}' \
         '{"name": "tavily", "command": "npx", "args": ["-y", "tavily-mcp"], "env": ["TAVILY_API_KEY"]}' \
