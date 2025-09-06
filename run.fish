@@ -5,7 +5,6 @@ uv --project (dirname (status filename)) run coding-assistant \
     --expert-model "openai/gpt-5" \
     --readable-sandbox-directories /mnt/wsl ~/.ssh \
     --writable-sandbox-directories /tmp /dev/shm \
-    --no-truncate-tools "^mcp_context7_get-library-docs" \
     --mcp-servers \
         '{"name": "filesystem", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "{home_directory}"]}' \
         '{"name": "fetch", "command": "uvx", "args": ["mcp-server-fetch"]}' \
