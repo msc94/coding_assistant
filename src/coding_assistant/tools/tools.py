@@ -24,9 +24,6 @@ from coding_assistant.ui import UI, DefaultAnswerUI, NullUI
 logger = logging.getLogger(__name__)
 
 
-# Feedback is now handled directly in run_agent_loop; no helper needed here.
-
-
 class LaunchOrchestratorAgentSchema(BaseModel):
     task: str = Field(description="The task to assign to the orchestrator agent.")
     summaries: List[str] = Field(
@@ -271,7 +268,7 @@ class FinishTaskSchema(BaseModel):
         description="The result of the work on the task. The work of the agent is evaluated based on this result."
     )
     summary: str = Field(
-        description="A concise summary of the conversation the agent and the client had. There should be enough context such that the work could be continued based on this summary. It should be able to evaluate your result using only your input parameters and this summary. That means that you need to include all of the user feedback you worked into your result.",
+        description="A concise summary of the conversation the agent and the client had. There should be enough context such that the work could be continued based on this summary. It should be possible to evaluate your result using only your input parameters and this summary. That means that you need to include all of the user feedback you worked into your result.",
     )
 
 
