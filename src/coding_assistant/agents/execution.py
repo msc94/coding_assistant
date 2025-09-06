@@ -115,12 +115,7 @@ async def handle_tool_call(
         function_args = json.loads(args_str)
     except JSONDecodeError as e:
         logger.error(
-            "[%s] [%s] Failed to parse tool '%s' arguments as JSON: %s | raw: %s",
-            tool_call.id,
-            agent.name,
-            function_name,
-            e,
-            args_str,
+            f"[{agent.name}] [{tool_call.id}] Failed to parse tool '{function_name}' arguments as JSON: {e} | raw: {args_str}"
         )
         append_tool_message(
             agent.history,
