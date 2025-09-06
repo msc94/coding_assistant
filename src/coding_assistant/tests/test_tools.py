@@ -15,11 +15,18 @@ async def test_execute_shell_command_tool_timeout():
 
 
 @pytest.mark.asyncio
+async def test_execute_shell_command_tool_nonzero_return_code():
+    tool = ExecuteShellCommandTool()
+    result = await tool.execute({"command": "bash -lc 'exit 7'"})
+    assert result.content.startswith("Returncode: 7\n\n")
+
+
+@pytest.mark.asyncio
 async def test_execute_shell_command_tool_confirmation_yes():
     ui = make_ui_mock(confirm_sequence=[("Execute `echo 'Hello'`?", True)])
     tool = ExecuteShellCommandTool(shell_confirmation_patterns=["echo"], ui=ui)
     result = await tool.execute({"command": "echo 'Hello'"})
-    assert result.content == "Returncode: 0\n\nHello\n"
+    assert result.content == "Hello\n"
 
 
 @pytest.mark.asyncio
@@ -43,7 +50,7 @@ async def test_execute_shell_command_tool_no_match():
     ui = make_ui_mock()
     tool = ExecuteShellCommandTool(shell_confirmation_patterns=["ls"], ui=ui)
     result = await tool.execute({"command": "echo 'Hello'"})
-    assert result.content == "Returncode: 0\n\nHello\n"
+    assert result.content == "Hello\n"
 
 
 @pytest.mark.asyncio
