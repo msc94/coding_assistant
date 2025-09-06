@@ -117,7 +117,10 @@ async def get_mcp_servers_from_config(
 
         for server_config in config_servers:
             # Format all arguments with available variables
-            format_vars = {"working_directory": str(working_directory), "home_directory": str(Path.home())}
+            format_vars = {
+                "working_directory": str(working_directory),
+                "home_directory": str(Path.home()),
+            }
             args = [arg.format(**format_vars) for arg in server_config.args]
 
             # Merge environment variables with current environment and server-specific env
