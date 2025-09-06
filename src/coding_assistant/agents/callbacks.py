@@ -169,8 +169,10 @@ class RichCallbacks(AgentCallbacks):
 
     def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
         parts: list[Any] = [Markdown(f"Name: `{tool_name}`")]
+
         if arguments is not None:
             parts.append(Padding(Pretty(arguments, expand_all=True, indent_size=2), (1, 0, 0, 0)))
+
         parts.append(Padding(self._format_tool_result(result, tool_name), (1, 0, 0, 0)))
 
         render_group = Group(*parts)
