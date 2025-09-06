@@ -4,10 +4,9 @@ import json
 import textwrap
 from abc import ABC, abstractmethod
 from pprint import pformat
-
-from rich import print
 from typing import Any
 
+from rich import print
 from rich.console import Group
 from rich.json import JSON
 from rich.markdown import Markdown
@@ -151,19 +150,7 @@ class RichCallbacks(AgentCallbacks):
 
     def _format_tool_result(self, result: str, tool_name: str):
         if data := self._try_parse_json(result):
-            if tool_name == "execute_shell_command":
-                result = f"RC: {data['returncode']}"
-
-                if data["stderr"]:
-                    result += f"\n\nstderr\n\n```\n{data['stderr']}\n```"
-
-                if data["stdout"]:
-                    result += f"\n\nstdout\n\n```\n{data['stdout']}\n```"
-
-                return Markdown(result)
-
             return Pretty(data, expand_all=True, indent_size=2)
-
         else:
             return Markdown(f"```\n{result}\n```")
 
