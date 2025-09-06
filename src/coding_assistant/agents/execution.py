@@ -114,13 +114,21 @@ async def handle_tool_call(
     try:
         function_args = json.loads(args_str)
     except JSONDecodeError as e:
+        logger.error(
+            "[%s] [%s] Failed to parse tool '%s' arguments as JSON: %s | raw: %s",
+            tool_call.id,
+            agent.name,
+            function_name,
+            e,
+            args_str,
+        )
         append_tool_message(
             agent.history,
             agent_callbacks,
             agent.name,
             tool_call.id,
             function_name,
-            dict(),
+            None,
             f"Error: Tool call arguments {args_str} are not valid JSON: {e}",
         )
         return

@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from pprint import pformat
 
 from rich import print
+from typing import Any
+
 from rich.console import Group
 from rich.json import JSON
 from rich.markdown import Markdown
@@ -44,7 +46,7 @@ class AgentCallbacks(ABC):
         pass
 
     @abstractmethod
-    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict, result: str):
+    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
         """Handle messages with role: tool."""
         pass
 
@@ -77,7 +79,7 @@ class NullCallbacks(AgentCallbacks):
     def on_assistant_reasoning(self, agent_name: str, content: str):
         pass
 
-    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict, result: str):
+    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
         pass
 
     def on_chunk(self, chunk: str):
@@ -165,12 +167,13 @@ class RichCallbacks(AgentCallbacks):
         else:
             return Markdown(f"```\n{result}\n```")
 
-    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict, result: str):
-        render_group = Group(
-            Markdown(f"Name: `{tool_name}`"),
-            Padding(Pretty(arguments, expand_all=True, indent_size=2), (1, 0, 0, 0)),
-            Padding(self._format_tool_result(result, tool_name), (1, 0, 0, 0)),
-        )
+    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
+        parts: list[Any] = [Markdown(f"Name: `{tool_name}`")]
+        if arguments is not None:
+            parts.append(Padding(Pretty(arguments, expand_all=True, indent_size=2), (1, 0, 0, 0)))
+        parts.append(Padding(self._format_tool_result(result, tool_name), (1, 0, 0, 0)))
+
+        render_group = Group(*parts)
         print(
             Panel(
                 render_group,
