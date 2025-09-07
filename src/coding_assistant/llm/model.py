@@ -1,5 +1,7 @@
+import functools
 import logging
 import os
+import re
 from dataclasses import dataclass
 
 import litellm
@@ -19,6 +21,17 @@ class Completion:
     tokens: int
 
 
+@functools.lru_cache(maxsize=8)
+def _parse_model_and_reasoning(model: str) -> tuple[str, str | None]:
+    s = model.strip()
+    m = re.match(r"^(.+?)\s*\(([^)]*)\)\s*$", s)
+    if not m:
+        return s, None
+    base = m.group(1).strip()
+    effort = m.group(2).strip()
+    return base, effort.lower() if effort else None
+
+
 async def complete(
     messages: list[dict],
     model: str,
@@ -26,12 +39,14 @@ async def complete(
     callbacks: AgentCallbacks,
 ):
     try:
+        model, reasoning_effort = _parse_model_and_reasoning(model)
+
         response = await litellm.acompletion(
             messages=messages,
             tools=tools,
             model=model,
             stream=True,
-            reasoning_effort="high",
+            reasoning_effort=reasoning_effort if reasoning_effort else "mid",
         )
 
         chunks = []
