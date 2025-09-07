@@ -126,7 +126,6 @@ def make_test_agent(
     *,
     name: str = "TestAgent",
     model: str = "TestMode",
-    description: str = "TestDescription",
     parameters: Sequence[Parameter] | None = None,
     tools: Iterable[Tool] | None = None,
     history: list[dict] | None = None,
@@ -134,7 +133,6 @@ def make_test_agent(
     return Agent(
         name=name,
         model=model,
-        description=description,
         parameters=list(parameters) if parameters is not None else [],
         tools=list(tools) if tools is not None else [],
         history=list(history) if history is not None else [],

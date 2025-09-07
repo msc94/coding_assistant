@@ -12,7 +12,7 @@ from opentelemetry import trace
 from coding_assistant.agents.callbacks import AgentCallbacks
 from coding_assistant.agents.history import append_assistant_message, append_tool_message, append_user_message
 from coding_assistant.agents.interrupts import InterruptibleSection, NonInterruptibleSection
-from coding_assistant.agents.parameters import format_parameters
+from coding_assistant.agents.parameters import format_parameters, Parameter
 from coding_assistant.agents.types import (
     Agent,
     AgentOutput,
@@ -30,12 +30,6 @@ tracer = trace.get_tracer(__name__)
 
 START_MESSAGE_TEMPLATE = """
 You are an agent named `{name}`.
-
-## Task
-
-Your client has been given the following description of your work and capabilities: 
-
-{description}
 
 ## Parameters
 
@@ -58,7 +52,6 @@ def _create_start_message(agent: Agent) -> str:
     parameters_str = format_parameters(agent.parameters)
     message = START_MESSAGE_TEMPLATE.format(
         name=agent.name,
-        description=textwrap.indent(agent.description, "> "),
         parameters=parameters_str,
     )
 

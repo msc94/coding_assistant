@@ -60,7 +60,6 @@ class Agent:
     name: str
     model: str
 
-    description: str
     parameters: list[Parameter]
     tools: list[Tool]
 

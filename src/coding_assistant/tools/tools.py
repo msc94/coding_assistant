@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks
 from coding_assistant.agents.execution import run_agent_loop
-from coding_assistant.agents.parameters import fill_parameters
+from coding_assistant.agents.parameters import fill_parameters, Parameter
 from coding_assistant.agents.types import (
     Agent,
     AgentOutput,
@@ -61,14 +61,23 @@ class OrchestratorTool(Tool):
         return LaunchOrchestratorAgentSchema.model_json_schema()
 
     async def execute(self, parameters: dict) -> TextResult:
-        orchestrator_agent = Agent(
-            name="Orchestrator",
-            history=self._history or [],
-            description=self.description(),
-            parameters=fill_parameters(
+        # Compose parameters with the tool description as a dedicated entry
+        orch_params = [
+            Parameter(
+                name="description",
+                description="The description of your work and capabilities.",
+                value=self.description(),
+            ),
+            *fill_parameters(
                 parameter_description=self.parameters(),
                 parameter_values=parameters,
             ),
+        ]
+
+        orchestrator_agent = Agent(
+            name="Orchestrator",
+            history=self._history or [],
+            parameters=orch_params,
             tools=[
                 FinishTaskTool(),
                 ShortenConversation(),
@@ -135,13 +144,22 @@ class AgentTool(Tool):
         return self._config.model
 
     async def execute(self, parameters: dict) -> TextResult:
-        agent = Agent(
-            name="Agent",
-            description=self.description(),
-            parameters=fill_parameters(
+        # Compose parameters with the tool description as a dedicated entry
+        agent_params = [
+            Parameter(
+                name="description",
+                description="The description of your work and capabilities.",
+                value=self.description(),
+            ),
+            *fill_parameters(
                 parameter_description=self.parameters(),
                 parameter_values=parameters,
             ),
+        ]
+
+        agent = Agent(
+            name="Agent",
+            parameters=agent_params,
             tools=[
                 FinishTaskTool(),
                 ShortenConversation(),
