@@ -21,6 +21,14 @@ class FakeToolCall:
     id: str
     function: FakeFunction
 
+    def model_dump_json(self) -> str:
+        return json.dumps(
+            {
+                "id": self.id,
+                "function": {"name": self.function.name, "arguments": self.function.arguments},
+            }
+        )
+
 
 class FakeMessage:
     def __init__(
