@@ -9,8 +9,9 @@ from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks
 from coding_assistant.agents.execution import run_agent_loop
 from coding_assistant.agents.parameters import fill_parameters, Parameter
 from coding_assistant.agents.types import (
-    Agent,
+    AgentDescription,
     AgentOutput,
+    AgentState,
     FinishTaskResult,
     ShortenConversationResult,
     TextResult,
@@ -74,9 +75,9 @@ class OrchestratorTool(Tool):
             ),
         ]
 
-        orchestrator_agent = Agent(
+        desc = AgentDescription(
             name="Orchestrator",
-            history=self._history or [],
+            model=self._config.expert_model,
             parameters=orch_params,
             tools=[
                 FinishTaskTool(),
@@ -86,12 +87,13 @@ class OrchestratorTool(Tool):
                 ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=self._ui),
                 *self._tools,
             ],
-            model=self._config.expert_model,
         )
+        state = AgentState(history=self._history or [])
 
         try:
             output = await run_agent_loop(
-                orchestrator_agent,
+                desc,
+                state,
                 self._agent_callbacks,
                 shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
                 tool_confirmation_patterns=self._config.tool_confirmation_patterns,
@@ -103,7 +105,7 @@ class OrchestratorTool(Tool):
             self.summary = output.summary
             return TextResult(content=output.result)
         finally:
-            self.history = orchestrator_agent.history
+            self.history = state.history
 
 
 class LaunchAgentSchema(BaseModel):
@@ -157,8 +159,9 @@ class AgentTool(Tool):
             ),
         ]
 
-        agent = Agent(
+        desc = AgentDescription(
             name="Agent",
+            model=self.get_model(parameters),
             parameters=agent_params,
             tools=[
                 FinishTaskTool(),
@@ -166,11 +169,12 @@ class AgentTool(Tool):
                 ExecuteShellCommandTool(self._config.shell_confirmation_patterns, ui=self._ui),
                 *self._tools,
             ],
-            model=self.get_model(parameters),
         )
+        state = AgentState()
 
         output = await run_agent_loop(
-            agent=agent,
+            desc,
+            state,
             agent_callbacks=self._agent_callbacks,
             shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
             tool_confirmation_patterns=self._config.tool_confirmation_patterns,

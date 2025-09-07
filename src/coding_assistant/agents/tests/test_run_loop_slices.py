@@ -12,7 +12,7 @@ from coding_assistant.agents.tests.helpers import (
     make_test_agent,
     make_ui_mock,
 )
-from coding_assistant.agents.types import Agent, AgentOutput, TextResult, Tool
+from coding_assistant.agents.types import AgentDescription, AgentOutput, AgentState, TextResult, Tool
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
@@ -54,9 +54,11 @@ async def test_tool_selection_then_finish():
 
     fake_tool = FakeEchoTool()
     agent = make_test_agent(tools=[fake_tool, FinishTaskTool(), ShortenConversation()])
+    desc, state = agent
 
     output = await run_agent_loop(
-        agent,
+        desc,
+        state,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=False,
@@ -68,7 +70,8 @@ async def test_tool_selection_then_finish():
     assert output.summary == "sum"
     assert fake_tool.called_with == {"text": "hi"}
 
-    assert agent.history[1:] == [
+    desc, state = agent
+    assert state.history[1:] == [
         {
             "role": "assistant",
             "tool_calls": [
@@ -127,9 +130,11 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
     )
 
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
+    desc, state = agent
 
     output = await run_agent_loop(
-        agent,
+        desc,
+        state,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=False,
@@ -137,7 +142,8 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
         ui=make_ui_mock(),
     )
 
-    assert agent.history[1:] == [
+    desc, state = agent
+    assert state.history[1:] == [
         {
             "role": "assistant",
             "tool_calls": [
@@ -195,9 +201,11 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
     )
 
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
+    desc, state = agent
 
     output = await run_agent_loop(
-        agent,
+        desc,
+        state,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=False,
@@ -205,7 +213,8 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
         ui=make_ui_mock(),
     )
 
-    assert agent.history[1:] == [
+    desc, state = agent
+    assert state.history[1:] == [
         {
             "role": "assistant",
             "content": "Hello",
@@ -276,6 +285,7 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
 
     echo_tool = FakeEchoTool()
     agent = make_test_agent(tools=[echo_tool, FinishTaskTool(), ShortenConversation()])
+    desc, state = agent
 
     expected_feedback_text = (
         "Your client has provided the following feedback on your work:\n\n"
@@ -285,7 +295,8 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
     )
 
     output = await run_agent_loop(
-        agent,
+        desc,
+        state,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=False,
@@ -295,8 +306,9 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
     )
 
     assert output.result == "done"
+    desc, state = agent
     # Feedback should be injected between first tool result and the next assistant call
-    assert expected_feedback_text in [m.get("content") for m in agent.history if m.get("role") == "user"]
+    assert expected_feedback_text in [m.get("content") for m in state.history if m.get("role") == "user"]
 
     @pytest.mark.asyncio
     async def test_interrupt_disabled_skips_feedback(monkeypatch):
@@ -332,7 +344,8 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
         agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
         output = await run_agent_loop(
-            agent,
+        desc,
+        state,
             NullCallbacks(),
             shorten_conversation_at_tokens=200_000,
             enable_user_feedback=False,
@@ -344,17 +357,18 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
         assert output.result == "done"
         # Ensure no feedback prompt injected
         assert not any(
-            "Feedback on your work" in (m.get("content") or "") for m in agent.history if m.get("role") == "user"
+            "Feedback on your work" in (m.get("content") or "") for m in state.history if m.get("role") == "user"
         )
 
 
 @pytest.mark.asyncio
 async def test_errors_if_output_already_set():
-    agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
-    agent.output = AgentOutput(result="r", summary="s")
+    desc, state = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
+    state.output = AgentOutput(result="r", summary="s")
     with pytest.raises(RuntimeError, match="Agent already has a result or summary."):
         await run_agent_loop(
-            agent,
+        desc,
+        state,
             NullCallbacks(),
             shorten_conversation_at_tokens=200_000,
             enable_user_feedback=False,
@@ -375,14 +389,16 @@ async def test_feedback_ok_does_not_reloop():
     completer = FakeCompleter([FakeMessage(tool_calls=[finish_call])])
 
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
+    desc, state = agent
 
     output = await run_agent_loop(
-        agent,
+        desc,
+        state,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=True,
         completer=completer,
-        ui=make_ui_mock(ask_sequence=[(f"Feedback for {agent.name}", "Ok")]),
+        ui=make_ui_mock(ask_sequence=[(f"Feedback for {desc.name}", "Ok")]),
     )
 
     assert output.result == "final"
@@ -409,9 +425,11 @@ async def test_multiple_tool_calls_processed_in_order():
 
     echo_tool = FakeEchoTool()
     agent = make_test_agent(tools=[echo_tool, FinishTaskTool(), ShortenConversation()])
+    desc, state = agent
 
     output = await run_agent_loop(
-        agent,
+        desc,
+        state,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=False,
@@ -420,7 +438,8 @@ async def test_multiple_tool_calls_processed_in_order():
     )
 
     assert output.result == "ok"
-    assert [m for m in agent.history[1:4]] == [
+    desc, state = agent
+    assert [m for m in state.history[1:4]] == [
         {
             "role": "assistant",
             "tool_calls": [
@@ -455,7 +474,8 @@ async def test_multiple_tool_calls_processed_in_order():
     ]
 
     # Also verify the finish comes after both tool results
-    assert agent.history[4] == {
+    desc, state = agent
+    assert state.history[4] == {
         "role": "assistant",
         "tool_calls": [
             {
@@ -467,7 +487,8 @@ async def test_multiple_tool_calls_processed_in_order():
             }
         ],
     }
-    assert agent.history[5] == {
+    desc, state = agent
+    assert state.history[5] == {
         "tool_call_id": "3",
         "role": "tool",
         "name": "finish_task",
@@ -501,15 +522,17 @@ async def test_feedback_loop_then_finish():
     )
 
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
+    desc, state = agent
 
     output = await run_agent_loop(
-        agent,
+        desc,
+        state,
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=True,
         completer=completer,
         ui=make_ui_mock(
-            ask_sequence=[(f"Feedback for {agent.name}", "Please improve"), (f"Feedback for {agent.name}", "Ok")]
+            ask_sequence=[(f"Feedback for {desc.name}", "Please improve"), (f"Feedback for {desc.name}", "Ok")]
         ),
     )
 
@@ -523,7 +546,8 @@ async def test_feedback_loop_then_finish():
         "Afterwards, call the `finish_task` tool again to signal that you are done."
     )
 
-    assert agent.history[1:] == [
+    desc, state = agent
+    assert state.history[1:] == [
         {
             "role": "assistant",
             "tool_calls": [
