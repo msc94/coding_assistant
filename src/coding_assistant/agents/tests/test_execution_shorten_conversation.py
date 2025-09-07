@@ -10,8 +10,10 @@ from coding_assistant.agents.tests.helpers import (
     FakeToolCall,
     FakeCompleter,
     make_test_agent,
+    make_test_context,
     make_ui_mock,
 )
+from coding_assistant.agents.types import AgentContext
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
@@ -38,7 +40,8 @@ async def test_shorten_conversation_resets_history():
         ),
     )
 
-    await handle_tool_call(tool_call, desc, state, callbacks, tool_confirmation_patterns=[], ui=make_ui_mock())
+    ctx = AgentContext(desc=desc, state=state)
+    await handle_tool_call(tool_call, ctx, callbacks, tool_confirmation_patterns=[], ui=make_ui_mock())
 
     # History should be reset to a fresh start message + summary message, followed by the tool result message
     assert len(state.history) >= 3
@@ -73,8 +76,7 @@ async def test_shorten_conversation_resets_history():
     completer = FakeCompleter([FakeMessage(tool_calls=[finish_call])])
 
     await do_single_step(
-        desc,
-        state,
+        ctx,
         callbacks,
         shorten_conversation_at_tokens=200_000,
         completer=completer,

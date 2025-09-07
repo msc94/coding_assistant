@@ -66,6 +66,13 @@ class AgentState:
     summary: str | None = None
 
 
+# Combines the immutable description with the mutable state of an agent
+@dataclass
+class AgentContext:
+    desc: AgentDescription
+    state: AgentState
+
+
 class Completer(Protocol):
     def __call__(
         self,

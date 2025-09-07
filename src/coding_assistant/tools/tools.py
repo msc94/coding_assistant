@@ -11,6 +11,7 @@ from coding_assistant.agents.parameters import fill_parameters, Parameter
 from coding_assistant.agents.types import (
     AgentDescription,
     AgentState,
+    AgentContext,
     FinishTaskResult,
     ShortenConversationResult,
     TextResult,
@@ -90,9 +91,9 @@ class OrchestratorTool(Tool):
         state = AgentState(history=self._history or [])
 
         try:
+            ctx = AgentContext(desc=desc, state=state)
             output_state = await run_agent_loop(
-                desc,
-                state,
+                ctx,
                 self._agent_callbacks,
                 shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
                 tool_confirmation_patterns=self._config.tool_confirmation_patterns,
@@ -171,9 +172,9 @@ class AgentTool(Tool):
         )
         state = AgentState()
         
+        ctx = AgentContext(desc=desc, state=state)
         output_state = await run_agent_loop(
-            desc,
-            state,
+            ctx,
             agent_callbacks=self._agent_callbacks,
             shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
             tool_confirmation_patterns=self._config.tool_confirmation_patterns,

@@ -12,7 +12,7 @@ from coding_assistant.agents.tests.helpers import (
     make_test_agent,
     make_ui_mock,
 )
-from coding_assistant.agents.types import TextResult, Tool
+from coding_assistant.agents.types import TextResult, Tool, AgentContext
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
@@ -31,8 +31,7 @@ async def test_on_agent_start_end_called_with_expected_args():
     desc, state = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
     await run_agent_loop(
-        desc,
-        state,
+        AgentContext(desc=desc, state=state),
         callbacks,
         shorten_conversation_at_tokens=200_000,
         tool_confirmation_patterns=[],
@@ -54,8 +53,7 @@ async def test_on_tool_message_called_with_arguments_and_result():
     desc, state = make_test_agent(tools=[EchoTool(), FinishTaskTool(), ShortenConversation()])
 
     await run_agent_loop(
-        desc,
-        state,
+        AgentContext(desc=desc, state=state),
         callbacks,
         shorten_conversation_at_tokens=200_000,
         tool_confirmation_patterns=[],

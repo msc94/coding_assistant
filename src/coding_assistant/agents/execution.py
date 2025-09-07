@@ -16,6 +16,7 @@ from coding_assistant.agents.parameters import Parameter, format_parameters
 from coding_assistant.agents.types import (
     AgentDescription,
     AgentState,
+    AgentContext,
     Completer,
     FinishTaskResult,
     ShortenConversationResult,
@@ -26,6 +27,8 @@ from coding_assistant.ui import UI
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
+ 
+
 
 
 START_MESSAGE_TEMPLATE = """
@@ -90,14 +93,15 @@ def _handle_shorten_conversation_result(
 
 @tracer.start_as_current_span("handle_tool_call")
 async def handle_tool_call(
-    tool_call: litellm.ChatCompletionMessageToolCall,
-    desc: AgentDescription,
-    state: AgentState,
+    tool_call,
+    ctx: AgentContext,
     agent_callbacks: AgentCallbacks,
     tool_confirmation_patterns: list[str],
     *,
     ui: UI,
 ):
+    desc = ctx.desc
+    state = ctx.state
     function_name = tool_call.function.name
     if not function_name:
         raise RuntimeError(f"Tool call {tool_call.id} is missing function name.")
@@ -179,14 +183,15 @@ async def handle_tool_call(
 
 @tracer.start_as_current_span("handle_tool_calls")
 async def handle_tool_calls(
-    message: litellm.Message,
-    desc: AgentDescription,
-    state: AgentState,
+    message,
+    ctx: AgentContext,
     agent_callbacks: AgentCallbacks,
     tool_confirmation_patterns: list[str],
     *,
     ui: UI,
 ):
+    desc = ctx.desc
+    state = ctx.state
     tool_calls = message.tool_calls
     if not tool_calls:
         append_user_message(
@@ -204,8 +209,7 @@ async def handle_tool_calls(
         task = asyncio.create_task(
             handle_tool_call(
                 tool_call,
-                desc,
-                state,
+                ctx,
                 agent_callbacks,
                 tool_confirmation_patterns,
                 ui=ui,
@@ -227,8 +231,7 @@ async def handle_tool_calls(
 
 @tracer.start_as_current_span("do_single_step")
 async def do_single_step(
-    desc: AgentDescription,
-    state: AgentState,
+    ctx: AgentContext,
     agent_callbacks: AgentCallbacks,
     shorten_conversation_at_tokens: int,
     *,
@@ -236,6 +239,8 @@ async def do_single_step(
     ui: UI,
     tool_confirmation_patterns: list[str],
 ):
+    desc = ctx.desc
+    state = ctx.state
     trace.get_current_span().set_attribute("agent.name", desc.name)
 
     # Validate agent tools
@@ -270,8 +275,7 @@ async def do_single_step(
     append_assistant_message(state.history, agent_callbacks, desc.name, message)
     await handle_tool_calls(
         message,
-        desc,
-        state,
+        ctx,
         agent_callbacks,
         tool_confirmation_patterns,
         ui=ui,
@@ -291,8 +295,7 @@ async def do_single_step(
 
 @tracer.start_as_current_span("run_agent_loop")
 async def run_agent_loop(
-    desc: AgentDescription,
-    state: AgentState,
+    ctx: AgentContext,
     agent_callbacks: AgentCallbacks,
     *,
     completer: Completer,
@@ -302,6 +305,8 @@ async def run_agent_loop(
     enable_user_feedback: bool = False,
     is_interruptible: bool = False,
 ) -> AgentState:
+    desc = ctx.desc
+    state = ctx.state
     if state.result or state.summary:
         raise RuntimeError("Agent already has a result or summary.")
 
@@ -318,8 +323,7 @@ async def run_agent_loop(
             section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
             with section_cls() as interruptible_section:
                 await do_single_step(
-                    desc,
-                    state,
+                    ctx,
                     agent_callbacks,
                     shorten_conversation_at_tokens,
                     completer=completer,

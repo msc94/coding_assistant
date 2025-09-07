@@ -12,7 +12,7 @@ from coding_assistant.agents.tests.helpers import (
     make_test_agent,
     make_ui_mock,
 )
-from coding_assistant.agents.types import AgentDescription, AgentState, TextResult, Tool
+from coding_assistant.agents.types import AgentDescription, AgentState, AgentContext, TextResult, Tool
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
@@ -57,8 +57,7 @@ async def test_tool_selection_then_finish():
     desc, state = agent
 
     output_state = await run_agent_loop(
-        desc,
-        state,
+        AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=False,
@@ -133,8 +132,7 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
     desc, state = agent
 
     output_state = await run_agent_loop(
-        desc,
-        state,
+        AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=False,
@@ -204,8 +202,7 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
     desc, state = agent
 
     output_state = await run_agent_loop(
-        desc,
-        state,
+        AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=False,
@@ -295,8 +292,7 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
     )
 
     output_state = await run_agent_loop(
-        desc,
-        state,
+        AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=False,
@@ -344,8 +340,7 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
         agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
         output = await run_agent_loop(
-        desc,
-        state,
+            AgentContext(desc=desc, state=state),
             NullCallbacks(),
             shorten_conversation_at_tokens=200_000,
             enable_user_feedback=False,
@@ -368,8 +363,7 @@ async def test_errors_if_output_already_set():
     state.summary = "s"
     with pytest.raises(RuntimeError, match="Agent already has a result or summary."):
         await run_agent_loop(
-            desc,
-            state,
+            AgentContext(desc=desc, state=state),
             NullCallbacks(),
             shorten_conversation_at_tokens=200_000,
             enable_user_feedback=False,
@@ -393,8 +387,7 @@ async def test_feedback_ok_does_not_reloop():
     desc, state = agent
 
     output_state = await run_agent_loop(
-        desc,
-        state,
+        AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=True,
@@ -429,8 +422,7 @@ async def test_multiple_tool_calls_processed_in_order():
     desc, state = agent
 
     output_state = await run_agent_loop(
-        desc,
-        state,
+        AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=False,
@@ -526,8 +518,7 @@ async def test_feedback_loop_then_finish():
     desc, state = agent
 
     output_state = await run_agent_loop(
-        desc,
-        state,
+        AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
         enable_user_feedback=True,

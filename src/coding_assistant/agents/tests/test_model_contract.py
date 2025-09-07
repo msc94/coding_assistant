@@ -11,9 +11,10 @@ from coding_assistant.agents.tests.helpers import (
     FakeToolCall,
     FakeFunction,
     make_test_agent,
+    make_test_context,
     make_ui_mock,
 )
-from coding_assistant.agents.types import AgentDescription, AgentState, TextResult, Tool
+from coding_assistant.agents.types import AgentDescription, AgentState, AgentContext, TextResult, Tool
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
@@ -41,10 +42,10 @@ async def test_do_single_step_adds_shorten_prompt_on_token_threshold():
     desc, state = make_test_agent(
         tools=[DummyTool(), FinishTaskTool(), ShortenConversation()], history=[{"role": "user", "content": "start"}]
     )
+    ctx = AgentContext(desc=desc, state=state)
 
     msg = await do_single_step(
-        desc,
-        state,
+        ctx,
         NullCallbacks(),
         shorten_conversation_at_tokens=1000,
         completer=completer,
@@ -97,12 +98,12 @@ async def test_reasoning_is_forwarded_and_not_stored():
         tools=[DummyTool(), FinishTaskTool(), ShortenConversation()],
         history=[{"role": "user", "content": "start"}],
     )
+    ctx = AgentContext(desc=desc, state=state)
 
     callbacks = Mock(spec=AgentCallbacks)
 
     await do_single_step(
-        desc,
-        state,
+    ctx,
         callbacks,
         shorten_conversation_at_tokens=100_000,
         completer=completer,
@@ -128,10 +129,10 @@ async def test_requires_finish_tool():
         tools=[DummyTool(), ShortenConversation()],
         history=[{"role": "user", "content": "start"}],
     )
+    ctx = AgentContext(desc=desc, state=state)
     with pytest.raises(RuntimeError, match="Agent needs to have a `finish_task` tool in order to run a step."):
         await do_single_step(
-            desc,
-            state,
+            ctx,
             NullCallbacks(),
             shorten_conversation_at_tokens=1000,
             completer=FakeCompleter([FakeMessage(content="hi")]),
@@ -147,10 +148,10 @@ async def test_requires_shorten_tool():
         tools=[DummyTool(), FinishTaskTool()],
         history=[{"role": "user", "content": "start"}],
     )
+    ctx = AgentContext(desc=desc, state=state)
     with pytest.raises(RuntimeError, match="Agent needs to have a `shorten_conversation` tool in order to run a step."):
         await do_single_step(
-            desc,
-            state,
+            ctx,
             NullCallbacks(),
             shorten_conversation_at_tokens=1000,
             completer=FakeCompleter([FakeMessage(content="hi")]),
@@ -163,10 +164,10 @@ async def test_requires_shorten_tool():
 async def test_requires_non_empty_history():
     # Empty history should raise
     desc, state = make_test_agent(tools=[DummyTool(), FinishTaskTool(), ShortenConversation()], history=[])
+    ctx = AgentContext(desc=desc, state=state)
     with pytest.raises(RuntimeError, match="Agent needs to have history in order to run a step."):
         await do_single_step(
-            desc,
-            state,
+            ctx,
             NullCallbacks(),
             shorten_conversation_at_tokens=1000,
             completer=FakeCompleter([FakeMessage(content="hi")]),
