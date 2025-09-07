@@ -13,7 +13,7 @@ from coding_assistant.ui import UI
 @dataclass
 class FakeFunction:
     name: str
-    arguments: str = "{}"
+    arguments: str
 
 
 @dataclass
