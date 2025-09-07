@@ -49,12 +49,6 @@ class Tool(ABC):
     async def execute(self, parameters) -> ToolResult: ...
 
 
-@dataclass
-class AgentOutput:
-    result: str
-    summary: str
-
-
 # Immutable description of an agent
 @dataclass
 class AgentDescription:
@@ -68,7 +62,8 @@ class AgentDescription:
 @dataclass
 class AgentState:
     history: list = field(default_factory=list)
-    output: AgentOutput | None = None
+    result: str | None = None
+    summary: str | None = None
 
 
 class Completer(Protocol):

@@ -15,7 +15,6 @@ from coding_assistant.agents.interrupts import InterruptibleSection, NonInterrup
 from coding_assistant.agents.parameters import Parameter, format_parameters
 from coding_assistant.agents.types import (
     AgentDescription,
-    AgentOutput,
     AgentState,
     Completer,
     FinishTaskResult,
@@ -60,10 +59,8 @@ def _create_start_message(desc: AgentDescription) -> str:
 
 
 def _handle_finish_task_result(result: FinishTaskResult, state: AgentState):
-    state.output = AgentOutput(
-        result=result.result,
-        summary=result.summary,
-    )
+    state.result = result.result
+    state.summary = result.summary
     return "Agent output set."
 
 
@@ -304,8 +301,8 @@ async def run_agent_loop(
     tool_confirmation_patterns: list[str] = [],
     enable_user_feedback: bool = False,
     is_interruptible: bool = False,
-) -> AgentOutput:
-    if state.output:
+) -> AgentState:
+    if state.result or state.summary:
         raise RuntimeError("Agent already has a result or summary.")
 
     trace.get_current_span().set_attribute("agent.name", desc.name)
@@ -317,7 +314,7 @@ async def run_agent_loop(
     append_user_message(state.history, agent_callbacks, desc.name, start_message)
 
     while True:
-        while not state.output:
+        while state.result is None:
             section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
             with section_cls() as interruptible_section:
                 await do_single_step(
@@ -338,9 +335,9 @@ async def run_agent_loop(
                 )
                 append_user_message(state.history, agent_callbacks, desc.name, formatted_feedback)
 
-        trace.get_current_span().set_attribute("agent.result", state.output.result)
-        trace.get_current_span().set_attribute("agent.summary", state.output.summary)
-        agent_callbacks.on_agent_end(desc.name, state.output.result, state.output.summary)
+        trace.get_current_span().set_attribute("agent.result", state.result or "")
+        trace.get_current_span().set_attribute("agent.summary", state.summary or "")
+        agent_callbacks.on_agent_end(desc.name, state.result or "", state.summary or "")
 
         user_feedback: str = "Ok"
         if enable_user_feedback:
@@ -349,8 +346,9 @@ async def run_agent_loop(
         if user_feedback != "Ok":
             formatted_feedback = FEEDBACK_TEMPLATE.format(feedback=textwrap.indent(user_feedback, "> "))
             append_user_message(state.history, agent_callbacks, desc.name, formatted_feedback)
-            state.output = None  # continue loop
+            state.result = None
+            state.summary = None  # continue loop
         else:
             break
 
-    return state.output
+    return state

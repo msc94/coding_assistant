@@ -12,7 +12,7 @@ from coding_assistant.agents.tests.helpers import (
     make_test_agent,
     make_ui_mock,
 )
-from coding_assistant.agents.types import AgentDescription, AgentOutput, AgentState, TextResult, Tool
+from coding_assistant.agents.types import AgentDescription, AgentState, TextResult, Tool
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
@@ -56,7 +56,7 @@ async def test_tool_selection_then_finish():
     agent = make_test_agent(tools=[fake_tool, FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output = await run_agent_loop(
+    output_state = await run_agent_loop(
         desc,
         state,
         NullCallbacks(),
@@ -66,8 +66,8 @@ async def test_tool_selection_then_finish():
         ui=make_ui_mock(),
     )
 
-    assert output.result == "done"
-    assert output.summary == "sum"
+    assert output_state.result == "done"
+    assert output_state.summary == "sum"
     assert fake_tool.called_with == {"text": "hi"}
 
     desc, state = agent
@@ -132,7 +132,7 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output = await run_agent_loop(
+    output_state = await run_agent_loop(
         desc,
         state,
         NullCallbacks(),
@@ -181,7 +181,7 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
             "content": "Agent output set.",
         },
     ]
-    assert output.result == "ok"
+    assert output_state.result == "ok"
 
 
 @pytest.mark.asyncio
@@ -203,7 +203,7 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output = await run_agent_loop(
+    output_state = await run_agent_loop(
         desc,
         state,
         NullCallbacks(),
@@ -242,7 +242,7 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
             "content": "Agent output set.",
         },
     ]
-    assert output.result == "r"
+    assert output_state.result == "r"
 
 
 @pytest.mark.asyncio
@@ -294,7 +294,7 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
         "Afterwards, call the `finish_task` tool again to signal that you are done."
     )
 
-    output = await run_agent_loop(
+    output_state = await run_agent_loop(
         desc,
         state,
         NullCallbacks(),
@@ -305,7 +305,7 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
         is_interruptible=True,
     )
 
-    assert output.result == "done"
+    assert output_state.result == "done"
     desc, state = agent
     # Feedback should be injected between first tool result and the next assistant call
     assert expected_feedback_text in [m.get("content") for m in state.history if m.get("role") == "user"]
@@ -364,11 +364,12 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
 @pytest.mark.asyncio
 async def test_errors_if_output_already_set():
     desc, state = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
-    state.output = AgentOutput(result="r", summary="s")
+    state.result = "r"
+    state.summary = "s"
     with pytest.raises(RuntimeError, match="Agent already has a result or summary."):
         await run_agent_loop(
-        desc,
-        state,
+            desc,
+            state,
             NullCallbacks(),
             shorten_conversation_at_tokens=200_000,
             enable_user_feedback=False,
@@ -391,7 +392,7 @@ async def test_feedback_ok_does_not_reloop():
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output = await run_agent_loop(
+    output_state = await run_agent_loop(
         desc,
         state,
         NullCallbacks(),
@@ -401,7 +402,7 @@ async def test_feedback_ok_does_not_reloop():
         ui=make_ui_mock(ask_sequence=[(f"Feedback for {desc.name}", "Ok")]),
     )
 
-    assert output.result == "final"
+    assert output_state.result == "final"
 
 
 @pytest.mark.asyncio
@@ -427,7 +428,7 @@ async def test_multiple_tool_calls_processed_in_order():
     agent = make_test_agent(tools=[echo_tool, FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output = await run_agent_loop(
+    output_state = await run_agent_loop(
         desc,
         state,
         NullCallbacks(),
@@ -437,7 +438,7 @@ async def test_multiple_tool_calls_processed_in_order():
         ui=make_ui_mock(),
     )
 
-    assert output.result == "ok"
+    assert output_state.result == "ok"
     desc, state = agent
     assert [m for m in state.history[1:4]] == [
         {
@@ -524,7 +525,7 @@ async def test_feedback_loop_then_finish():
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output = await run_agent_loop(
+    output_state = await run_agent_loop(
         desc,
         state,
         NullCallbacks(),
@@ -536,8 +537,8 @@ async def test_feedback_loop_then_finish():
         ),
     )
 
-    assert output.result == "second"
-    assert output.summary == "s2"
+    assert output_state.result == "second"
+    assert output_state.summary == "s2"
 
     expected_feedback_text = (
         "Your client has provided the following feedback on your work:\n\n"

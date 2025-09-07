@@ -10,7 +10,6 @@ from coding_assistant.agents.execution import run_agent_loop
 from coding_assistant.agents.parameters import fill_parameters, Parameter
 from coding_assistant.agents.types import (
     AgentDescription,
-    AgentOutput,
     AgentState,
     FinishTaskResult,
     ShortenConversationResult,
@@ -91,7 +90,7 @@ class OrchestratorTool(Tool):
         state = AgentState(history=self._history or [])
 
         try:
-            output = await run_agent_loop(
+            output_state = await run_agent_loop(
                 desc,
                 state,
                 self._agent_callbacks,
@@ -102,8 +101,8 @@ class OrchestratorTool(Tool):
                 ui=self._ui,
                 is_interruptible=True,
             )
-            self.summary = output.summary
-            return TextResult(content=output.result)
+            self.summary = output_state.summary or ""
+            return TextResult(content=output_state.result or "")
         finally:
             self.history = state.history
 
@@ -171,8 +170,8 @@ class AgentTool(Tool):
             ],
         )
         state = AgentState()
-
-        output = await run_agent_loop(
+        
+        output_state = await run_agent_loop(
             desc,
             state,
             agent_callbacks=self._agent_callbacks,
@@ -184,7 +183,7 @@ class AgentTool(Tool):
             ui=self._ui,
         )
 
-        return TextResult(content=output.result)
+        return TextResult(content=output_state.result or "")
 
 
 class AskClientSchema(BaseModel):
