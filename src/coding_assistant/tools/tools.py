@@ -262,9 +262,9 @@ class ExecuteShellCommandTool(Tool):
         else:
             result = stdout.decode()
 
-        if truncate_at is not None and len(result) > truncate_at:
-            truncated = result[: max(0, truncate_at - 200)]
+        if len(result) > truncate_at:
             note = "\n\n[truncated output due to truncate_at limit]"
+            truncated = result[: max(0, truncate_at - len(note))]
             result = truncated + note
 
         return TextResult(content=result)
