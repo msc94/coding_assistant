@@ -6,6 +6,7 @@ import re
 import textwrap
 from json import JSONDecodeError
 
+import litellm
 from opentelemetry import trace
 
 from coding_assistant.agents.callbacks import AgentCallbacks
@@ -98,7 +99,7 @@ def _handle_shorten_conversation_result(
 
 @tracer.start_as_current_span("handle_tool_call")
 async def handle_tool_call(
-    tool_call,
+    tool_call: litellm.ChatCompletionMessageToolCall,
     agent: Agent,
     agent_callbacks: AgentCallbacks,
     tool_confirmation_patterns: list[str],
@@ -106,8 +107,11 @@ async def handle_tool_call(
     ui: UI,
 ):
     function_name = tool_call.function.name
+    if not function_name:
+        raise RuntimeError(f"Tool call {tool_call.id} is missing function name.")
 
-    args_str = tool_call.function.arguments or "{}"
+    args_str = tool_call.function.arguments
+
     try:
         function_args = json.loads(args_str)
     except JSONDecodeError as e:
@@ -183,7 +187,7 @@ async def handle_tool_call(
 
 @tracer.start_as_current_span("handle_tool_calls")
 async def handle_tool_calls(
-    message,
+    message: litellm.Message,
     agent: Agent,
     agent_callbacks: AgentCallbacks,
     tool_confirmation_patterns: list[str],
