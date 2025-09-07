@@ -1,7 +1,7 @@
 #!/usr/bin/env fish
 
 uv --project (dirname (status filename)) run coding-assistant \
-    --model "openai/gpt-5 (mid)" \
+    --model "openai/gpt-5 (medium)" \
     --expert-model "openai/gpt-5 (high)" \
     --readable-sandbox-directories /mnt/wsl ~/.ssh \
     --writable-sandbox-directories /tmp /dev/shm \

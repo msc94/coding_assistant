@@ -22,7 +22,7 @@ class Completion:
     tokens: int
 
 
-@functools.lru_cache(maxsize=8)
+@functools.cache
 def _parse_model_and_reasoning(
     model: str,
 ) -> tuple[str, Literal["low", "medium", "high"] | None]:
