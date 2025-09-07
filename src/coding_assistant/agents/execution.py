@@ -27,8 +27,6 @@ from coding_assistant.ui import UI
 
 logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
- 
-
 
 
 START_MESSAGE_TEMPLATE = """
@@ -304,9 +302,10 @@ async def run_agent_loop(
     tool_confirmation_patterns: list[str] = [],
     enable_user_feedback: bool = False,
     is_interruptible: bool = False,
-) -> AgentState:
+):
     desc = ctx.desc
     state = ctx.state
+
     if state.result or state.summary:
         raise RuntimeError("Agent already has a result or summary.")
 
@@ -339,9 +338,14 @@ async def run_agent_loop(
                 )
                 append_user_message(state.history, agent_callbacks, desc.name, formatted_feedback)
 
-        trace.get_current_span().set_attribute("agent.result", state.result or "")
-        trace.get_current_span().set_attribute("agent.summary", state.summary or "")
-        agent_callbacks.on_agent_end(desc.name, state.result or "", state.summary or "")
+        # Once result is set, summary must also be set
+        assert state.result is not None, "Agent did not produce a result"
+        assert state.summary is not None, "Agent did not produce a summary"
+
+        trace.get_current_span().set_attribute("agent.result", state.result)
+        trace.get_current_span().set_attribute("agent.summary", state.summary)
+
+        agent_callbacks.on_agent_end(desc.name, state.result, state.summary)
 
         user_feedback: str = "Ok"
         if enable_user_feedback:
@@ -355,4 +359,5 @@ async def run_agent_loop(
         else:
             break
 
-    return state
+    assert state.result
+    assert state.summary
