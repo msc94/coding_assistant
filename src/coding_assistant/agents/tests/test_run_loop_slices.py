@@ -56,7 +56,7 @@ async def test_tool_selection_then_finish():
     agent = make_test_agent(tools=[fake_tool, FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output_state = await run_agent_loop(
+    await run_agent_loop(
         AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
@@ -65,8 +65,9 @@ async def test_tool_selection_then_finish():
         ui=make_ui_mock(),
     )
 
-    assert output_state.result == "done"
-    assert output_state.summary == "sum"
+    assert state.output is not None
+    assert state.output.result == "done"
+    assert state.output.summary == "sum"
     assert fake_tool.called_with == {"text": "hi"}
 
     desc, state = agent
@@ -131,7 +132,7 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output_state = await run_agent_loop(
+    await run_agent_loop(
         AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
@@ -179,7 +180,8 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
             "content": "Agent output set.",
         },
     ]
-    assert output_state.result == "ok"
+    assert state.output is not None
+    assert state.output.result == "ok"
 
 
 @pytest.mark.asyncio
@@ -201,7 +203,7 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output_state = await run_agent_loop(
+    await run_agent_loop(
         AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
@@ -239,7 +241,8 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
             "content": "Agent output set.",
         },
     ]
-    assert output_state.result == "r"
+    assert state.output is not None
+    assert state.output.result == "r"
 
 
 @pytest.mark.asyncio
@@ -291,7 +294,7 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
         "Afterwards, call the `finish_task` tool again to signal that you are done."
     )
 
-    output_state = await run_agent_loop(
+    await run_agent_loop(
         AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
@@ -300,8 +303,8 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
         ui=make_ui_mock(ask_sequence=[("Feedback: ", "Please refine")]),
         is_interruptible=True,
     )
-
-    assert output_state.result == "done"
+    assert state.output is not None
+    assert state.output.result == "done"
     desc, state = agent
     # Feedback should be injected between first tool result and the next assistant call
     assert expected_feedback_text in [m.get("content") for m in state.history if m.get("role") == "user"]
@@ -339,7 +342,7 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
 
         agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
-        output = await run_agent_loop(
+        await run_agent_loop(
             AgentContext(desc=desc, state=state),
             NullCallbacks(),
             shorten_conversation_at_tokens=200_000,
@@ -348,8 +351,8 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
             ui=make_ui_mock(),
             is_interruptible=False,
         )
-
-        assert output.result == "done"
+        assert state.output is not None
+        assert state.output.result == "done"
         # Ensure no feedback prompt injected
         assert not any(
             "Feedback on your work" in (m.get("content") or "") for m in state.history if m.get("role") == "user"
@@ -385,7 +388,7 @@ async def test_feedback_ok_does_not_reloop():
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output_state = await run_agent_loop(
+    await run_agent_loop(
         AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
@@ -393,8 +396,8 @@ async def test_feedback_ok_does_not_reloop():
         completer=completer,
         ui=make_ui_mock(ask_sequence=[(f"Feedback for {desc.name}", "Ok")]),
     )
-
-    assert output_state.result == "final"
+    assert state.output is not None
+    assert state.output.result == "final"
 
 
 @pytest.mark.asyncio
@@ -420,7 +423,7 @@ async def test_multiple_tool_calls_processed_in_order():
     agent = make_test_agent(tools=[echo_tool, FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output_state = await run_agent_loop(
+    await run_agent_loop(
         AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
@@ -428,8 +431,8 @@ async def test_multiple_tool_calls_processed_in_order():
         completer=completer,
         ui=make_ui_mock(),
     )
-
-    assert output_state.result == "ok"
+    assert state.output is not None
+    assert state.output.result == "ok"
     desc, state = agent
     assert [m for m in state.history[1:4]] == [
         {
@@ -516,7 +519,7 @@ async def test_feedback_loop_then_finish():
     agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
     desc, state = agent
 
-    output_state = await run_agent_loop(
+    await run_agent_loop(
         AgentContext(desc=desc, state=state),
         NullCallbacks(),
         shorten_conversation_at_tokens=200_000,
@@ -526,9 +529,9 @@ async def test_feedback_loop_then_finish():
             ask_sequence=[(f"Feedback for {desc.name}", "Please improve"), (f"Feedback for {desc.name}", "Ok")]
         ),
     )
-
-    assert output_state.result == "second"
-    assert output_state.summary == "s2"
+    assert state.output is not None
+    assert state.output.result == "second"
+    assert state.output.summary == "s2"
 
     expected_feedback_text = (
         "Your client has provided the following feedback on your work:\n\n"

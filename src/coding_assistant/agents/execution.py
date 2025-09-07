@@ -14,14 +14,14 @@ from coding_assistant.agents.history import append_assistant_message, append_too
 from coding_assistant.agents.interrupts import InterruptibleSection, NonInterruptibleSection
 from coding_assistant.agents.parameters import Parameter, format_parameters
 from coding_assistant.agents.types import (
-    AgentDescription,
-    AgentState,
     AgentContext,
+    AgentDescription,
+    AgentOutput,
+    AgentState,
     Completer,
     FinishTaskResult,
     ShortenConversationResult,
     TextResult,
-    AgentOutput,
 )
 from coding_assistant.llm.adapters import execute_tool_call, get_tools
 from coding_assistant.ui import UI
@@ -357,5 +357,3 @@ async def run_agent_loop(
             break
 
     assert state.output is not None
-
-    return AgentOutput(result=state.output.result, summary=state.output.summary)

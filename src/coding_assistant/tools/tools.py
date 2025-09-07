@@ -66,7 +66,7 @@ class OrchestratorTool(Tool):
         orch_params = [
             Parameter(
                 name="description",
-                description="The description of your work and capabilities.",
+                description="The description of the agent's work and capabilities.",
                 value=self.description(),
             ),
             *fill_parameters(
@@ -92,7 +92,7 @@ class OrchestratorTool(Tool):
 
         try:
             ctx = AgentContext(desc=desc, state=state)
-            output = await run_agent_loop(
+            await run_agent_loop(
                 ctx,
                 self._agent_callbacks,
                 shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
@@ -102,8 +102,9 @@ class OrchestratorTool(Tool):
                 ui=self._ui,
                 is_interruptible=True,
             )
-            self.summary = output.summary
-            return TextResult(content=output.result)
+            assert state.output is not None, "Agent did not produce output"
+            self.summary = state.output.summary
+            return TextResult(content=state.output.result)
         finally:
             self.history = state.history
 
@@ -149,7 +150,7 @@ class AgentTool(Tool):
         agent_params = [
             Parameter(
                 name="description",
-                description="The description of your work and capabilities.",
+                description="The description of the agent's work and capabilities.",
                 value=self.description(),
             ),
             *fill_parameters(
@@ -172,7 +173,7 @@ class AgentTool(Tool):
         state = AgentState()
         ctx = AgentContext(desc=desc, state=state)
 
-        output = await run_agent_loop(
+        await run_agent_loop(
             ctx,
             agent_callbacks=self._agent_callbacks,
             shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
@@ -182,7 +183,8 @@ class AgentTool(Tool):
             is_interruptible=False,
             ui=self._ui,
         )
-        return TextResult(content=output.result)
+        assert state.output is not None, "Agent did not produce output"
+        return TextResult(content=state.output.result)
 
 
 class AskClientSchema(BaseModel):
