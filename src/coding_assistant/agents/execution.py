@@ -6,13 +6,12 @@ import re
 import textwrap
 from json import JSONDecodeError
 
-import litellm
 from opentelemetry import trace
 
 from coding_assistant.agents.callbacks import AgentCallbacks
 from coding_assistant.agents.history import append_assistant_message, append_tool_message, append_user_message
 from coding_assistant.agents.interrupts import InterruptibleSection, NonInterruptibleSection
-from coding_assistant.agents.parameters import Parameter, format_parameters
+from coding_assistant.agents.parameters import format_parameters
 from coding_assistant.agents.types import (
     AgentContext,
     AgentDescription,
