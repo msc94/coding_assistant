@@ -7,11 +7,11 @@ from pydantic import BaseModel, Field
 
 from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks
 from coding_assistant.agents.execution import run_agent_loop
-from coding_assistant.agents.parameters import fill_parameters, Parameter
+from coding_assistant.agents.parameters import Parameter, fill_parameters
 from coding_assistant.agents.types import (
+    AgentContext,
     AgentDescription,
     AgentState,
-    AgentContext,
     FinishTaskResult,
     ShortenConversationResult,
     TextResult,
@@ -92,7 +92,7 @@ class OrchestratorTool(Tool):
 
         try:
             ctx = AgentContext(desc=desc, state=state)
-            output_state = await run_agent_loop(
+            output = await run_agent_loop(
                 ctx,
                 self._agent_callbacks,
                 shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
@@ -102,10 +102,8 @@ class OrchestratorTool(Tool):
                 ui=self._ui,
                 is_interruptible=True,
             )
-            assert output_state.result is not None, "Agent did not produce a result"
-            assert output_state.summary is not None, "Agent did not produce a summary"
-            self.summary = output_state.summary
-            return TextResult(content=output_state.result)
+            self.summary = output.summary
+            return TextResult(content=output.result)
         finally:
             self.history = state.history
 
@@ -174,7 +172,7 @@ class AgentTool(Tool):
         state = AgentState()
         ctx = AgentContext(desc=desc, state=state)
 
-        output_state = await run_agent_loop(
+        output = await run_agent_loop(
             ctx,
             agent_callbacks=self._agent_callbacks,
             shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
@@ -184,8 +182,7 @@ class AgentTool(Tool):
             is_interruptible=False,
             ui=self._ui,
         )
-    assert output_state.result is not None, "Agent did not produce a result"
-    return TextResult(content=output_state.result)
+        return TextResult(content=output.result)
 
 
 class AskClientSchema(BaseModel):

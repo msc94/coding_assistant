@@ -58,12 +58,18 @@ class AgentDescription:
     tools: list[Tool]
 
 
+# Final output of an agent run
+@dataclass
+class AgentOutput:
+    result: str
+    summary: str
+
+
 # Mutable state for an agent's execution
 @dataclass
 class AgentState:
     history: list = field(default_factory=list)
-    result: str | None = None
-    summary: str | None = None
+    output: AgentOutput | None = None
 
 
 # Combines the immutable description with the mutable state of an agent

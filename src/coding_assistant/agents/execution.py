@@ -21,6 +21,7 @@ from coding_assistant.agents.types import (
     FinishTaskResult,
     ShortenConversationResult,
     TextResult,
+    AgentOutput,
 )
 from coding_assistant.llm.adapters import execute_tool_call, get_tools
 from coding_assistant.ui import UI
@@ -60,8 +61,7 @@ def _create_start_message(desc: AgentDescription) -> str:
 
 
 def _handle_finish_task_result(result: FinishTaskResult, state: AgentState):
-    state.result = result.result
-    state.summary = result.summary
+    state.output = AgentOutput(result=result.result, summary=result.summary)
     return "Agent output set."
 
 
@@ -306,7 +306,7 @@ async def run_agent_loop(
     desc = ctx.desc
     state = ctx.state
 
-    if state.result or state.summary:
+    if state.output is not None:
         raise RuntimeError("Agent already has a result or summary.")
 
     trace.get_current_span().set_attribute("agent.name", desc.name)
@@ -318,7 +318,7 @@ async def run_agent_loop(
     append_user_message(state.history, agent_callbacks, desc.name, start_message)
 
     while True:
-        while state.result is None:
+        while state.output is None:
             section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
             with section_cls() as interruptible_section:
                 await do_single_step(
@@ -338,14 +338,12 @@ async def run_agent_loop(
                 )
                 append_user_message(state.history, agent_callbacks, desc.name, formatted_feedback)
 
-        # Once result is set, summary must also be set
-        assert state.result is not None, "Agent did not produce a result"
-        assert state.summary is not None, "Agent did not produce a summary"
+        assert state.output is not None, "Agent did not produce output"
 
-        trace.get_current_span().set_attribute("agent.result", state.result)
-        trace.get_current_span().set_attribute("agent.summary", state.summary)
+        trace.get_current_span().set_attribute("agent.result", state.output.result)
+        trace.get_current_span().set_attribute("agent.summary", state.output.summary)
 
-        agent_callbacks.on_agent_end(desc.name, state.result, state.summary)
+        agent_callbacks.on_agent_end(desc.name, state.output.result, state.output.summary)
 
         user_feedback: str = "Ok"
         if enable_user_feedback:
@@ -354,10 +352,10 @@ async def run_agent_loop(
         if user_feedback != "Ok":
             formatted_feedback = FEEDBACK_TEMPLATE.format(feedback=textwrap.indent(user_feedback, "> "))
             append_user_message(state.history, agent_callbacks, desc.name, formatted_feedback)
-            state.result = None
-            state.summary = None  # continue loop
+            state.output = None  # continue loop
         else:
             break
 
-    assert state.result
-    assert state.summary
+    assert state.output is not None
+
+    return AgentOutput(result=state.output.result, summary=state.output.summary)

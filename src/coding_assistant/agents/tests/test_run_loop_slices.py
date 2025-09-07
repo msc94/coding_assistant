@@ -12,7 +12,7 @@ from coding_assistant.agents.tests.helpers import (
     make_test_agent,
     make_ui_mock,
 )
-from coding_assistant.agents.types import AgentDescription, AgentState, AgentContext, TextResult, Tool
+from coding_assistant.agents.types import AgentDescription, AgentState, AgentContext, TextResult, Tool, AgentOutput
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
@@ -359,8 +359,7 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
 @pytest.mark.asyncio
 async def test_errors_if_output_already_set():
     desc, state = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
-    state.result = "r"
-    state.summary = "s"
+    state.output = AgentOutput(result="r", summary="s")
     with pytest.raises(RuntimeError, match="Agent already has a result or summary."):
         await run_agent_loop(
             AgentContext(desc=desc, state=state),
