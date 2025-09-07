@@ -63,7 +63,7 @@ class OrchestratorTool(Tool):
 
     async def execute(self, parameters: dict) -> TextResult:
         # Compose parameters with the tool description as a dedicated entry
-        orch_params = [
+        params = [
             Parameter(
                 name="description",
                 description="The description of the agent's work and capabilities.",
@@ -78,7 +78,7 @@ class OrchestratorTool(Tool):
         desc = AgentDescription(
             name="Orchestrator",
             model=self._config.expert_model,
-            parameters=orch_params,
+            parameters=params,
             tools=[
                 FinishTaskTool(),
                 ShortenConversation(),
@@ -147,7 +147,7 @@ class AgentTool(Tool):
         return self._config.model
 
     async def execute(self, parameters: dict) -> TextResult:
-        agent_params = [
+        params = [
             Parameter(
                 name="description",
                 description="The description of the agent's work and capabilities.",
@@ -162,7 +162,7 @@ class AgentTool(Tool):
         desc = AgentDescription(
             name="Agent",
             model=self.get_model(parameters),
-            parameters=agent_params,
+            parameters=params,
             tools=[
                 FinishTaskTool(),
                 ShortenConversation(),
