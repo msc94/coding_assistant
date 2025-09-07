@@ -50,7 +50,7 @@ class Tool(ABC):
 
 
 # Immutable description of an agent
-@dataclass
+@dataclass(frozen=True)
 class AgentDescription:
     name: str
     model: str
