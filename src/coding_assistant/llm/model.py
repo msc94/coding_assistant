@@ -46,7 +46,7 @@ async def complete(
             tools=tools,
             model=model,
             stream=True,
-            reasoning_effort=reasoning_effort if reasoning_effort else "mid",
+            reasoning_effort=reasoning_effort,
         )
 
         chunks = []
