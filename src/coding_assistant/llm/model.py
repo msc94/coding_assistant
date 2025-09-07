@@ -3,6 +3,7 @@ import logging
 import os
 import re
 from dataclasses import dataclass
+from typing import Literal
 
 import litellm
 
@@ -22,14 +23,22 @@ class Completion:
 
 
 @functools.lru_cache(maxsize=8)
-def _parse_model_and_reasoning(model: str) -> tuple[str, str | None]:
+def _parse_model_and_reasoning(
+    model: str,
+) -> tuple[str, Literal["low", "medium", "high"] | None]:
     s = model.strip()
-    m = re.match(r"^(.+?)\s*\(([^)]*)\)\s*$", s)
+    m = re.match(r"^(.+?) \(([^)]*)\)$", s)
+
     if not m:
         return s, None
+
     base = m.group(1).strip()
-    effort = m.group(2).strip()
-    return base, effort.lower() if effort else None
+    effort = m.group(2).strip().lower()
+
+    if effort not in ("low", "medium", "high"):
+        raise ValueError(f"Invalid reasoning effort level {effort} in {model}")
+
+    return base, effort
 
 
 async def complete(
