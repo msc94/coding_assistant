@@ -25,7 +25,7 @@ def test_complete():
     add(["Implement feature"])
     add(["Write docs"])
     complete_res = complete(1)
-    assert complete_res.startswith("Completed TODO 1\n")
+    assert complete_res.startswith("Completed TODO 1: Implement feature\n")
     assert "- [x] 1: Implement feature" in complete_res
     assert "- [ ] 2: Write docs" in complete_res
     # After completion, listing should show the completed task with an x (independently via list_todos)

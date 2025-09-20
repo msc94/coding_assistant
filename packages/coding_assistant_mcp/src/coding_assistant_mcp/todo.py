@@ -24,12 +24,12 @@ class TodoManager:
         self._next_id += 1
         return todo
 
-    def complete(self, task_id: int) -> bool:
+    def complete(self, task_id: int) -> Todo | None:
         todo = self._todos.get(task_id)
         if todo:
             todo.completed = True
-            return True
-        return False
+            return todo
+        return None
 
     def format(
         self,
@@ -77,8 +77,8 @@ def complete(task_id: int) -> str:
     manager = get_manager()
 
     result = ""
-    if manager.complete(task_id):
-        result += f"Completed TODO {task_id}\n"
+    if todo := manager.complete(task_id):
+        result += f"Completed TODO {task_id}: {todo.description}\n"
     else:
         result += f"TODO {task_id} not found\n"
 
