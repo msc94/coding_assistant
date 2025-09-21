@@ -1,7 +1,6 @@
-import re
 import pytest
 
-from coding_assistant_mcp.shell import execute, set_shell_confirmation_patterns, confirm
+from coding_assistant_mcp.shell import execute, set_shell_confirmation_patterns
 
 
 @pytest.mark.asyncio
@@ -44,16 +43,27 @@ async def test_shell_execute_nonzero_with_stderr_content():
 
 
 @pytest.mark.asyncio
-async def test_shell_execute_requires_confirmation():
-    set_shell_confirmation_patterns([r"^echo "])  # space ensures pattern clarity
+async def test_shell_execute_requires_confirmation_yes(monkeypatch):
+    set_shell_confirmation_patterns([r"^echo "])  # matches
+
+    async def fake_to_thread(func, prompt):  # mimic asyncio.to_thread return value
+        return "y"
+
+    monkeypatch.setattr("asyncio.to_thread", fake_to_thread)
     out = await execute(command="echo hello")
-    assert out.startswith("CONFIRMATION REQUIRED:")
-    # Extract token from 'Token: <hex>' line
-    m = re.search(r"^Token: (\w+)$", out, re.MULTILINE)
-    assert m, f"Token line not found in output: {out}"
-    token = m.group(1)
-    out2 = await confirm(token=token)
-    assert out2 == "hello\n"
+    assert out == "hello\n"
+
+
+@pytest.mark.asyncio
+async def test_shell_execute_requires_confirmation_no(monkeypatch):
+    set_shell_confirmation_patterns([r"^echo "])  # matches
+
+    async def fake_to_thread(func, prompt):  # deny
+        return "n"
+
+    monkeypatch.setattr("asyncio.to_thread", fake_to_thread)
+    out = await execute(command="echo hello")
+    assert out == "Command execution denied."
 
 
 @pytest.mark.asyncio
