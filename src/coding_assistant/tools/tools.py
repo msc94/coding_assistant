@@ -246,10 +246,7 @@ class ExecuteShellCommandTool(Tool):
         return "execute_shell_command"
 
     def description(self) -> str:
-        return (
-            "Execute a shell command in bash (-c) and return the combined stdout/stderr. "
-            "This always invokes bash explicitly (never uses Python create_subprocess_shell / shell=True)."
-        )
+        return "Execute a shell command in bash (-c) and return the combined stdout/stderr."
 
     def parameters(self) -> dict:
         return ExecuteShellCommandSchema.model_json_schema()
@@ -272,9 +269,6 @@ class ExecuteShellCommandTool(Tool):
         logger.info(f"Executing shell command: `{command}`")
 
         try:
-            # We explicitly invoke bash instead of using create_subprocess_shell to avoid an extra shell
-            # layer and the security/quoting pitfalls of shell=True. The command string is passed as-is
-            # to "bash -lc" so normal shell features (pipes, redirects, etc.) work as expected.
             process = await asyncio.create_subprocess_exec(
                 "bash",
                 "-c",
