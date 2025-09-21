@@ -16,9 +16,27 @@ class ExecuteInput:
     ] = None
 
 
-async def _run_shell(command: str, timeout: int | None, truncate_at: int | None) -> str:
+
+shell_server = FastMCP()
+
+
+async def execute(
+    command: Annotated[str, "The shell command to execute."],
+    timeout: Annotated[Optional[int], "The timeout for the command in seconds."] = None,
+    truncate_at: Annotated[Optional[int], "Maximum number of characters to return in stdout/stderr combined."] = None,
+) -> str:
+    """Execute a shell command using `bash -c` and return combined stdout/stderr.
+
+    Behavior:
+    - Uses a default timeout of 30s if `timeout` is None.
+    - Uses a default truncation limit of 50,000 characters if `truncate_at` is None.
+    - If the process exits with non‑zero status, the return code is prepended.
+    - Output longer than the limit is truncated with a note.
+    - On timeout, returns a timeout message (no partial output).
+
+    Provide only the command; do NOT include 'bash -c'.
+    """
     command = command.strip()
-    # Defaults mirror prior tool
     effective_timeout = 30 if timeout is None else timeout
     effective_truncate_at = 50_000 if truncate_at is None else truncate_at
 
@@ -45,18 +63,6 @@ async def _run_shell(command: str, timeout: int | None, truncate_at: int | None)
         result = truncated + note
 
     return result
-
-
-shell_server = FastMCP()
-
-
-async def execute(
-    command: Annotated[str, "The shell command to execute."],
-    timeout: Annotated[Optional[int], "The timeout for the command in seconds."] = None,
-    truncate_at: Annotated[Optional[int], "Maximum number of characters to return in stdout/stderr combined."] = None,
-) -> str:
-    """Execute a shell command in bash (-c) and return combined stdout/stderr. Do not include 'bash -c' yourself; the server wraps your command accordingly."""
-    return await _run_shell(command, timeout, truncate_at)
 
 
 # Register function with FastMCP server so it's exposed, while keeping it directly callable for tests
