@@ -86,6 +86,5 @@ def create_todo_server() -> FastMCP:
     server.tool(manager.add)
     server.tool(manager.list_todos)
     server.tool(manager.complete)
-    server.tool(manager.reset)
 
     return server
