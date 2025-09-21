@@ -130,7 +130,13 @@ async def handle_tool_call(
     if tool_callbacks is None:
         tool_callbacks = NullToolCallbacks()
     try:
-        pre_result = await tool_callbacks.before_tool_execution(desc.name, tool_call.id, function_name, function_args)
+        pre_result = await tool_callbacks.before_tool_execution(
+            desc.name,
+            tool_call.id,
+            function_name,
+            function_args,
+            ui=ui,
+        )
     except Exception as e:  # Defensive: tool callbacks should not break execution
         append_tool_message(
             state.history,

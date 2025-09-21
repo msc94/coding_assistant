@@ -302,7 +302,6 @@ async def _main(args):
         tool_callbacks = ConfirmationToolCallbacks(
             tool_confirmation_patterns=args.tool_confirmation_patterns,
             shell_confirmation_patterns=args.shell_confirmation_patterns,
-            ui=PromptToolkitUI(),
         )
 
         await run_orchestrator_agent(

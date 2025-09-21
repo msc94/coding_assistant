@@ -32,6 +32,8 @@ async def confirm_shell_if_needed(*, tool_name: str, arguments: dict, patterns: 
         return None
 
     command = arguments.get("command")
+    if not isinstance(command, str):
+        return None
 
     for pat in patterns:
         if re.search(pat, command):
@@ -141,11 +143,9 @@ class ConfirmationToolCallbacks(AgentToolCallbacks):
         *,
         tool_confirmation_patterns: list[str] | None = None,
         shell_confirmation_patterns: list[str] | None = None,
-        ui,
     ):
         self._tool_patterns = tool_confirmation_patterns or []
         self._shell_patterns = shell_confirmation_patterns or []
-        self._ui = ui
 
     async def before_tool_execution(
         self,
@@ -153,12 +153,14 @@ class ConfirmationToolCallbacks(AgentToolCallbacks):
         tool_call_id: str,
         tool_name: str,
         arguments: dict,
+        *,
+        ui,
     ) -> Optional[ToolResult]:
         if result := await confirm_tool_if_needed(
             tool_name=tool_name,
             arguments=arguments,
             patterns=self._tool_patterns,
-            ui=self._ui,
+            ui=ui,
         ):
             return result
 
@@ -166,7 +168,7 @@ class ConfirmationToolCallbacks(AgentToolCallbacks):
             tool_name=tool_name,
             arguments=arguments,
             patterns=self._shell_patterns,
-            ui=self._ui,
+            ui=ui,
         ):
             return result
 

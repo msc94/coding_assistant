@@ -47,7 +47,7 @@ async def test_tool_confirmation_denied_and_allowed():
         call1,
         ctx,
         NullProgressCallbacks(),
-        tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[r"^execute_shell_command"], shell_confirmation_patterns=[], ui=ui),
+    tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[r"^execute_shell_command"], shell_confirmation_patterns=[]),
         ui=ui,
     )
 
@@ -65,7 +65,7 @@ async def test_tool_confirmation_denied_and_allowed():
         call2,
         ctx,
         NullProgressCallbacks(),
-        tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[r"^execute_shell_command"], shell_confirmation_patterns=[], ui=ui),
+    tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[r"^execute_shell_command"], shell_confirmation_patterns=[]),
         ui=ui,
     )
 
