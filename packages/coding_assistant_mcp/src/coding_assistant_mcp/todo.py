@@ -8,15 +8,6 @@ from fastmcp import FastMCP
 
 @dataclass
 class Todo:
-    """A single TODO item.
-
-    Attributes:
-        id: Autoincrementing integer identifier assigned by the manager.
-        description: Short human readable description of the task.
-        completed: Whether the task has been marked complete.
-        result: Optional result / output text captured when the task is completed.
-    """
-
     id: int
     description: str
     completed: bool = False
@@ -24,26 +15,11 @@ class Todo:
 
 
 class TodoManager:
-    """In‑memory manager for TODO items.
-
-    This class is intentionally minimal; it performs no persistence and is safe for
-    single‑process use only. IDs are allocated sequentially starting from 1.
-    """
-
     def __init__(self) -> None:
-        """Initialize an empty manager."""
         self._todos: dict[int, Todo] = dict()
         self._next_id = 1
 
     def add(self, description: str) -> Todo:
-        """Create and store a new TODO item.
-
-        Args:
-            description: Non‑empty task description.
-
-        Returns:
-            The newly created ``Todo`` instance.
-        """
         todo = Todo(id=self._next_id, description=description)
         self._todos[todo.id] = todo
         self._next_id += 1
@@ -75,11 +51,6 @@ _MANAGER: Optional[TodoManager] = None
 
 
 def get_manager() -> TodoManager:
-    """Get the process‑global ``TodoManager`` instance, creating it if needed.
-
-    Returns:
-        The singleton ``TodoManager``.
-    """
     global _MANAGER
     if _MANAGER is None:
         _MANAGER = TodoManager()
@@ -97,6 +68,7 @@ def add(descriptions: Annotated[list[str], "List of non-empty TODO description s
     Raises:
         ValueError: If any provided description is empty.
     """
+
     manager = get_manager()
     for desc in descriptions:
         if not desc:
