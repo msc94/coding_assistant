@@ -7,6 +7,7 @@ from fastmcp import FastMCP
 
 shell_server = FastMCP()
 
+
 async def execute(
     command: Annotated[str, "The shell command to execute. Do not include 'bash -c'."],
     timeout: Annotated[int, "The timeout for the command in seconds."] = 30,

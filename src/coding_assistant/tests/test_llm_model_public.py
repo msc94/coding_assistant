@@ -44,6 +44,7 @@ async def test_complete_streaming_happy_path(monkeypatch):
         async def agen():
             yield {"choices": [{"delta": {"content": "Hello"}}]}
             yield {"choices": [{"delta": {"content": " world"}}]}
+
         return agen()
 
     def fake_stream_chunk_builder(chunks):
@@ -51,8 +52,10 @@ async def test_complete_streaming_happy_path(monkeypatch):
         class _Msg:
             def __init__(self):
                 self.content = "Hello world"
+
             def model_dump(self):
                 return {"role": "assistant", "content": self.content}
+
         return {"choices": [{"message": _Msg()}], "usage": {"total_tokens": 42}}
 
     monkeypatch.setattr(llm_model.litellm, "acompletion", fake_acompletion)
@@ -93,17 +96,21 @@ async def test_complete_parses_reasoning_effort_from_model_string(monkeypatch):
     async def fake_acompletion(**kwargs):
         # capture for assertion outside
         captured.update(kwargs)
+
         async def agen():
             yield {"choices": [{"delta": {"content": "A"}}]}
             yield {"choices": [{"delta": {"content": "B"}}]}
+
         return agen()
 
     def fake_stream_chunk_builder(chunks):
         class _Msg:
             def __init__(self):
                 self.content = "AB"
+
             def model_dump(self):
                 return {"role": "assistant", "content": self.content}
+
         return {"choices": [{"message": _Msg()}], "usage": {"total_tokens": 2}}
 
     monkeypatch.setattr(llm_model.litellm, "acompletion", fake_acompletion)

@@ -139,9 +139,7 @@ class ParallelSlowTool(Tool):
     from coding_assistant.agents.callbacks import AgentToolCallbacks
     from coding_assistant.agents.types import FinishTaskResult
 
-
     # --- New high-value tests for callback & error coverage ---
-
 
     @pytest.mark.asyncio
     async def test_tool_call_malformed_arguments_records_error():
@@ -166,15 +164,21 @@ class ParallelSlowTool(Tool):
         assert msg["tool_call_id"] == "bad1"
         assert msg["content"].startswith("Error: Tool call arguments {bad are not valid JSON:"), msg["content"]
 
-
     @pytest.mark.asyncio
     async def test_tool_execution_value_error_records_error():
         class ErrorTool(Tool):
             def __init__(self):
                 self.executed = False
-            def name(self) -> str: return "err_tool"
-            def description(self) -> str: return "raises"
-            def parameters(self) -> dict: return {}
+
+            def name(self) -> str:
+                return "err_tool"
+
+            def description(self) -> str:
+                return "raises"
+
+            def parameters(self) -> dict:
+                return {}
+
             async def execute(self, parameters: dict) -> TextResult:
                 self.executed = True
                 raise ValueError("boom")
@@ -199,16 +203,22 @@ class ParallelSlowTool(Tool):
         assert msg["name"] == "err_tool"
         assert msg["content"] == "Error executing tool: boom"
 
-
     @pytest.mark.asyncio
     async def test_shell_tool_confirmation_denied_and_allowed():
         # Simulate the special shell tool name used by confirmation logic
         class FakeShellTool(Tool):
             def __init__(self):
                 self.calls: list[dict] = []
-            def name(self) -> str: return "mcp_coding_assistant_mcp_shell_execute"
-            def description(self) -> str: return "shell"
-            def parameters(self) -> dict: return {"type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"]}
+
+            def name(self) -> str:
+                return "mcp_coding_assistant_mcp_shell_execute"
+
+            def description(self) -> str:
+                return "shell"
+
+            def parameters(self) -> dict:
+                return {"type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"]}
+
             async def execute(self, parameters: dict) -> TextResult:
                 self.calls.append(parameters)
                 return TextResult(content=f"ran shell: {parameters['command']}")
@@ -225,11 +235,14 @@ class ParallelSlowTool(Tool):
         # First denied
         call1 = FakeToolCall("s1", FakeFunction("mcp_coding_assistant_mcp_shell_execute", args_json))
         from coding_assistant.callbacks import ConfirmationToolCallbacks  # local import to avoid circular
+
         await handle_tool_call(
             call1,
             ctx,
             NullProgressCallbacks(),
-            tool_callbacks=ConfirmationToolCallbacks(shell_confirmation_patterns=[r"rm -rf"], tool_confirmation_patterns=[]),
+            tool_callbacks=ConfirmationToolCallbacks(
+                shell_confirmation_patterns=[r"rm -rf"], tool_confirmation_patterns=[]
+            ),
             ui=ui,
         )
         assert tool.calls == []
@@ -246,7 +259,9 @@ class ParallelSlowTool(Tool):
             call2,
             ctx,
             NullProgressCallbacks(),
-            tool_callbacks=ConfirmationToolCallbacks(shell_confirmation_patterns=[r"rm -rf"], tool_confirmation_patterns=[]),
+            tool_callbacks=ConfirmationToolCallbacks(
+                shell_confirmation_patterns=[r"rm -rf"], tool_confirmation_patterns=[]
+            ),
             ui=ui,
         )
         assert tool.calls == [{"command": command}]
@@ -257,15 +272,26 @@ class ParallelSlowTool(Tool):
             "content": f"ran shell: {command}",
         }
 
-
     @pytest.mark.asyncio
     async def test_before_tool_execution_can_return_finish_task_result():
         # Callback should fabricate a FinishTaskResult and prevent underlying tool execution
         class RecordingFinishTaskTool(Tool):
-            def __init__(self): self.executed = False
-            def name(self) -> str: return "finish_task"
-            def description(self) -> str: return "finish"
-            def parameters(self) -> dict: return {"type": "object", "properties": {"result": {"type": "string"}, "summary": {"type": "string"}}, "required": ["result", "summary"]}
+            def __init__(self):
+                self.executed = False
+
+            def name(self) -> str:
+                return "finish_task"
+
+            def description(self) -> str:
+                return "finish"
+
+            def parameters(self) -> dict:
+                return {
+                    "type": "object",
+                    "properties": {"result": {"type": "string"}, "summary": {"type": "string"}},
+                    "required": ["result", "summary"],
+                }
+
             async def execute(self, parameters: dict) -> TextResult:
                 self.executed = True
                 return TextResult(content="should not run")
@@ -302,6 +328,7 @@ class ParallelSlowTool(Tool):
             "name": "finish_task",
             "content": "Agent output set.",
         }
+
 
 @pytest.mark.asyncio
 async def test_multiple_tool_calls_are_parallel():

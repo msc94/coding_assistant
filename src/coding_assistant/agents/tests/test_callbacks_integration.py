@@ -19,10 +19,17 @@ from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
 class EchoTool(Tool):
-    def name(self) -> str: return "echo"
-    def description(self) -> str: return "echo"
-    def parameters(self) -> dict: return {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}
-    async def execute(self, parameters: dict) -> TextResult: return TextResult(content=parameters["text"])
+    def name(self) -> str:
+        return "echo"
+
+    def description(self) -> str:
+        return "echo"
+
+    def parameters(self) -> dict:
+        return {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}
+
+    async def execute(self, parameters: dict) -> TextResult:
+        return TextResult(content=parameters["text"])
 
 
 @pytest.mark.asyncio
@@ -69,9 +76,13 @@ async def test_on_tool_message_called_with_arguments_and_result():
     for call_args in callbacks.on_tool_message.call_args_list:
         # on_tool_message is called positionally in code; args tuple
         args = call_args[0]
-        if len(args) == 4 and args[0] == desc.name and args[1] == "echo" and args[2] == {"text": "hello"} and args[3] == "hello":
+        if (
+            len(args) == 4
+            and args[0] == desc.name
+            and args[1] == "echo"
+            and args[2] == {"text": "hello"}
+            and args[3] == "hello"
+        ):
             found = True
             break
     assert found, "Expected on_tool_message to be called with echo arguments and result"
-
-

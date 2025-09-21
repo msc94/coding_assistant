@@ -86,5 +86,5 @@ class Completer(Protocol):
         *,
         model: str,
         tools: list,
-    callbacks: AgentProgressCallbacks,
+        callbacks: AgentProgressCallbacks,
     ) -> Awaitable[Completion]: ...
