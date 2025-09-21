@@ -33,7 +33,7 @@ async def test_orchestrator_tool():
         history=None,
         agent_callbacks=NullProgressCallbacks(),
         ui=NullUI(),
-    tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[], shell_confirmation_patterns=[]),
+        tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[], shell_confirmation_patterns=[]),
     )
     result = await tool.execute(parameters={"task": "Say 'Hello, World!'"})
     assert result.content == "Hello, World!"
@@ -49,7 +49,7 @@ async def test_orchestrator_tool_resume():
         history=None,
         agent_callbacks=NullProgressCallbacks(),
         ui=NullUI(),
-    tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[], shell_confirmation_patterns=[]),
+        tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[], shell_confirmation_patterns=[]),
     )
 
     result = await first.execute(parameters={"task": "Say 'Hello, World!'"})
@@ -61,7 +61,7 @@ async def test_orchestrator_tool_resume():
         history=first.history,
         agent_callbacks=NullProgressCallbacks(),
         ui=NullUI(),
-    tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[], shell_confirmation_patterns=[]),
+        tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[], shell_confirmation_patterns=[]),
     )
     result = await second.execute(
         parameters={"task": "Re-do your previous task, just translate your output to German."}
@@ -79,7 +79,9 @@ async def test_orchestrator_tool_instructions():
         history=None,
         agent_callbacks=NullProgressCallbacks(),
         ui=NullUI(),
-        tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[], shell_confirmation_patterns=[], ui=NullUI()),
+        tool_callbacks=ConfirmationToolCallbacks(
+            tool_confirmation_patterns=[], shell_confirmation_patterns=[], ui=NullUI()
+        ),
     )
     result = await tool.execute(
         parameters={
@@ -88,5 +90,3 @@ async def test_orchestrator_tool_instructions():
         }
     )
     assert result.content == "Servus, World!"
-
-
