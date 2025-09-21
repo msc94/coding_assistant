@@ -125,7 +125,6 @@ class ConfirmationToolCallbacks(AgentToolCallbacks):
         shell_confirmation_patterns: list[str] | None = None,
         ui,
     ):
-        self._re = re
         self._tool_patterns = tool_confirmation_patterns or []
         self._shell_patterns = shell_confirmation_patterns or []
         self._ui = ui
@@ -138,17 +137,24 @@ class ConfirmationToolCallbacks(AgentToolCallbacks):
         arguments: dict,
     ) -> Optional[ToolResult]:
         for pat in self._tool_patterns:
-            if self._re.search(pat, tool_name):
+            if re.search(pat, tool_name):
                 question = f"Execute tool `{tool_name}` with arguments `{arguments}`?"
                 allowed = await self._ui.confirm(question)
                 if not allowed:
                     return TextResult(content="Tool execution denied.")
-                break  # only ask once
+                break
 
         cmd = arguments.get("cmd") if isinstance(arguments, dict) else None
+        # Temporary hardcoded support for MCP shell execute tool whose parameter is named 'command'
+        if (
+            isinstance(arguments, dict)
+            and (not cmd)
+            and tool_name == "mcp_coding_assistant_mcp_shell_execute"
+        ):
+            cmd = arguments.get("command")
         if cmd and self._shell_patterns:
             for pat in self._shell_patterns:
-                if self._re.search(pat, cmd):
+                if re.search(pat, cmd):
                     question = f"Execute shell command `{cmd}` for tool `{tool_name}`?"
                     allowed = await self._ui.confirm(question)
                     if not allowed:
