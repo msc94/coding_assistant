@@ -4,8 +4,7 @@ import asyncio
 import re
 from typing import Annotated
 
-from prompt_toolkit import prompt as ptk_prompt
-from prompt_toolkit.styles import Style
+from prompt_toolkit.shortcuts import create_confirm_session
 
 from fastmcp import FastMCP
 
@@ -47,7 +46,7 @@ async def execute(
             break
 
     if matched_pattern:
-        confirmed = await asyncio.to_thread(_ask_confirmation, command)
+        confirmed = await _ask_confirmation(command)
         if not confirmed:
             return "Command execution denied."
 
@@ -79,20 +78,18 @@ shell_server.tool(execute)
 
 
 # --- internal helpers ---
-_STYLE = Style.from_dict(
-    {
-        "prompt": "ansibrightblack",
-        "command": "ansiyellow",
-    }
-)
+async def _ask_confirmation(command: str) -> bool:
+    """Prompt the user for confirmation using prompt_toolkit's create_confirm_session.
 
-
-def _ask_confirmation(command: str) -> bool:
-    """Prompt the user for confirmation using prompt_toolkit (falls back to input)."""
-    msg = f"Execute `{command}`? (y/N): "
+    Falls back to a blocking input() call if prompt_toolkit cannot create a session.
+    """
+    prompt_text = f"Execute `{command}`?"
     try:
-        answer = ptk_prompt(msg, style=_STYLE)
+        return await create_confirm_session(prompt_text).prompt_async()
     except Exception:
-        # Fallback to plain input if prompt_toolkit rendering fails (e.g., non-interactive TTY)
-        answer = input(msg)
-    return answer.strip().lower() in ("y", "yes")
+        # Fallback path: run input in a thread so we don't block the event loop.
+        def _fallback() -> bool:
+            answer = input(f"{prompt_text} (y/N): ")
+            return answer.strip().lower() in ("y", "yes")
+
+        return await asyncio.to_thread(_fallback)

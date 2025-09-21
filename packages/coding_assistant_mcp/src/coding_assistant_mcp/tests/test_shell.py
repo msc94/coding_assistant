@@ -46,7 +46,9 @@ async def test_shell_execute_nonzero_with_stderr_content():
 async def test_shell_execute_requires_confirmation_yes(monkeypatch):
     set_shell_confirmation_patterns([r"^echo "])  # matches
 
-    monkeypatch.setattr("coding_assistant_mcp.shell._ask_confirmation", lambda command: True)
+    async def yes(_command: str) -> bool:
+        return True
+    monkeypatch.setattr("coding_assistant_mcp.shell._ask_confirmation", yes)
     out = await execute(command="echo hello")
     assert out == "hello\n"
 
@@ -54,7 +56,9 @@ async def test_shell_execute_requires_confirmation_yes(monkeypatch):
 @pytest.mark.asyncio
 async def test_shell_execute_requires_confirmation_no(monkeypatch):
     set_shell_confirmation_patterns([r"^echo "])  # matches
-    monkeypatch.setattr("coding_assistant_mcp.shell._ask_confirmation", lambda command: False)
+    async def no(_command: str) -> bool:
+        return False
+    monkeypatch.setattr("coding_assistant_mcp.shell._ask_confirmation", no)
     out = await execute(command="echo hello")
     assert out == "Command execution denied."
 
