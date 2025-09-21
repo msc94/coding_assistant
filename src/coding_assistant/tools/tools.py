@@ -104,9 +104,9 @@ class OrchestratorTool(Tool):
 
             await run_agent_loop(
                 ctx,
-                self._agent_callbacks,
-                shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
+                agent_callbacks=self._agent_callbacks,
                 tool_callbacks=tool_callbacks,
+                shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
                 enable_user_feedback=self._config.enable_user_feedback,
                 completer=complete,
                 ui=self._ui,
@@ -190,8 +190,8 @@ class AgentTool(Tool):
         await run_agent_loop(
             ctx,
             agent_callbacks=self._agent_callbacks,
-            shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
             tool_callbacks=tool_callbacks,
+            shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
             enable_user_feedback=False,
             completer=complete,
             is_interruptible=False,

@@ -316,9 +316,9 @@ async def do_single_step(
 @tracer.start_as_current_span("run_agent_loop")
 async def run_agent_loop(
     ctx: AgentContext,
+    *,
     agent_callbacks: AgentProgressCallbacks,
     tool_callbacks: AgentToolCallbacks,
-    *,
     completer: Completer,
     ui: UI,
     shorten_conversation_at_tokens: int = 200_000,
