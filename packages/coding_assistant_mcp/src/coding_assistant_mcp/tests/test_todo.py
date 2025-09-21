@@ -42,10 +42,9 @@ def test_complete_with_result(manager: TodoManager):
     lines = res.splitlines()
     # Output should include completion message with result inline
     assert lines[0] == "Completed TODO 1: Run benchmarks with result: Throughput +12% vs baseline"
-    # Listing shows the result inline with an arrow now
+    # Listing shows the result inline with an arrow (single line)
     listing = manager.list_todos()
-    # Result is now rendered on a separate indented line after the task
-    assert "- [x] 1: Run benchmarks\n -> Throughput +12% vs baseline" in listing
+    assert "- [x] 1: Run benchmarks -> Throughput +12% vs baseline" in listing
     assert "- [ ] 2: Prepare release notes" in listing
 
 
