@@ -24,7 +24,7 @@ class TodoManager:
         for t in self._todos.values():
             box = "x" if t.completed else " "
             if t.result:
-                lines.append(f"- [{box}] {t.id}: {t.description}\n -> {t.result}")
+                lines.append(f"- [{box}] {t.id}: {t.description} -> {t.result}")
             else:
                 lines.append(f"- [{box}] {t.id}: {t.description}")
         return "\n".join(lines)
