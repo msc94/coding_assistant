@@ -4,6 +4,9 @@ import asyncio
 import re
 from typing import Annotated
 
+from prompt_toolkit import prompt as ptk_prompt
+from prompt_toolkit.styles import Style
+
 from fastmcp import FastMCP
 
 shell_server = FastMCP()
@@ -33,7 +36,7 @@ async def execute(
     """Execute a shell command using bash and return combined stdout/stderr.
 
     If the command matches any configured confirmation pattern, the user is
-    synchronously prompted via standard input to confirm execution (y/yes to proceed).
+    prompted (using prompt_toolkit) to confirm execution (y/yes to proceed).
     """
     command = command.strip()
 
@@ -44,10 +47,8 @@ async def execute(
             break
 
     if matched_pattern:
-        # Use a thread to avoid blocking the event loop with input()
-        prompt = f"Execute `{command}`? (y/N): "
-        answer = await asyncio.to_thread(input, prompt)
-        if answer.strip().lower() not in ("y", "yes"):
+        confirmed = await asyncio.to_thread(_ask_confirmation, command)
+        if not confirmed:
             return "Command execution denied."
 
     try:
@@ -75,3 +76,23 @@ async def execute(
     return result
 
 shell_server.tool(execute)
+
+
+# --- internal helpers ---
+_STYLE = Style.from_dict(
+    {
+        "prompt": "ansibrightblack",
+        "command": "ansiyellow",
+    }
+)
+
+
+def _ask_confirmation(command: str) -> bool:
+    """Prompt the user for confirmation using prompt_toolkit (falls back to input)."""
+    msg = f"Execute `{command}`? (y/N): "
+    try:
+        answer = ptk_prompt(msg, style=_STYLE)
+    except Exception:
+        # Fallback to plain input if prompt_toolkit rendering fails (e.g., non-interactive TTY)
+        answer = input(msg)
+    return answer.strip().lower() in ("y", "yes")
