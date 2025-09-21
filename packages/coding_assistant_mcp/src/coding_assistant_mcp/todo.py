@@ -33,11 +33,7 @@ class TodoManager:
         self,
         descriptions: Annotated[list[str], "List of non-empty TODO description strings"],
     ) -> str:
-        """Add one or more TODO items and return the updated list.
-
-        Raises:
-            ValueError: If any provided description is empty.
-        """
+        """Add TODO items and return the updated list."""
         for desc in descriptions:
             if not desc:
                 raise ValueError("Description must not be empty.")
