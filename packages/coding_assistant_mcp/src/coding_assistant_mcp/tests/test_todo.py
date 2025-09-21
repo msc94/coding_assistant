@@ -44,7 +44,8 @@ def test_complete_with_result():
     assert lines[0] == "Completed TODO 1: Run benchmarks with result: Throughput +12% vs baseline"
     # Listing shows the result inline with an arrow now
     listing = list_todos()
-    assert "- [x] 1: Run benchmarks -> Throughput +12% vs baseline" in listing
+    # Result is now rendered on a separate indented line after the task
+    assert "- [x] 1: Run benchmarks\n -> Throughput +12% vs baseline" in listing
     assert "- [ ] 2: Prepare release notes" in listing
 
 

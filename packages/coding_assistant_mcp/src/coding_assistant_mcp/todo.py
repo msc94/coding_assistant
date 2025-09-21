@@ -40,7 +40,7 @@ class TodoManager:
             box = "x" if t.completed else " "
 
             if t.result:
-                lines.append(f"- [{box}] {t.id}: {t.description}\n  -> {t.result}")
+                lines.append(f"- [{box}] {t.id}: {t.description}\n -> {t.result}")
             else:
                 lines.append(f"- [{box}] {t.id}: {t.description}")
 
