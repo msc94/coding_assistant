@@ -63,13 +63,7 @@ def reset_state() -> None:
 
 
 def add(descriptions: Annotated[list[str], "List of non-empty TODO description strings"]) -> str:
-    """Add TODO items.
-
-    Args:
-        descriptions: A list of non-empty description strings. Empty strings raise ``ValueError``.
-
-    Returns:
-        A markdown rendering of the full TODO list after insertion.
+    """Add one or more TODO items and return the updated list.
 
     Raises:
         ValueError: If any provided description is empty.
@@ -84,11 +78,7 @@ def add(descriptions: Annotated[list[str], "List of non-empty TODO description s
 
 
 def list_todos() -> str:
-    """List all TODO items.
-
-    Returns:
-        A markdown task list representation of every TODO (completed and pending).
-    """
+    """Return all TODO items as a markdown task list."""
     return get_manager().format()
 
 
@@ -96,16 +86,7 @@ def complete(
     task_id: Annotated[int, "ID of the TODO to mark complete"],
     result: Annotated[str | None, "Optional result text (one line) to attach"] = None,
 ) -> str:
-    """Complete a TODO item and return an updated list.
-
-    Args:
-        task_id: ID of the TODO to mark complete.
-        result: Optional short (one line) descriptive outcome / result text to associate. None can be passed to indicate no result.
-
-    Returns:
-        Markdown output consisting of a completion message followed by the full
-        rendered list.
-    """
+    """Mark a task complete and return a completion message plus the full list."""
     manager = get_manager()
 
     output = ""
