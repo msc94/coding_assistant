@@ -23,16 +23,19 @@ def parameters_from_model(model: BaseModel) -> list[Parameter]:
     """Create a list of Parameter objects from a validated Pydantic model instance.
 
     Rules:
-    - Skip fields whose value is ``None`` (mirrors previous optional omission logic).
+    - Skip fields whose value is ``None``
     - Lists are rendered as bullet lists (``- item``) preserving existing ``- `` prefix.
     - Primitive values (str / int / float / bool) are stringified.
-    - Any other value types raise a RuntimeError (matching previous guardrails).
+    - Any other value types raise a RuntimeError
     """
 
     params: list[Parameter] = []
     data = model.model_dump()
     for name, field in model.__class__.model_fields.items():
-        value: Any = data[name]
+        value: Any | None = data.get(name)
+
+        if value is None:
+            continue
 
         if isinstance(value, list):
             rendered_items: list[str] = []
