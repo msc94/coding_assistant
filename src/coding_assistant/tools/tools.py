@@ -219,8 +219,6 @@ class AskClientTool(Tool):
         return TextResult(content=str(answer))
 
 
-
-
 class FinishTaskSchema(BaseModel):
     result: str = Field(
         description="The result of the work on the task. The work of the agent is evaluated based on this result."
