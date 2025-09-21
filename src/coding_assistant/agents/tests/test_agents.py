@@ -3,9 +3,8 @@ import pytest
 from coding_assistant.agents.tests.helpers import make_ui_mock
 from coding_assistant.config import Config
 from coding_assistant.tools.tools import OrchestratorTool
-from coding_assistant.agents.callbacks import NullProgressCallbacks
+from coding_assistant.agents.callbacks import NullProgressCallbacks, NullToolCallbacks
 from coding_assistant.ui import NullUI
-from coding_assistant.callbacks import ConfirmationToolCallbacks
 
 # This file contains integration tests using the real LLM API.
 
@@ -33,7 +32,7 @@ async def test_orchestrator_tool():
         history=None,
         agent_callbacks=NullProgressCallbacks(),
         ui=NullUI(),
-        tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[], shell_confirmation_patterns=[]),
+        tool_callbacks=NullToolCallbacks(),
     )
     result = await tool.execute(parameters={"task": "Say 'Hello, World!'"})
     assert result.content == "Hello, World!"
@@ -49,7 +48,7 @@ async def test_orchestrator_tool_resume():
         history=None,
         agent_callbacks=NullProgressCallbacks(),
         ui=NullUI(),
-        tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[], shell_confirmation_patterns=[]),
+        tool_callbacks=NullToolCallbacks(),
     )
 
     result = await first.execute(parameters={"task": "Say 'Hello, World!'"})
@@ -61,7 +60,7 @@ async def test_orchestrator_tool_resume():
         history=first.history,
         agent_callbacks=NullProgressCallbacks(),
         ui=NullUI(),
-        tool_callbacks=ConfirmationToolCallbacks(tool_confirmation_patterns=[], shell_confirmation_patterns=[]),
+        tool_callbacks=NullToolCallbacks(),
     )
     result = await second.execute(
         parameters={"task": "Re-do your previous task, just translate your output to German."}
@@ -79,9 +78,7 @@ async def test_orchestrator_tool_instructions():
         history=None,
         agent_callbacks=NullProgressCallbacks(),
         ui=NullUI(),
-        tool_callbacks=ConfirmationToolCallbacks(
-            tool_confirmation_patterns=[], shell_confirmation_patterns=[], ui=NullUI()
-        ),
+        tool_callbacks=NullToolCallbacks(),
     )
     result = await tool.execute(
         parameters={
