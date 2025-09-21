@@ -10,19 +10,15 @@ from fastmcp import FastMCP
 
 shell_server = FastMCP()
 
-# Patterns configured at runtime via CLI args in main.py
 _SHELL_CONFIRMATION_PATTERNS: list[str] = []
 
 
+async def _ask_confirmation(command: str) -> bool:
+    prompt_text = f"Execute `{command}`?"
+    return await create_confirm_session(prompt_text).prompt_async()
+
 
 def set_shell_confirmation_patterns(patterns: list[str]) -> None:
-    """Configure the regex patterns which require explicit confirmation.
-
-    When a command matches one of these patterns, the caller must supply
-    confirm=True to actually execute it. Otherwise a descriptive message is
-    returned and the command is NOT executed.
-    """
-
     global _SHELL_CONFIRMATION_PATTERNS
     _SHELL_CONFIRMATION_PATTERNS = patterns
 
@@ -74,15 +70,5 @@ async def execute(
 
     return result
 
+
 shell_server.tool(execute)
-
-
-# --- internal helpers ---
-async def _ask_confirmation(command: str) -> bool:
-    """Prompt the user for confirmation using create_confirm_session.
-
-    If the session cannot be created, an exception will propagate and the calling
-    code will surface the error rather than attempting a fallback.
-    """
-    prompt_text = f"Execute `{command}`?"
-    return await create_confirm_session(prompt_text).prompt_async()
