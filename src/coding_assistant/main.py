@@ -165,8 +165,6 @@ def create_config_from_args(args) -> Config:
         enable_user_feedback=args.user_feedback,
         shorten_conversation_at_tokens=args.shorten_conversation_at_tokens,
         enable_ask_user=args.ask_user,
-        tool_confirmation_patterns=args.tool_confirmation_patterns,
-        shell_confirmation_patterns=args.shell_confirmation_patterns,
     )
 
 
@@ -196,7 +194,7 @@ async def run_orchestrator_agent(
     instructions: str | None,
     working_directory: Path,
     agent_callbacks: AgentProgressCallbacks,
-    shell_confirmation_patterns: list[str],
+    tool_callbacks: ConfirmationToolCallbacks,
 ):
     with tracer.start_as_current_span("run_root_agent"):
         tool = OrchestratorTool(
@@ -205,6 +203,7 @@ async def run_orchestrator_agent(
             history=history,
             agent_callbacks=agent_callbacks,
             ui=PromptToolkitUI(),
+            tool_callbacks=tool_callbacks,
         )
         orchestrator_params = {
             "task": task,
@@ -300,6 +299,12 @@ async def _main(args):
             print_reasoning=args.print_reasoning,
         )
 
+        tool_callbacks = ConfirmationToolCallbacks(
+            tool_confirmation_patterns=args.tool_confirmation_patterns,
+            shell_confirmation_patterns=args.shell_confirmation_patterns,
+            ui=PromptToolkitUI(),
+        )
+
         await run_orchestrator_agent(
             task=args.task,
             config=config,
@@ -309,7 +314,7 @@ async def _main(args):
             instructions=instructions,
             working_directory=working_directory,
             agent_callbacks=agent_callbacks,
-            shell_confirmation_patterns=args.shell_confirmation_patterns,
+            tool_callbacks=tool_callbacks,
         )
 
 
