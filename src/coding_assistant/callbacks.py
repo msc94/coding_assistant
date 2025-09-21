@@ -28,14 +28,10 @@ async def confirm_tool_if_needed(*, tool_name: str, arguments: dict, patterns: l
 
 
 async def confirm_shell_if_needed(*, tool_name: str, arguments: dict, patterns: list[str], ui) -> Optional[TextResult]:
-    command: str | None = None
-    if isinstance(arguments, dict):
-        command = arguments.get("cmd")
-        if not command and tool_name == "mcp_coding_assistant_mcp_shell_execute":
-            command = arguments.get("command")
-
-    if not command:
+    if tool_name != "mcp_coding_assistant_mcp_shell_execute":
         return None
+
+    command = arguments.get("command")
 
     for pat in patterns:
         if re.search(pat, command):
