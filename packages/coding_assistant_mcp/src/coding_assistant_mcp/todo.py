@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Annotated
 
 from fastmcp import FastMCP
 
@@ -62,7 +62,7 @@ def reset_state() -> None:
     _MANAGER = None
 
 
-def add(descriptions: list[str]) -> str:
+def add(descriptions: Annotated[list[str], "List of non-empty TODO description strings"]) -> str:
     """Add TODO items.
 
     Args:
@@ -92,12 +92,15 @@ def list_todos() -> str:
     return get_manager().format()
 
 
-def complete(task_id: int, result: str | None = None) -> str:
+def complete(
+    task_id: Annotated[int, "ID of the TODO to mark complete"],
+    result: Annotated[str | None, "Optional result text (one line) to attach"] = None,
+) -> str:
     """Complete a TODO item and return an updated list.
 
     Args:
         task_id: ID of the TODO to mark complete.
-        result: Optional descriptive outcome / result text to associate. None can be passed to indicate no result.
+        result: Optional short (one line) descriptive outcome / result text to associate. None can be passed to indicate no result.
 
     Returns:
         Markdown output consisting of a completion message followed by the full
