@@ -108,8 +108,27 @@ class RichAgentProgressCallbacks(AgentProgressCallbacks):
     def _format_tool_result(self, tool_name: str, result: str):
         if data := self._try_parse_json(result):
             return Pretty(data, expand_all=True, indent_size=2)
-        # NOTE: These are hard-coded specific tool names for which we know that they return markdown content.
-        #       In the future, we might want to have a more general mechanism to specify the content type of tool results.
+        # TODO: Avoid hard-coding tool-name prefixes to decide how to render tool results.
+        # Proper solution (incremental, non-breaking):
+        # 1) Add a CLI option (e.g. --markdown-tool-name-patterns) that accepts regex patterns. Thread these into
+        #    RichAgentProgressCallbacks and render as Markdown when the tool_name matches any pattern.
+        # 2) Keep a lightweight Markdown heuristic as a fallback when JSON parsing fails (e.g., starts with '#',
+        #    contains fenced code blocks, or Markdown tables). Use conservatively to avoid mis-rendering.
+        # Longer-term API improvement:
+        # - Extend ToolResult with an explicit content type (e.g., content_type: "text/markdown" | "application/json"),
+        #   or introduce specific result types like MarkdownResult/JsonResult/PlainTextResult so tools can declare their
+        #   output type. Prefer this over name-based checks.
+        # - For MCP tools, if/when the protocol exposes MIME/type hints, honor those. Otherwise rely on the configurable
+        #   patterns above to mark specific MCP tools as Markdown-producing.
+        # Backcompat plan:
+        # - Keep this branch until configuration-based matching exists; delete this hard-coded branch once the CLI option
+        #   is implemented and wired through RichAgentProgressCallbacks.
+        # Example sketch:
+        #   class RichAgentProgressCallbacks(..., markdown_tool_name_patterns: list[str] | None = None):
+        #       self._markdown_tool_patterns = [re.compile(p) for p in (markdown_tool_name_patterns or [])]
+        #   def _format_tool_result(...):
+        #       if any(p.search(tool_name) for p in self._markdown_tool_patterns):
+        #           return Markdown(result)
         elif tool_name.startswith("mcp_coding_assistant_mcp_todo_"):
             return Markdown(result)
         else:

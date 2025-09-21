@@ -80,24 +80,12 @@ class TodoManager:
 
 
 def create_todo_server() -> FastMCP:
-    """Create a fresh FastMCP server exposing TODO tools without global state.
-
-    Each invocation returns a new server instance with an isolated in-memory
-    store so test runs or multiple parent processes do not interfere.
-    """
-
     manager = TodoManager()
     server = FastMCP()
 
-    # Register bound methods directly; FastMCP will see signatures without 'self'.
-    for method_name in ["add", "list_todos", "complete", "reset"]:
-        server.tool(getattr(manager, method_name))
+    server.tool(manager.add)
+    server.tool(manager.list_todos)
+    server.tool(manager.complete)
+    server.tool(manager.reset)
 
     return server
-
-
-__all__ = [
-    "Todo",
-    "TodoManager",
-    "create_todo_server",
-]
