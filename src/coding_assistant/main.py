@@ -23,7 +23,7 @@ from coding_assistant.agents.callbacks import (
     AgentProgressCallbacks,
     NullProgressCallbacks,
 )
-from coding_assistant.rich_callbacks import RichAgentProgressCallbacks, ConfirmationToolCallbacks
+from coding_assistant.callbacks import RichAgentProgressCallbacks, ConfirmationToolCallbacks
 from coding_assistant.agents.types import Tool
 from coding_assistant.config import Config, MCPServerConfig
 from coding_assistant.history import (

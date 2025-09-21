@@ -10,7 +10,7 @@ from coding_assistant.agents.callbacks import (
     NullProgressCallbacks,
     NullToolCallbacks,
 )
-from coding_assistant.rich_callbacks import ConfirmationToolCallbacks
+from coding_assistant.callbacks import ConfirmationToolCallbacks
 from coding_assistant.agents.execution import run_agent_loop
 from coding_assistant.agents.parameters import Parameter, fill_parameters
 from coding_assistant.agents.types import (

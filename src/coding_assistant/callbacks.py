@@ -1,12 +1,3 @@
-"""Rich/console implementations of agent callbacks.
-
-This module contains:
-  * RichAgentProgressCallbacks: pretty printing of agent progress using rich
-  * ConfirmationToolCallbacks: asks the user to confirm tool (and shell) execution
-
-Previous names: print_callbacks.PrintAgentProgressCallbacks
-"""
-
 from __future__ import annotations
 
 from typing import Any, Optional
@@ -25,14 +16,7 @@ from coding_assistant.agents.callbacks import AgentProgressCallbacks, AgentToolC
 from coding_assistant.agents.types import ToolResult, TextResult
 
 
-async def confirm_tool_if_needed(
-    *, tool_name: str, arguments: dict, patterns: list[str], ui
-) -> Optional[TextResult]:
-    """If tool_name matches any pattern, ask the user to confirm.
-
-    Returns TextResult denial if rejected, otherwise None.
-    Only asks at most once (first matching pattern).
-    """
+async def confirm_tool_if_needed(*, tool_name: str, arguments: dict, patterns: list[str], ui) -> Optional[TextResult]:
     for pat in patterns:
         if re.search(pat, tool_name):
             question = f"Execute tool `{tool_name}` with arguments `{arguments}`?"
@@ -43,16 +27,16 @@ async def confirm_tool_if_needed(
     return None
 
 
-async def confirm_shell_if_needed(
-    *, tool_name: str, command: str | None, patterns: list[str], ui
-) -> Optional[TextResult]:
-    """If command matches any shell pattern, ask the user to confirm.
+async def confirm_shell_if_needed(*, tool_name: str, arguments: dict, patterns: list[str], ui) -> Optional[TextResult]:
+    command: str | None = None
+    if isinstance(arguments, dict):
+        command = arguments.get("cmd")
+        if not command and tool_name == "mcp_coding_assistant_mcp_shell_execute":
+            command = arguments.get("command")
 
-    Returns TextResult denial if rejected, otherwise None.
-    Only asks at most once (first matching pattern).
-    """
     if not command:
         return None
+
     for pat in patterns:
         if re.search(pat, command):
             question = f"Execute shell command `{command}` for tool `{tool_name}`?"
@@ -174,7 +158,6 @@ class ConfirmationToolCallbacks(AgentToolCallbacks):
         tool_name: str,
         arguments: dict,
     ) -> Optional[ToolResult]:
-        # Tool confirmation
         if result := await confirm_tool_if_needed(
             tool_name=tool_name,
             arguments=arguments,
@@ -183,14 +166,9 @@ class ConfirmationToolCallbacks(AgentToolCallbacks):
         ):
             return result
 
-        # Shell confirmation (supports legacy 'cmd' and MCP shell 'command')
-        cmd = arguments.get("cmd") if isinstance(arguments, dict) else None
-        if isinstance(arguments, dict) and not cmd and tool_name == "mcp_coding_assistant_mcp_shell_execute":
-            cmd = arguments.get("command")
-
         if result := await confirm_shell_if_needed(
             tool_name=tool_name,
-            command=cmd,
+            arguments=arguments,
             patterns=self._shell_patterns,
             ui=self._ui,
         ):
