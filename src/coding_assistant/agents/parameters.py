@@ -31,11 +31,8 @@ def parameters_from_model(model: BaseModel) -> list[Parameter]:
 
     params: list[Parameter] = []
     data = model.model_dump()
-    # Access model_fields on the class to avoid Pydantic deprecation warning
-    for name, field in model.__class__.model_fields.items():  # Maintains declared order
-        value: Any = data.get(name)
-        if value is None:
-            continue
+    for name, field in model.__class__.model_fields.items():
+        value: Any = data[name]
 
         if isinstance(value, list):
             rendered_items: list[str] = []
@@ -48,10 +45,13 @@ def parameters_from_model(model: BaseModel) -> list[Parameter]:
         else:
             raise RuntimeError(f"Unsupported parameter type for parameter '{name}'")
 
+        if not field.description:
+            raise RuntimeError(f"Parameter '{name}' is missing a description.")
+
         params.append(
             Parameter(
                 name=name,
-                description=field.description or "",
+                description=field.description,
                 value=value_str,
             )
         )
