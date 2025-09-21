@@ -19,7 +19,11 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 from rich.table import Table
 
-from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullProgressCallbacks
+from coding_assistant.agents.callbacks import (
+    AgentProgressCallbacks,
+    NullProgressCallbacks,
+    ConfirmationToolCallbacks,
+)
 from coding_assistant.print_callbacks import PrintAgentProgressCallbacks
 from coding_assistant.agents.types import Tool
 from coding_assistant.config import Config, MCPServerConfig
@@ -138,13 +142,12 @@ def parse_args():
         default=[],
         help="Ask for confirmation before executing a tool that matches any of the given patterns.",
     )
-    # TODO: Need to implement this (again).
-    # parser.add_argument(
-    #     "--shell-confirmation-patterns",
-    #     nargs="*",
-    #     default=[],
-    #     help="Regex patterns that would require confirmation before executing shell commands via MCP shell server.",
-    # )
+    parser.add_argument(
+        "--shell-confirmation-patterns",
+        nargs="*",
+        default=[],
+        help="Regex patterns that require confirmation before executing shell commands (matched against 'cmd' argument).",
+    )
     parser.add_argument(
         "--wait-for-debugger",
         action=BooleanOptionalAction,
@@ -156,6 +159,7 @@ def parse_args():
 
 
 def create_config_from_args(args) -> Config:
+    # Note: shell_confirmation_patterns are not yet persisted in Config model (backwards compatibility).
     return Config(
         model=args.model,
         expert_model=args.expert_model,
@@ -163,6 +167,7 @@ def create_config_from_args(args) -> Config:
         shorten_conversation_at_tokens=args.shorten_conversation_at_tokens,
         enable_ask_user=args.ask_user,
         tool_confirmation_patterns=args.tool_confirmation_patterns,
+        shell_confirmation_patterns=args.shell_confirmation_patterns,
     )
 
 
@@ -192,6 +197,7 @@ async def run_orchestrator_agent(
     instructions: str | None,
     working_directory: Path,
     agent_callbacks: AgentProgressCallbacks,
+    shell_confirmation_patterns: list[str],
 ):
     with tracer.start_as_current_span("run_root_agent"):
         tool = OrchestratorTool(
@@ -304,6 +310,7 @@ async def _main(args):
             instructions=instructions,
             working_directory=working_directory,
             agent_callbacks=agent_callbacks,
+            shell_confirmation_patterns=args.shell_confirmation_patterns,
         )
 
 

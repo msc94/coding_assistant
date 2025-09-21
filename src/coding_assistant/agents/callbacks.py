@@ -1,10 +1,10 @@
-"""Callback interfaces for agent interactions."""
-
-import json
-import textwrap
 from abc import ABC, abstractmethod
-from pprint import pformat
-from typing import Any
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+    from coding_assistant.agents.types import ToolResult  # for type hints only
+else:  # At runtime we avoid importing to prevent circular import
+    ToolResult = object  # type: ignore
 
 
 class AgentProgressCallbacks(ABC):
@@ -77,3 +77,67 @@ class NullProgressCallbacks(AgentProgressCallbacks):
 
     def on_chunks_end(self):
         pass
+
+
+class AgentToolCallbacks(ABC):
+    @abstractmethod
+    async def before_tool_execution(
+        self,
+        agent_name: str,
+        tool_call_id: str,
+        tool_name: str,
+        arguments: dict,
+    ) -> Optional[ToolResult]:  # pragma: no cover - interface
+        pass
+
+
+class NullToolCallbacks(AgentToolCallbacks):
+    async def before_tool_execution(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict) -> None:  # type: ignore[override]
+        return None
+
+
+class ConfirmationToolCallbacks(AgentToolCallbacks):
+    def __init__(
+        self,
+        *,
+        tool_confirmation_patterns: list[str] | None = None,
+        shell_confirmation_patterns: list[str] | None = None,
+        ui,
+    ):
+        import re  # local import to avoid adding to global namespace unless used
+
+        self._re = re
+        self._tool_patterns = tool_confirmation_patterns or []
+        self._shell_patterns = shell_confirmation_patterns or []
+        self._ui = ui
+
+    async def before_tool_execution(
+        self,
+        agent_name: str,
+        tool_call_id: str,
+        tool_name: str,
+        arguments: dict,
+    ) -> Optional["ToolResult"]:
+        # Tool-level confirmation
+        for pat in self._tool_patterns:
+            if self._re.search(pat, tool_name):
+                question = f"Execute tool `{tool_name}` with arguments `{arguments}`?"
+                allowed = await self._ui.confirm(question)
+                if not allowed:
+                    from coding_assistant.agents.types import TextResult  # local import
+                    return TextResult(content="Tool execution denied.")
+                break  # only ask once
+
+        # Shell command confirmation (if a 'cmd' argument exists)
+        cmd = arguments.get("cmd") if isinstance(arguments, dict) else None
+        if cmd and self._shell_patterns:
+            for pat in self._shell_patterns:
+                if self._re.search(pat, cmd):
+                    question = f"Execute shell command `{cmd}` for tool `{tool_name}`?"
+                    allowed = await self._ui.confirm(question)
+                    if not allowed:
+                        from coding_assistant.agents.types import TextResult  # local import
+                        return TextResult(content="Shell command execution denied.")
+                    break
+
+        return None

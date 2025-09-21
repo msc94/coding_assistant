@@ -4,6 +4,7 @@ from unittest.mock import Mock
 import pytest
 
 from coding_assistant.agents.execution import run_agent_loop
+from coding_assistant.agents.callbacks import NullToolCallbacks, ConfirmationToolCallbacks
 from coding_assistant.agents.tests.helpers import (
     FakeCompleter,
     FakeFunction,
@@ -34,7 +35,7 @@ async def test_on_agent_start_end_called_with_expected_args():
         AgentContext(desc=desc, state=state),
         callbacks,
         shorten_conversation_at_tokens=200_000,
-        tool_confirmation_patterns=[],
+        tool_callbacks=NullToolCallbacks(),
         enable_user_feedback=False,
         completer=completer,
         ui=make_ui_mock(),
@@ -56,7 +57,7 @@ async def test_on_tool_message_called_with_arguments_and_result():
         AgentContext(desc=desc, state=state),
         callbacks,
         shorten_conversation_at_tokens=200_000,
-        tool_confirmation_patterns=[],
+        tool_callbacks=NullToolCallbacks(),
         enable_user_feedback=False,
         completer=completer,
         ui=make_ui_mock(),

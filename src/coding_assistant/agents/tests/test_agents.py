@@ -18,8 +18,9 @@ def create_test_config() -> Config:
         expert_model=TEST_MODEL,
         enable_user_feedback=False,
         shorten_conversation_at_tokens=200_000,
-    enable_ask_user=False,
-    tool_confirmation_patterns=[],
+        enable_ask_user=False,
+        tool_confirmation_patterns=[],
+        shell_confirmation_patterns=[],
     )
 
 

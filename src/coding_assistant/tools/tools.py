@@ -5,7 +5,12 @@ import re
 
 from pydantic import BaseModel, Field
 
-from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullProgressCallbacks
+from coding_assistant.agents.callbacks import (
+    AgentProgressCallbacks,
+    NullProgressCallbacks,
+    ConfirmationToolCallbacks,
+    NullToolCallbacks,
+)
 from coding_assistant.agents.execution import run_agent_loop
 from coding_assistant.agents.parameters import Parameter, fill_parameters
 from coding_assistant.agents.types import (
@@ -91,11 +96,17 @@ class OrchestratorTool(Tool):
 
         try:
             ctx = AgentContext(desc=desc, state=state)
+            tool_callbacks = ConfirmationToolCallbacks(
+                tool_confirmation_patterns=self._config.tool_confirmation_patterns,
+                shell_confirmation_patterns=self._config.shell_confirmation_patterns,
+                ui=self._ui,
+            )
+
             await run_agent_loop(
                 ctx,
                 self._agent_callbacks,
                 shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
-                tool_confirmation_patterns=self._config.tool_confirmation_patterns,
+                tool_callbacks=tool_callbacks,
                 enable_user_feedback=self._config.enable_user_feedback,
                 completer=complete,
                 ui=self._ui,
@@ -171,11 +182,16 @@ class AgentTool(Tool):
         state = AgentState()
         ctx = AgentContext(desc=desc, state=state)
 
+        tool_callbacks = ConfirmationToolCallbacks(
+            tool_confirmation_patterns=self._config.tool_confirmation_patterns,
+            shell_confirmation_patterns=self._config.shell_confirmation_patterns,
+            ui=self._ui,
+        )
         await run_agent_loop(
             ctx,
             agent_callbacks=self._agent_callbacks,
             shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
-            tool_confirmation_patterns=self._config.tool_confirmation_patterns,
+            tool_callbacks=tool_callbacks,
             enable_user_feedback=False,
             completer=complete,
             is_interruptible=False,

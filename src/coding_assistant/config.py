@@ -17,3 +17,4 @@ class Config(BaseModel):
     shorten_conversation_at_tokens: int
     enable_ask_user: bool
     tool_confirmation_patterns: list[str]
+    shell_confirmation_patterns: list[str] = Field(default_factory=list)
