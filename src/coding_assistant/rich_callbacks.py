@@ -25,6 +25,44 @@ from coding_assistant.agents.callbacks import AgentProgressCallbacks, AgentToolC
 from coding_assistant.agents.types import ToolResult, TextResult
 
 
+async def confirm_tool_if_needed(
+    *, tool_name: str, arguments: dict, patterns: list[str], ui
+) -> Optional[TextResult]:
+    """If tool_name matches any pattern, ask the user to confirm.
+
+    Returns TextResult denial if rejected, otherwise None.
+    Only asks at most once (first matching pattern).
+    """
+    for pat in patterns:
+        if re.search(pat, tool_name):
+            question = f"Execute tool `{tool_name}` with arguments `{arguments}`?"
+            allowed = await ui.confirm(question)
+            if not allowed:
+                return TextResult(content="Tool execution denied.")
+            break
+    return None
+
+
+async def confirm_shell_if_needed(
+    *, tool_name: str, command: str | None, patterns: list[str], ui
+) -> Optional[TextResult]:
+    """If command matches any shell pattern, ask the user to confirm.
+
+    Returns TextResult denial if rejected, otherwise None.
+    Only asks at most once (first matching pattern).
+    """
+    if not command:
+        return None
+    for pat in patterns:
+        if re.search(pat, command):
+            question = f"Execute shell command `{command}` for tool `{tool_name}`?"
+            allowed = await ui.confirm(question)
+            if not allowed:
+                return TextResult(content="Shell command execution denied.")
+            break
+    return None
+
+
 class RichAgentProgressCallbacks(AgentProgressCallbacks):
     def __init__(self, print_chunks: bool = True, print_reasoning: bool = True):
         self._print_chunks = print_chunks
@@ -136,29 +174,26 @@ class ConfirmationToolCallbacks(AgentToolCallbacks):
         tool_name: str,
         arguments: dict,
     ) -> Optional[ToolResult]:
-        for pat in self._tool_patterns:
-            if re.search(pat, tool_name):
-                question = f"Execute tool `{tool_name}` with arguments `{arguments}`?"
-                allowed = await self._ui.confirm(question)
-                if not allowed:
-                    return TextResult(content="Tool execution denied.")
-                break
-
-        cmd = arguments.get("cmd") if isinstance(arguments, dict) else None
-        # Temporary hardcoded support for MCP shell execute tool whose parameter is named 'command'
-        if (
-            isinstance(arguments, dict)
-            and (not cmd)
-            and tool_name == "mcp_coding_assistant_mcp_shell_execute"
+        # Tool confirmation
+        if result := await confirm_tool_if_needed(
+            tool_name=tool_name,
+            arguments=arguments,
+            patterns=self._tool_patterns,
+            ui=self._ui,
         ):
+            return result
+
+        # Shell confirmation (supports legacy 'cmd' and MCP shell 'command')
+        cmd = arguments.get("cmd") if isinstance(arguments, dict) else None
+        if isinstance(arguments, dict) and not cmd and tool_name == "mcp_coding_assistant_mcp_shell_execute":
             cmd = arguments.get("command")
-        if cmd and self._shell_patterns:
-            for pat in self._shell_patterns:
-                if re.search(pat, cmd):
-                    question = f"Execute shell command `{cmd}` for tool `{tool_name}`?"
-                    allowed = await self._ui.confirm(question)
-                    if not allowed:
-                        return TextResult(content="Shell command execution denied.")
-                    break
+
+        if result := await confirm_shell_if_needed(
+            tool_name=tool_name,
+            command=cmd,
+            patterns=self._shell_patterns,
+            ui=self._ui,
+        ):
+            return result
 
         return None
