@@ -145,7 +145,7 @@ def parse_args():
         "--shell-confirmation-patterns",
         nargs="*",
         default=[],
-        help="Regex patterns that require confirmation before executing shell commands (matched against 'cmd' argument).",
+        help="Regex patterns that require confirmation before executing shell commands",
     )
     parser.add_argument(
         "--wait-for-debugger",
@@ -158,7 +158,6 @@ def parse_args():
 
 
 def create_config_from_args(args) -> Config:
-    # Note: shell_confirmation_patterns are not yet persisted in Config model (backwards compatibility).
     return Config(
         model=args.model,
         expert_model=args.expert_model,
