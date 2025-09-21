@@ -9,11 +9,14 @@ echo \
 MCP in $mcp_project_dir
 MCP config: $mcp_json_config"
 
+set shell_usage_instruction "- Use MCP shell tool 'shell.execute' for any shell commands. Do not assume local shell access. Examples: eza/ls, git, fd/find, rg/grep, gh, pwd."
+
 uv --project $project_dir run coding-assistant \
     --model "openai/gpt-5 (medium)" \
     --expert-model "openai/gpt-5 (high)" \
     --readable-sandbox-directories /mnt/wsl ~/.ssh \
     --writable-sandbox-directories $project_dir /tmp /dev/shm \
+    --instructions $shell_usage_instruction \
     --mcp-servers \
         $mcp_json_config \
         '{"name": "filesystem", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "{home_directory}"]}' \

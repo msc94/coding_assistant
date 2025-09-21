@@ -1,0 +1,63 @@
+from __future__ import annotations
+
+import asyncio
+from dataclasses import dataclass
+from typing import Optional, Annotated
+
+from fastmcp import FastMCP
+
+
+@dataclass
+class ExecuteInput:
+    command: Annotated[str, "The shell command to execute."]
+    timeout: Annotated[Optional[int], "The timeout for the command in seconds."] = None
+    truncate_at: Annotated[
+        Optional[int], "Max chars for combined stdout/stderr; truncates with a note when exceeded."
+    ] = None
+
+
+async def _run_shell(command: str, timeout: int | None, truncate_at: int | None) -> str:
+    command = command.strip()
+    # Defaults mirror prior tool
+    effective_timeout = 30 if timeout is None else timeout
+    effective_truncate_at = 50_000 if truncate_at is None else truncate_at
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "bash",
+            "-c",
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=effective_timeout)
+    except asyncio.TimeoutError:
+        return f"Command timed out after {effective_timeout} seconds."
+
+    if proc.returncode != 0:
+        result = f"Returncode: {proc.returncode}\n\n{stdout.decode()}"
+    else:
+        result = stdout.decode()
+
+    if len(result) > effective_truncate_at:
+        note = "\n\n[truncated output due to truncate_at limit]"
+        truncated = result[: max(0, effective_truncate_at - len(note))]
+        result = truncated + note
+
+    return result
+
+
+shell_server = FastMCP()
+
+
+async def execute(
+    command: Annotated[str, "The shell command to execute."],
+    timeout: Annotated[Optional[int], "The timeout for the command in seconds."] = None,
+    truncate_at: Annotated[Optional[int], "Maximum number of characters to return in stdout/stderr combined."] = None,
+) -> str:
+    """Execute a shell command in bash (-c) and return combined stdout/stderr. Do not include 'bash -c' yourself; the server wraps your command accordingly."""
+    return await _run_shell(command, timeout, truncate_at)
+
+
+# Register function with FastMCP server so it's exposed, while keeping it directly callable for tests
+shell_server.tool(execute)
