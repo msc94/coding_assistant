@@ -137,12 +137,13 @@ def parse_args():
         default=[],
         help="Ask for confirmation before executing a tool that matches any of the given patterns.",
     )
-    parser.add_argument(
-        "--shell-confirmation-patterns",
-        nargs="*",
-        default=[],
-        help="(Currently unused) Regex patterns that would require confirmation before executing shell commands via MCP shell server.",
-    )
+    # TODO: Need to implement this (again).
+    # parser.add_argument(
+    #     "--shell-confirmation-patterns",
+    #     nargs="*",
+    #     default=[],
+    #     help="(Currently unused) Regex patterns that would require confirmation before executing shell commands via MCP shell server.",
+    # )
     parser.add_argument(
         "--wait-for-debugger",
         action=BooleanOptionalAction,
