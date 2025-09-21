@@ -15,35 +15,8 @@ class Todo:
 
 
 class TodoManager:
-    """In-memory TODO manager with tool methods registered onto FastMCP.
-
-    Tool-facing methods (add, list_todos, complete, reset) return strings for
-    LLM consumption. Internal helpers (add_item, complete_item) return domain
-    objects.
-    """
-
     def __init__(self) -> None:
         self._todos: dict[int, Todo] = {}
-        self._next_id = 1
-
-    # --- Internal helpers -------------------------------------------------
-    def add_item(self, description: str) -> Todo:
-        todo = Todo(id=self._next_id, description=description)
-        self._todos[todo.id] = todo
-        self._next_id += 1
-        return todo
-
-    def complete_item(self, task_id: int, result: str | None = None) -> Todo | None:
-        todo = self._todos.get(task_id)
-        if todo:
-            todo.completed = True
-            if result is not None and result != "":
-                todo.result = result
-            return todo
-        return None
-
-    def reset_items(self) -> None:
-        self._todos.clear()
         self._next_id = 1
 
     def format(self) -> str:
@@ -56,7 +29,6 @@ class TodoManager:
                 lines.append(f"- [{box}] {t.id}: {t.description}")
         return "\n".join(lines)
 
-    # --- Tool methods -----------------------------------------------------
     def add(
         self,
         descriptions: Annotated[list[str], "List of non-empty TODO description strings"],
@@ -69,7 +41,9 @@ class TodoManager:
         for desc in descriptions:
             if not desc:
                 raise ValueError("Description must not be empty.")
-            self.add_item(desc)
+            todo = Todo(id=self._next_id, description=desc)
+            self._todos[todo.id] = todo
+            self._next_id += 1
         return self.format()
 
     def list_todos(self) -> str:  # noqa: D401 - concise
@@ -83,7 +57,11 @@ class TodoManager:
     ) -> str:
         """Mark a task complete and return a completion message plus the full list."""
         output = ""
-        if todo := self.complete_item(task_id, result=result):
+        todo = self._todos.get(task_id)
+        if todo:
+            todo.completed = True
+            if result is not None and result != "":
+                todo.result = result
             output += f"Completed TODO {task_id}: {todo.description}"
             if result:
                 output += f" with result: {result}\n"
@@ -96,7 +74,8 @@ class TodoManager:
 
     def reset(self) -> str:
         """Reset the in-memory TODO list."""
-        self.reset_items()
+        self._todos.clear()
+        self._next_id = 1
         return "Reset TODO list (now empty)."
 
 
@@ -115,6 +94,7 @@ def create_todo_server() -> FastMCP:
         server.tool(getattr(manager, method_name))
 
     return server
+
 
 __all__ = [
     "Todo",
