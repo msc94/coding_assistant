@@ -142,7 +142,7 @@ def parse_args():
     #     "--shell-confirmation-patterns",
     #     nargs="*",
     #     default=[],
-    #     help="(Currently unused) Regex patterns that would require confirmation before executing shell commands via MCP shell server.",
+    #     help="Regex patterns that would require confirmation before executing shell commands via MCP shell server.",
     # )
     parser.add_argument(
         "--wait-for-debugger",
