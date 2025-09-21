@@ -34,6 +34,22 @@ def test_complete():
     assert "- [ ] 2: Write docs" in text
 
 
+def test_complete_with_result():
+    add(["Run benchmarks"])
+    add(["Prepare release notes"])
+    res = complete(1, result="Throughput +12% vs baseline")
+    # Immediate output now includes the result inline on the completion line
+    first_line = res.splitlines()[0]
+    assert first_line == "Completed TODO 1: Run benchmarks with result: Throughput +12% vs baseline"
+
+    # Listing shows the result indented under the completed task
+    listing = list_todos()
+    lines = listing.splitlines()
+    idx = lines.index("- [x] 1: Run benchmarks")
+    assert lines[idx + 1] == "  Result: Throughput +12% vs baseline"
+    assert "- [ ] 2: Prepare release notes" in listing
+
+
 def test_complete_invalid():
     # No tasks yet
     res = complete(1)
