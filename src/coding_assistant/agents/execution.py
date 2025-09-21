@@ -125,55 +125,23 @@ async def handle_tool_call(
         )
         return
 
-    # Pre-execution tool callbacks (confirmation, policy etc.)
-    pre_result = None
-    if tool_callbacks is None:
-        tool_callbacks = NullToolCallbacks()
-    try:
-        pre_result = await tool_callbacks.before_tool_execution(
-            desc.name,
-            tool_call.id,
-            function_name,
-            function_args,
-            ui=ui,
-        )
-    except Exception as e:  # Defensive: tool callbacks should not break execution
-        append_tool_message(
-            state.history,
-            agent_callbacks,
-            desc.name,
-            tool_call.id,
-            function_name,
-            function_args,
-            f"Error in tool callbacks: {e}",
-        )
-        return
-    if pre_result is not None:
-        # Bypass actual tool execution, treat as if the tool returned this.
-        result_handlers = {
-            FinishTaskResult: lambda r: _handle_finish_task_result(r, state),
-            ShortenConversationResult: lambda r: _handle_shorten_conversation_result(r, desc, state, agent_callbacks),
-            TextResult: lambda r: _handle_text_result(r),
-        }
-        tool_return_summary = result_handlers[type(pre_result)](pre_result)
-        append_tool_message(
-            state.history,
-            agent_callbacks,
-            desc.name,
-            tool_call.id,
-            function_name,
-            function_args,
-            tool_return_summary,
-        )
-        return
-
     trace.get_current_span().set_attribute("function.name", function_name)
     trace.get_current_span().set_attribute("function.args", json.dumps(function_args))
 
     logger.info(f"[{tool_call.id}] [{desc.name}] Calling tool '{function_name}' with arguments {function_args}")
 
     try:
-        function_call_result = await execute_tool_call(function_name, function_args, desc.tools)
+        if callback_result := await tool_callbacks.before_tool_execution(
+            desc.name,
+            tool_call.id,
+            function_name,
+            function_args,
+            ui=ui,
+        ):
+            logger.info(f"[{tool_call.id}] [{desc.name}] Tool '{function_name}' execution was prevented via callback.")
+            function_call_result = callback_result
+        else:
+            function_call_result = await execute_tool_call(function_name, function_args, desc.tools)
     except ValueError as e:
         append_tool_message(
             state.history,
