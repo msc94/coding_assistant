@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import Optional, Annotated
+from typing import Annotated, Optional
 
 from fastmcp import FastMCP
-
 
 shell_server = FastMCP()
 
