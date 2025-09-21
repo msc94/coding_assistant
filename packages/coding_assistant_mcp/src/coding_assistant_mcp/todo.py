@@ -42,7 +42,7 @@ class TodoManager:
             self._next_id += 1
         return self.format()
 
-    def list_todos(self) -> str:  # noqa: D401 - concise
+    def list_todos(self) -> str:
         """Return all TODO items as a markdown task list."""
         return self.format()
 
