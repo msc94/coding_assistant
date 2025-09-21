@@ -22,9 +22,8 @@ from rich.table import Table
 from coding_assistant.agents.callbacks import (
     AgentProgressCallbacks,
     NullProgressCallbacks,
-    ConfirmationToolCallbacks,
 )
-from coding_assistant.print_callbacks import PrintAgentProgressCallbacks
+from coding_assistant.rich_callbacks import RichAgentProgressCallbacks, ConfirmationToolCallbacks
 from coding_assistant.agents.types import Tool
 from coding_assistant.config import Config, MCPServerConfig
 from coding_assistant.history import (
@@ -296,7 +295,7 @@ async def _main(args):
         if not args.task:
             raise ValueError("Task must be provided. Use --task to specify the task for the orchestrator agent.")
 
-        agent_callbacks = PrintAgentProgressCallbacks(
+        agent_callbacks = RichAgentProgressCallbacks(
             print_chunks=args.print_chunks,
             print_reasoning=args.print_reasoning,
         )

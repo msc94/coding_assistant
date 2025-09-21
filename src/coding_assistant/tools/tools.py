@@ -8,9 +8,9 @@ from pydantic import BaseModel, Field
 from coding_assistant.agents.callbacks import (
     AgentProgressCallbacks,
     NullProgressCallbacks,
-    ConfirmationToolCallbacks,
     NullToolCallbacks,
 )
+from coding_assistant.rich_callbacks import ConfirmationToolCallbacks
 from coding_assistant.agents.execution import run_agent_loop
 from coding_assistant.agents.parameters import Parameter, fill_parameters
 from coding_assistant.agents.types import (
