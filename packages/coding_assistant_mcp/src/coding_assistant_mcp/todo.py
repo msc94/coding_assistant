@@ -29,7 +29,7 @@ class TodoManager:
         todo = self._todos.get(task_id)
         if todo:
             todo.completed = True
-            if result is not None and result != "":
+            if result is not None:
                 todo.result = result
             return todo
         return None
@@ -38,9 +38,12 @@ class TodoManager:
         lines: list[str] = []
         for t in self._todos.values():
             box = "x" if t.completed else " "
-            lines.append(f"- [{box}] {t.id}: {t.description}")
+
             if t.result:
-                lines.append(f"  Result: {t.result}")
+                lines.append(f"- [{box}] {t.id}: {t.description} -> {t.result}")
+            else:
+                lines.append(f"- [{box}] {t.id}: {t.description}")
+
         return "\n".join(lines)
 
 
