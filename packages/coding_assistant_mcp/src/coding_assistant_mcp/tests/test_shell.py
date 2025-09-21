@@ -1,6 +1,7 @@
+import re
 import pytest
 
-from coding_assistant_mcp.shell import execute, set_shell_confirmation_patterns
+from coding_assistant_mcp.shell import execute, set_shell_confirmation_patterns, confirm
 
 
 @pytest.mark.asyncio
@@ -46,14 +47,17 @@ async def test_shell_execute_nonzero_with_stderr_content():
 async def test_shell_execute_requires_confirmation():
     set_shell_confirmation_patterns([r"^echo "])  # space ensures pattern clarity
     out = await execute(command="echo hello")
-    assert out.startswith("Confirmation required:")
-    # now confirm
-    out2 = await execute(command="echo hello", confirm=True)
+    assert out.startswith("CONFIRMATION REQUIRED:")
+    # Extract token from 'Token: <hex>' line
+    m = re.search(r"^Token: (\w+)$", out, re.MULTILINE)
+    assert m, f"Token line not found in output: {out}"
+    token = m.group(1)
+    out2 = await confirm(token=token)
     assert out2 == "hello\n"
 
 
 @pytest.mark.asyncio
 async def test_shell_execute_no_match_no_confirmation_needed():
     set_shell_confirmation_patterns([r"^echo foo"])  # different
-    out = await execute(command="echo bar", confirm=False)
+    out = await execute(command="echo bar")
     assert out == "bar\n"
