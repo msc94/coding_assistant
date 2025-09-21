@@ -246,7 +246,7 @@ class ExecuteShellCommandTool(Tool):
         return "execute_shell_command"
 
     def description(self) -> str:
-        return "Execute a shell command in bash (-c) and return the combined stdout/stderr."
+        return "Execute a shell command in bash (-c) and return the combined stdout/stderr. Do not run bash yourself, i.e. do not use 'bash -c' or 'bash -lc' in your command."
 
     def parameters(self) -> dict:
         return ExecuteShellCommandSchema.model_json_schema()
