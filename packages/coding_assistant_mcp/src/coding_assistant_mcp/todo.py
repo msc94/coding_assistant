@@ -15,32 +15,34 @@ class Todo:
 
 
 class TodoManager:
-    """In-memory TODO manager.
+    """In-memory TODO manager with tool methods registered onto FastMCP.
 
-    This object is intentionally simple; callers create a new instance per
-    server so no global state is shared across servers / tests.
+    Tool-facing methods (add, list_todos, complete, reset) return strings for
+    LLM consumption. Internal helpers (add_item, complete_item) return domain
+    objects.
     """
 
     def __init__(self) -> None:
         self._todos: dict[int, Todo] = {}
         self._next_id = 1
 
-    def add(self, description: str) -> Todo:
+    # --- Internal helpers -------------------------------------------------
+    def add_item(self, description: str) -> Todo:
         todo = Todo(id=self._next_id, description=description)
         self._todos[todo.id] = todo
         self._next_id += 1
         return todo
 
-    def complete(self, task_id: int, result: str | None = None) -> Todo | None:
+    def complete_item(self, task_id: int, result: str | None = None) -> Todo | None:
         todo = self._todos.get(task_id)
         if todo:
             todo.completed = True
-            if result is not None:
+            if result is not None and result != "":
                 todo.result = result
             return todo
         return None
 
-    def reset(self) -> None:
+    def reset_items(self) -> None:
         self._todos.clear()
         self._next_id = 1
 
@@ -54,6 +56,49 @@ class TodoManager:
                 lines.append(f"- [{box}] {t.id}: {t.description}")
         return "\n".join(lines)
 
+    # --- Tool methods -----------------------------------------------------
+    def add(
+        self,
+        descriptions: Annotated[list[str], "List of non-empty TODO description strings"],
+    ) -> str:
+        """Add one or more TODO items and return the updated list.
+
+        Raises:
+            ValueError: If any provided description is empty.
+        """
+        for desc in descriptions:
+            if not desc:
+                raise ValueError("Description must not be empty.")
+            self.add_item(desc)
+        return self.format()
+
+    def list_todos(self) -> str:  # noqa: D401 - concise
+        """Return all TODO items as a markdown task list."""
+        return self.format()
+
+    def complete(
+        self,
+        task_id: Annotated[int, "ID of the TODO to mark complete"],
+        result: Annotated[str | None, "Optional result text (one line) to attach"] = None,
+    ) -> str:
+        """Mark a task complete and return a completion message plus the full list."""
+        output = ""
+        if todo := self.complete_item(task_id, result=result):
+            output += f"Completed TODO {task_id}: {todo.description}"
+            if result:
+                output += f" with result: {result}\n"
+            else:
+                output += "\n"
+        else:
+            output += f"TODO {task_id} not found\n"
+        output += "\n" + self.format()
+        return output
+
+    def reset(self) -> str:
+        """Reset the in-memory TODO list."""
+        self.reset_items()
+        return "Reset TODO list (now empty)."
+
 
 def create_todo_server() -> FastMCP:
     """Create a fresh FastMCP server exposing TODO tools without global state.
@@ -65,65 +110,17 @@ def create_todo_server() -> FastMCP:
     manager = TodoManager()
     server = FastMCP()
 
-    # Tool functions capture the manager via closure – no globals needed.
-    def add(
-        descriptions: Annotated[list[str], "List of non-empty TODO description strings"],
-    ) -> str:
-        """Add one or more TODO items and return the updated list.
-
-        Raises:
-            ValueError: If any provided description is empty.
-        """
-        for desc in descriptions:
-            if not desc:
-                raise ValueError("Description must not be empty.")
-            manager.add(desc)
-        return manager.format()
-
-    def list_todos() -> str:
-        """Return all TODO items as a markdown task list."""
-        return manager.format()
-
-    def complete(
-        task_id: Annotated[int, "ID of the TODO to mark complete"],
-        result: Annotated[str | None, "Optional result text (one line) to attach"] = None,
-    ) -> str:
-        """Mark a task complete and return a completion message plus the full list."""
-        output = ""
-        if todo := manager.complete(task_id, result=result):
-            output += f"Completed TODO {task_id}: {todo.description}"
-            if result:
-                output += f" with result: {result}\n"
-            else:
-                output += "\n"
-        else:
-            output += f"TODO {task_id} not found\n"
-        output += "\n" + manager.format()
-        return output
-
-    def reset() -> str:
-        """Reset the in-memory TODO list."""
-        manager.reset()
-        return "Reset TODO list (now empty)."
-
-    # Register tools
-    server.tool(add)
-    server.tool(list_todos)
-    server.tool(complete)
-    server.tool(reset)
+    # Register bound methods directly; FastMCP will see signatures without 'self'.
+    for method_name in ["add", "list_todos", "complete", "reset"]:
+        server.tool(getattr(manager, method_name))
 
     # Provide an accessor to the manager for optional advanced uses / tests.
     setattr(server, "_todo_manager", manager)  # type: ignore[attr-defined]
-    # Expose raw functions for direct invocation in unit tests (not part of public API)
+    # Expose raw bound methods for direct invocation in unit tests (not part of public API)
     setattr(
         server,
         "_todo_tools",
-        {
-            "add": add,
-            "list_todos": list_todos,
-            "complete": complete,
-            "reset": reset,
-        },
+        {name: getattr(manager, name) for name in ["add", "list_todos", "complete", "reset"]},
     )  # type: ignore[attr-defined]
 
     return server
