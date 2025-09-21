@@ -79,17 +79,10 @@ shell_server.tool(execute)
 
 # --- internal helpers ---
 async def _ask_confirmation(command: str) -> bool:
-    """Prompt the user for confirmation using prompt_toolkit's create_confirm_session.
+    """Prompt the user for confirmation using create_confirm_session.
 
-    Falls back to a blocking input() call if prompt_toolkit cannot create a session.
+    If the session cannot be created, an exception will propagate and the calling
+    code will surface the error rather than attempting a fallback.
     """
     prompt_text = f"Execute `{command}`?"
-    try:
-        return await create_confirm_session(prompt_text).prompt_async()
-    except Exception:
-        # Fallback path: run input in a thread so we don't block the event loop.
-        def _fallback() -> bool:
-            answer = input(f"{prompt_text} (y/N): ")
-            return answer.strip().lower() in ("y", "yes")
-
-        return await asyncio.to_thread(_fallback)
+    return await create_confirm_session(prompt_text).prompt_async()
