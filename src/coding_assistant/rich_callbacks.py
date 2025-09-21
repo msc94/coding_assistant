@@ -9,9 +9,10 @@ Previous names: print_callbacks.PrintAgentProgressCallbacks
 
 from __future__ import annotations
 
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional
 import json
 import textwrap
+import re
 
 from rich import print
 from rich.console import Group
@@ -21,11 +22,7 @@ from rich.panel import Panel
 from rich.pretty import Pretty
 
 from coding_assistant.agents.callbacks import AgentProgressCallbacks, AgentToolCallbacks
-
-if TYPE_CHECKING:  # pragma: no cover
-    from coding_assistant.agents.types import ToolResult
-else:
-    ToolResult = object  # type: ignore
+from coding_assistant.agents.types import ToolResult, TextResult
 
 
 class RichAgentProgressCallbacks(AgentProgressCallbacks):
@@ -128,8 +125,6 @@ class ConfirmationToolCallbacks(AgentToolCallbacks):
         shell_confirmation_patterns: list[str] | None = None,
         ui,
     ):
-        import re  # local import to avoid adding to global namespace unless used
-
         self._re = re
         self._tool_patterns = tool_confirmation_patterns or []
         self._shell_patterns = shell_confirmation_patterns or []
@@ -141,14 +136,12 @@ class ConfirmationToolCallbacks(AgentToolCallbacks):
         tool_call_id: str,
         tool_name: str,
         arguments: dict,
-    ) -> Optional["ToolResult"]:
+    ) -> Optional[ToolResult]:
         for pat in self._tool_patterns:
             if self._re.search(pat, tool_name):
                 question = f"Execute tool `{tool_name}` with arguments `{arguments}`?"
                 allowed = await self._ui.confirm(question)
                 if not allowed:
-                    from coding_assistant.agents.types import TextResult  # local import
-
                     return TextResult(content="Tool execution denied.")
                 break  # only ask once
 
@@ -159,8 +152,6 @@ class ConfirmationToolCallbacks(AgentToolCallbacks):
                     question = f"Execute shell command `{cmd}` for tool `{tool_name}`?"
                     allowed = await self._ui.confirm(question)
                     if not allowed:
-                        from coding_assistant.agents.types import TextResult  # local import
-
                         return TextResult(content="Shell command execution denied.")
                     break
 
