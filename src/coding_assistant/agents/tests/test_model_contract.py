@@ -3,7 +3,7 @@ import json
 import pytest
 from unittest.mock import Mock
 
-from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks
+from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullCallbacks
 from coding_assistant.agents.execution import do_single_step
 from coding_assistant.agents.tests.helpers import (
     FakeCompleter,
@@ -100,7 +100,7 @@ async def test_reasoning_is_forwarded_and_not_stored():
     )
     ctx = AgentContext(desc=desc, state=state)
 
-    callbacks = Mock(spec=AgentCallbacks)
+    callbacks = Mock(spec=AgentProgressCallbacks)
 
     await do_single_step(
     ctx,

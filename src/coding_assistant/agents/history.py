@@ -1,9 +1,9 @@
-from coding_assistant.agents.callbacks import AgentCallbacks
+from coding_assistant.agents.callbacks import AgentProgressCallbacks
 
 
 def append_tool_message(
     history: list,
-    callbacks: AgentCallbacks,
+    callbacks: AgentProgressCallbacks,
     agent_name: str,
     tool_call_id: str,
     function_name: str,
@@ -25,7 +25,7 @@ def append_tool_message(
 
 
 def append_user_message(
-    history: list, callbacks: AgentCallbacks, agent_name: str, content: str
+    history: list, callbacks: AgentProgressCallbacks, agent_name: str, content: str
 ):
     callbacks.on_user_message(agent_name, content)
 
@@ -38,7 +38,7 @@ def append_user_message(
 
 
 def append_assistant_message(
-    history: list, callbacks: AgentCallbacks, agent_name: str, message
+    history: list, callbacks: AgentProgressCallbacks, agent_name: str, message
 ):
     if message.content:
         callbacks.on_assistant_message(agent_name, message.content)

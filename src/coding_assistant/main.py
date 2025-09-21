@@ -19,7 +19,8 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 from rich.table import Table
 
-from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks, RichCallbacks
+from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullCallbacks
+from coding_assistant.print_callbacks import PrintAgentProgressCallbacks
 from coding_assistant.agents.types import Tool
 from coding_assistant.config import Config, MCPServerConfig
 from coding_assistant.history import (
@@ -190,7 +191,7 @@ async def run_orchestrator_agent(
     conversation_summaries: list[str],
     instructions: str | None,
     working_directory: Path,
-    agent_callbacks: AgentCallbacks,
+    agent_callbacks: AgentProgressCallbacks,
 ):
     with tracer.start_as_current_span("run_root_agent"):
         tool = OrchestratorTool(
@@ -289,7 +290,7 @@ async def _main(args):
         if not args.task:
             raise ValueError("Task must be provided. Use --task to specify the task for the orchestrator agent.")
 
-        agent_callbacks = RichCallbacks(
+        agent_callbacks = PrintAgentProgressCallbacks(
             print_chunks=args.print_chunks,
             print_reasoning=args.print_reasoning,
         )

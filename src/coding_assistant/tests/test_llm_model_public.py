@@ -3,10 +3,10 @@ import types
 import pytest
 
 from coding_assistant.llm import model as llm_model
-from coding_assistant.agents.callbacks import AgentCallbacks
+from coding_assistant.agents.callbacks import AgentProgressCallbacks
 
 
-class _CB(AgentCallbacks):
+class _CB(AgentProgressCallbacks):
     def __init__(self):
         self.chunks = []
         self.end = False
@@ -27,7 +27,7 @@ class _CB(AgentCallbacks):
     def on_assistant_reasoning(self, agent_name: str, content: str):
         self.reasoning.append(content)
 
-    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict, result: str):
+    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
         pass
 
     def on_chunk(self, chunk: str):

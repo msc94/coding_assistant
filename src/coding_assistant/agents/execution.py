@@ -8,7 +8,7 @@ from json import JSONDecodeError
 
 from opentelemetry import trace
 
-from coding_assistant.agents.callbacks import AgentCallbacks
+from coding_assistant.agents.callbacks import AgentProgressCallbacks
 from coding_assistant.agents.history import append_assistant_message, append_tool_message, append_user_message
 from coding_assistant.agents.interrupts import InterruptibleSection, NonInterruptibleSection
 from coding_assistant.agents.parameters import format_parameters
@@ -69,7 +69,7 @@ def _handle_text_result(result: TextResult) -> str:
 
 
 def _handle_shorten_conversation_result(
-    result: ShortenConversationResult, desc: AgentDescription, state: AgentState, agent_callbacks: AgentCallbacks
+    result: ShortenConversationResult, desc: AgentDescription, state: AgentState, agent_callbacks: AgentProgressCallbacks
 ):
     start_message = _create_start_message(desc)
     state.history = []
@@ -92,7 +92,7 @@ def _handle_shorten_conversation_result(
 async def handle_tool_call(
     tool_call,
     ctx: AgentContext,
-    agent_callbacks: AgentCallbacks,
+    agent_callbacks: AgentProgressCallbacks,
     tool_confirmation_patterns: list[str],
     *,
     ui: UI,
@@ -182,7 +182,7 @@ async def handle_tool_call(
 async def handle_tool_calls(
     message,
     ctx: AgentContext,
-    agent_callbacks: AgentCallbacks,
+    agent_callbacks: AgentProgressCallbacks,
     tool_confirmation_patterns: list[str],
     *,
     ui: UI,
@@ -229,7 +229,7 @@ async def handle_tool_calls(
 @tracer.start_as_current_span("do_single_step")
 async def do_single_step(
     ctx: AgentContext,
-    agent_callbacks: AgentCallbacks,
+    agent_callbacks: AgentProgressCallbacks,
     shorten_conversation_at_tokens: int,
     *,
     completer: Completer,
@@ -293,7 +293,7 @@ async def do_single_step(
 @tracer.start_as_current_span("run_agent_loop")
 async def run_agent_loop(
     ctx: AgentContext,
-    agent_callbacks: AgentCallbacks,
+    agent_callbacks: AgentProgressCallbacks,
     *,
     completer: Completer,
     ui: UI,

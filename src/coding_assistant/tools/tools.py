@@ -5,7 +5,7 @@ import re
 
 from pydantic import BaseModel, Field
 
-from coding_assistant.agents.callbacks import AgentCallbacks, NullCallbacks
+from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullCallbacks
 from coding_assistant.agents.execution import run_agent_loop
 from coding_assistant.agents.parameters import Parameter, fill_parameters
 from coding_assistant.agents.types import (
@@ -42,7 +42,7 @@ class OrchestratorTool(Tool):
         config: Config,
         tools: list[Tool],
         history: list | None,
-        agent_callbacks: AgentCallbacks,
+    agent_callbacks: AgentProgressCallbacks,
         ui: UI,
     ):
         super().__init__()
@@ -124,7 +124,7 @@ class LaunchAgentSchema(BaseModel):
 
 
 class AgentTool(Tool):
-    def __init__(self, config: Config, tools: list[Tool], ui: UI, agent_callbacks: AgentCallbacks):
+    def __init__(self, config: Config, tools: list[Tool], ui: UI, agent_callbacks: AgentProgressCallbacks):
         super().__init__()
         self._config = config
         self._tools = tools
