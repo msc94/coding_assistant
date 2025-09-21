@@ -257,7 +257,7 @@ async def do_single_step(
     *,
     completer: Completer,
     ui: UI,
-    tool_callbacks: AgentToolCallbacks | None,
+    tool_callbacks: AgentToolCallbacks,
 ):
     desc = ctx.desc
     state = ctx.state
@@ -317,11 +317,11 @@ async def do_single_step(
 async def run_agent_loop(
     ctx: AgentContext,
     agent_callbacks: AgentProgressCallbacks,
+    tool_callbacks: AgentToolCallbacks,
     *,
     completer: Completer,
     ui: UI,
     shorten_conversation_at_tokens: int = 200_000,
-    tool_callbacks: AgentToolCallbacks | None = None,
     enable_user_feedback: bool = False,
     is_interruptible: bool = False,
 ):

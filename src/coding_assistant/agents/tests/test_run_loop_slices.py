@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from coding_assistant.agents.callbacks import NullProgressCallbacks
+from coding_assistant.agents.callbacks import NullProgressCallbacks, NullToolCallbacks
 from coding_assistant.agents.execution import run_agent_loop
 from coding_assistant.agents.tests.helpers import (
     FakeCompleter,
@@ -58,8 +58,9 @@ async def test_tool_selection_then_finish():
 
     await run_agent_loop(
         AgentContext(desc=desc, state=state),
-    NullProgressCallbacks(),
+        NullProgressCallbacks(),
         shorten_conversation_at_tokens=200_000,
+        tool_callbacks=NullToolCallbacks(),
         enable_user_feedback=False,
         completer=completer,
         ui=make_ui_mock(),
@@ -134,8 +135,9 @@ async def test_unknown_tool_error_then_finish(monkeypatch):
 
     await run_agent_loop(
         AgentContext(desc=desc, state=state),
-    NullProgressCallbacks(),
+        NullProgressCallbacks(),
         shorten_conversation_at_tokens=200_000,
+        tool_callbacks=NullToolCallbacks(),
         enable_user_feedback=False,
         completer=completer,
         ui=make_ui_mock(),
@@ -205,8 +207,9 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
 
     await run_agent_loop(
         AgentContext(desc=desc, state=state),
-    NullProgressCallbacks(),
+        NullProgressCallbacks(),
         shorten_conversation_at_tokens=200_000,
+        tool_callbacks=NullToolCallbacks(),
         enable_user_feedback=False,
         completer=completer,
         ui=make_ui_mock(),
@@ -296,8 +299,9 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
 
     await run_agent_loop(
         AgentContext(desc=desc, state=state),
-    NullProgressCallbacks(),
+        NullProgressCallbacks(),
         shorten_conversation_at_tokens=200_000,
+        tool_callbacks=NullToolCallbacks(),
         enable_user_feedback=False,
         completer=completer,
         ui=make_ui_mock(ask_sequence=[("Feedback: ", "Please refine")]),
@@ -346,6 +350,7 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
             AgentContext(desc=desc, state=state),
             NullProgressCallbacks(),
             shorten_conversation_at_tokens=200_000,
+            tool_callbacks=NullToolCallbacks(),
             enable_user_feedback=False,
             completer=completer,
             ui=make_ui_mock(),
@@ -368,6 +373,7 @@ async def test_errors_if_output_already_set():
             AgentContext(desc=desc, state=state),
             NullProgressCallbacks(),
             shorten_conversation_at_tokens=200_000,
+            tool_callbacks=NullToolCallbacks(),
             enable_user_feedback=False,
             completer=FakeCompleter([FakeMessage(content="irrelevant")]),
             ui=make_ui_mock(),
@@ -390,8 +396,9 @@ async def test_feedback_ok_does_not_reloop():
 
     await run_agent_loop(
         AgentContext(desc=desc, state=state),
-    NullProgressCallbacks(),
+        NullProgressCallbacks(),
         shorten_conversation_at_tokens=200_000,
+        tool_callbacks=NullToolCallbacks(),
         enable_user_feedback=True,
         completer=completer,
         ui=make_ui_mock(ask_sequence=[(f"Feedback for {desc.name}", "Ok")]),
@@ -425,8 +432,9 @@ async def test_multiple_tool_calls_processed_in_order():
 
     await run_agent_loop(
         AgentContext(desc=desc, state=state),
-    NullProgressCallbacks(),
+        NullProgressCallbacks(),
         shorten_conversation_at_tokens=200_000,
+        tool_callbacks=NullToolCallbacks(),
         enable_user_feedback=False,
         completer=completer,
         ui=make_ui_mock(),
@@ -521,8 +529,9 @@ async def test_feedback_loop_then_finish():
 
     await run_agent_loop(
         AgentContext(desc=desc, state=state),
-    NullProgressCallbacks(),
+        NullProgressCallbacks(),
         shorten_conversation_at_tokens=200_000,
+        tool_callbacks=NullToolCallbacks(),
         enable_user_feedback=True,
         completer=completer,
         ui=make_ui_mock(
