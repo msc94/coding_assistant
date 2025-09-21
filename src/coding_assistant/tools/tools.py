@@ -307,7 +307,7 @@ class FinishTaskTool(Tool):
         return "finish_task"
 
     def description(self) -> str:
-        return "Signals that the assigned task is complete. This tool must be called eventually to terminate the agent's execution loop."
+        return "Signals that the assigned task is complete. This tool must be called eventually to terminate the agent's execution loop. This tool shall not be called when there are still open questions for the client."
 
     def parameters(self) -> dict:
         return FinishTaskSchema.model_json_schema()
