@@ -20,7 +20,6 @@ uv --project $project_dir run coding-assistant \
     --readable-sandbox-directories /mnt/wsl ~/.ssh \
     --writable-sandbox-directories "$project_dir" /tmp /dev/shm \
     --instructions "$user_instructions" \
-    --shell-confirmation-patterns '^echo' \
     --mcp-servers \
         $mcp_json_config \
         '{"name": "filesystem", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "{home_directory}"]}' \
