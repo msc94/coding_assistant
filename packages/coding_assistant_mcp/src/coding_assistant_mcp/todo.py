@@ -114,15 +114,6 @@ def create_todo_server() -> FastMCP:
     for method_name in ["add", "list_todos", "complete", "reset"]:
         server.tool(getattr(manager, method_name))
 
-    # Provide an accessor to the manager for optional advanced uses / tests.
-    setattr(server, "_todo_manager", manager)  # type: ignore[attr-defined]
-    # Expose raw bound methods for direct invocation in unit tests (not part of public API)
-    setattr(
-        server,
-        "_todo_tools",
-        {name: getattr(manager, name) for name in ["add", "list_todos", "complete", "reset"]},
-    )  # type: ignore[attr-defined]
-
     return server
 
 __all__ = [
