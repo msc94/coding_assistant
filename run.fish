@@ -18,8 +18,9 @@ uv --project $project_dir run coding-assistant \
     --model "openai/gpt-5 (medium)" \
     --expert-model "openai/gpt-5 (high)" \
     --readable-sandbox-directories /mnt/wsl ~/.ssh \
-    --writable-sandbox-directories $project_dir /tmp /dev/shm \
+    --writable-sandbox-directories "$project_dir" /tmp /dev/shm \
     --instructions "$user_instructions" \
+    --shell-confirmation-patterns '^echo' \
     --mcp-servers \
         $mcp_json_config \
         '{"name": "filesystem", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "{home_directory}"]}' \
