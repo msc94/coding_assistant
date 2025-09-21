@@ -1,6 +1,6 @@
 import pytest
 
-from coding_assistant.agents.callbacks import NullCallbacks
+from coding_assistant.agents.callbacks import NullProgressCallbacks
 from coding_assistant.agents.execution import do_single_step, handle_tool_call, handle_tool_calls
 from coding_assistant.agents.tests.helpers import FakeFunction, FakeToolCall, make_test_agent, make_test_context, make_ui_mock
 from coding_assistant.agents.types import AgentDescription, AgentState, AgentContext, TextResult, Tool, ToolResult
@@ -42,7 +42,7 @@ async def test_tool_confirmation_denied_and_allowed():
 
     # First: denied
     call1 = FakeToolCall(id="1", function=FakeFunction(name="execute_shell_command", arguments=args_json))
-    await handle_tool_call(call1, ctx, NullCallbacks(), tool_confirmation_patterns=[r"^execute_shell_command"], ui=ui)
+    await handle_tool_call(call1, ctx, NullProgressCallbacks(), tool_confirmation_patterns=[r"^execute_shell_command"], ui=ui)
 
     assert tool.calls == []  # should not run
     assert state.history[-1] == {
@@ -54,7 +54,7 @@ async def test_tool_confirmation_denied_and_allowed():
 
     # Second: allowed
     call2 = FakeToolCall(id="2", function=FakeFunction(name="execute_shell_command", arguments=args_json))
-    await handle_tool_call(call2, ctx, NullCallbacks(), tool_confirmation_patterns=[r"^execute_shell_command"], ui=ui)
+    await handle_tool_call(call2, ctx, NullProgressCallbacks(), tool_confirmation_patterns=[r"^execute_shell_command"], ui=ui)
 
     assert tool.calls == [{"cmd": "echo 123"}]
     assert state.history[-1] == {
@@ -87,7 +87,7 @@ async def test_unknown_result_type_raises():
     ctx = AgentContext(desc=desc, state=state)
     tool_call = FakeToolCall(id="1", function=FakeFunction(name="weird", arguments="{}"))
     with pytest.raises(KeyError, match=r"WeirdResult"):
-        await handle_tool_call(tool_call, ctx, NullCallbacks(), tool_confirmation_patterns=[], ui=make_ui_mock())
+        await handle_tool_call(tool_call, ctx, NullProgressCallbacks(), tool_confirmation_patterns=[], ui=make_ui_mock())
 
 
 class ParallelSlowTool(Tool):
@@ -133,14 +133,14 @@ async def test_multiple_tool_calls_are_parallel():
     )
 
     start = time.monotonic()
-    await handle_tool_call(msg.tool_calls[0], ctx, NullCallbacks(), tool_confirmation_patterns=[], ui=make_ui_mock())
-    await handle_tool_call(msg.tool_calls[1], ctx, NullCallbacks(), tool_confirmation_patterns=[], ui=make_ui_mock())
+    await handle_tool_call(msg.tool_calls[0], ctx, NullProgressCallbacks(), tool_confirmation_patterns=[], ui=make_ui_mock())
+    await handle_tool_call(msg.tool_calls[1], ctx, NullProgressCallbacks(), tool_confirmation_patterns=[], ui=make_ui_mock())
     # Above would be sequential; now test real parallel variant using handle_tool_calls
     desc, state = make_test_agent(tools=[t1, t2])  # reset agent history
     ctx = AgentContext(desc=desc, state=state)
     events.clear()
     start = time.monotonic()
-    await handle_tool_calls(msg, ctx, NullCallbacks(), tool_confirmation_patterns=[], ui=make_ui_mock())
+    await handle_tool_calls(msg, ctx, NullProgressCallbacks(), tool_confirmation_patterns=[], ui=make_ui_mock())
     elapsed = time.monotonic() - start
 
     # Assert total runtime significantly less than sequential (~0.4s)

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from coding_assistant.agents.callbacks import NullCallbacks
+from coding_assistant.agents.callbacks import NullProgressCallbacks
 from coding_assistant.agents.execution import do_single_step, handle_tool_call
 from coding_assistant.agents.tests.helpers import (
     FakeFunction,
@@ -28,7 +28,7 @@ async def test_shorten_conversation_resets_history():
         ],
     )
 
-    callbacks = NullCallbacks()
+    callbacks = NullProgressCallbacks()
 
     # Invoke shorten_conversation tool directly
     summary_text = "This is the summary of prior conversation."

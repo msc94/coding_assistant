@@ -3,7 +3,7 @@ import json
 import pytest
 from unittest.mock import Mock
 
-from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullCallbacks
+from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullProgressCallbacks
 from coding_assistant.agents.execution import do_single_step
 from coding_assistant.agents.tests.helpers import (
     FakeCompleter,
@@ -46,7 +46,7 @@ async def test_do_single_step_adds_shorten_prompt_on_token_threshold():
 
     msg = await do_single_step(
         ctx,
-        NullCallbacks(),
+        NullProgressCallbacks(),
         shorten_conversation_at_tokens=1000,
         completer=completer,
         ui=make_ui_mock(),
@@ -103,7 +103,7 @@ async def test_reasoning_is_forwarded_and_not_stored():
     callbacks = Mock(spec=AgentProgressCallbacks)
 
     await do_single_step(
-    ctx,
+        ctx,
         callbacks,
         shorten_conversation_at_tokens=100_000,
         completer=completer,
@@ -133,7 +133,7 @@ async def test_requires_finish_tool():
     with pytest.raises(RuntimeError, match="Agent needs to have a `finish_task` tool in order to run a step."):
         await do_single_step(
             ctx,
-            NullCallbacks(),
+            NullProgressCallbacks(),
             shorten_conversation_at_tokens=1000,
             completer=FakeCompleter([FakeMessage(content="hi")]),
             ui=make_ui_mock(),
@@ -152,7 +152,7 @@ async def test_requires_shorten_tool():
     with pytest.raises(RuntimeError, match="Agent needs to have a `shorten_conversation` tool in order to run a step."):
         await do_single_step(
             ctx,
-            NullCallbacks(),
+            NullProgressCallbacks(),
             shorten_conversation_at_tokens=1000,
             completer=FakeCompleter([FakeMessage(content="hi")]),
             ui=make_ui_mock(),
@@ -168,7 +168,7 @@ async def test_requires_non_empty_history():
     with pytest.raises(RuntimeError, match="Agent needs to have history in order to run a step."):
         await do_single_step(
             ctx,
-            NullCallbacks(),
+            NullProgressCallbacks(),
             shorten_conversation_at_tokens=1000,
             completer=FakeCompleter([FakeMessage(content="hi")]),
             ui=make_ui_mock(),

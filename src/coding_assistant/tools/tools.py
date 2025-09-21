@@ -5,7 +5,7 @@ import re
 
 from pydantic import BaseModel, Field
 
-from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullCallbacks
+from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullProgressCallbacks
 from coding_assistant.agents.execution import run_agent_loop
 from coding_assistant.agents.parameters import Parameter, fill_parameters
 from coding_assistant.agents.types import (
@@ -82,7 +82,7 @@ class OrchestratorTool(Tool):
             tools=[
                 FinishTaskTool(),
                 ShortenConversation(),
-                AgentTool(self._config, self._tools, DefaultAnswerUI(), NullCallbacks()),
+                AgentTool(self._config, self._tools, DefaultAnswerUI(), NullProgressCallbacks()),
                 AskClientTool(self._config.enable_ask_user, ui=self._ui),
                 *self._tools,
             ],

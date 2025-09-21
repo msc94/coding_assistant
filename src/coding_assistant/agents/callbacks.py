@@ -51,7 +51,7 @@ class AgentProgressCallbacks(ABC):
         pass
 
 
-class NullCallbacks(AgentProgressCallbacks):
+class NullProgressCallbacks(AgentProgressCallbacks):
     """Null object implementation that does nothing."""
 
     def on_agent_start(self, agent_name: str, model: str, is_resuming: bool = False):
