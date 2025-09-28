@@ -6,6 +6,7 @@ readme = "README.md"
 authors = []
 license = "MIT"
 requires-python = ">=3.12"
+
 dependencies = [
     "litellm",
     "litellm[proxy]",
@@ -26,6 +27,12 @@ dependencies = [
     "prompt-toolkit",
 ]
 
+[dependency-groups]
+dev = [
+    "mypy",
+    "ruff",
+]
+
 [tool.black]
 line-length = 120
 
@@ -39,12 +46,6 @@ sandbox = "coding_assistant.sandbox:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[dependency-groups]
-dev = [
-    "mypy>=1.18.2",
-    "ruff>=0.13.2",
-]
 
 [tool.pytest.ini_options]
 markers = [
