@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+import logging
 
 from coding_assistant.tools.mcp import MCPServer
+
+logger = logging.getLogger(__name__)
 
 INSTRUCTIONS = """
 # Global instructions
@@ -71,6 +74,9 @@ def get_instructions(
         content = path.read_text().strip()
         if not content:
             continue
+
+        if not content.startswith("# "):
+            logger.warning(f"Local instructions file {path} does not start with a top-level heading")
 
         instructions = f"{instructions}\n\n{content}"
 
