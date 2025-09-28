@@ -10,7 +10,15 @@ from coding_assistant.agents.tests.helpers import (
     make_test_context,
     make_ui_mock,
 )
-from coding_assistant.agents.types import AgentDescription, AgentState, AgentContext, TextResult, Tool, ToolResult
+from coding_assistant.agents.types import (
+    AgentDescription,
+    AgentState,
+    AgentContext,
+    FinishTaskResult,
+    TextResult,
+    Tool,
+    ToolResult,
+)
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 import asyncio, time
 
