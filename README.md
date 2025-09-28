@@ -75,11 +75,8 @@ uv run coding-assistant \
   --task "Say 'Hello World'" \
   --model "gpt-5" \
   --expert-model "gpt-5" \
-  --mcp-servers '{"name": "coding_assistant_mcp", "command": "uv", "args": ["--project", "{working_directory}/packages/coding_assistant_mcp", "run", "coding-assistant-mcp"], "env": []}' \
   --mcp-servers '{"name": "filesystem", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "{home_directory}"]}' \
-  --mcp-servers '{"name": "fetch", "command": "uvx", "args": ["mcp-server-fetch"]}' \
-  --mcp-servers '{"name": "context7", "command": "npx", "args": ["-y", "@upstash/context7-mcp"], "env": []}' \
-  --mcp-servers '{"name": "tavily", "command": "npx", "args": ["-y", "tavily-mcp"], "env": ["TAVILY_API_KEY"]}'
+  --mcp-servers '{"name": "fetch", "command": "uvx", "args": ["mcp-server-fetch"]}'
 ```
 
 Notes:
