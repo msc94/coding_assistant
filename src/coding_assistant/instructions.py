@@ -1,4 +1,11 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Imported only for type checking to avoid runtime dependency/cycles
+    from coding_assistant.tools.mcp import MCPServer
 
 INSTRUCTIONS = """
 - Do not initialize a new git repository, unless your client explicitly requests it.
@@ -34,7 +41,12 @@ PLANNING_INSTRUCTIONS = """
 """.strip()
 
 
-def get_instructions(working_directory: Path, plan: bool, user_instructions: list[str]) -> str:
+def get_instructions(
+    working_directory: Path,
+    plan: bool,
+    user_instructions: list[str],
+    mcp_servers: list["MCPServer"] | None = None,
+) -> str:
     instructions = INSTRUCTIONS.strip()
 
     if plan:
@@ -44,7 +56,21 @@ def get_instructions(working_directory: Path, plan: bool, user_instructions: lis
     if local_instructions_path.exists():
         instructions = f"{instructions}\n{local_instructions_path.read_text().strip()}"
 
+    agents_md_path = working_directory / "AGENTS.md"
+    if agents_md_path.exists():
+        instructions = f"{instructions}\n{agents_md_path.read_text().strip()}"
+
     for instruction in user_instructions:
         instructions = f"{instructions}\n{instruction.strip()}"
+
+    # Append MCP server instructions (if provided)
+    if mcp_servers:
+        for s in mcp_servers:
+            try:
+                mi = getattr(s, "instructions", None)
+            except Exception:
+                mi = None
+            if isinstance(mi, str) and mi.strip():
+                instructions = f"{instructions}\n{mi.strip()}"
 
     return instructions

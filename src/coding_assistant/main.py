@@ -249,11 +249,8 @@ async def _main(args):
     else:
         resume_history = None
 
-    instructions = get_instructions(
-        working_directory=working_directory,
-        user_instructions=args.instructions,
-        plan=args.plan,
-    )
+    # We'll assemble final instructions after initializing MCP servers, so we can include
+    # any server-provided instruction banners.
 
     venv_directory = Path(os.environ["VIRTUAL_ENV"])
     logger.info(f"Using virtual environment directory: {venv_directory}")
@@ -286,6 +283,15 @@ async def _main(args):
             return
 
         tools = await get_mcp_wrapped_tools(mcp_servers)
+
+        instructions = get_instructions(
+            working_directory=working_directory,
+            user_instructions=args.instructions,
+            plan=args.plan,
+            mcp_servers=mcp_servers,
+        )
+
+        logger.info(f"Final instructions:\n\n{instructions}")
 
         if not args.task:
             raise ValueError("Task must be provided. Use --task to specify the task for the orchestrator agent.")
