@@ -8,13 +8,20 @@ from coding_assistant_mcp.shell import shell_server
 from coding_assistant_mcp.todo import create_todo_server
 
 INSTRUCTIONS = """
-# Coding Assistant MCP
+## General
 
-- Prefer the tools from `coding_assistant_mcp` if other tools provide the same functionality.
+- If other MCP servers provide the same functionality, prefer the tools from this MCP server.
+
+## Shell
+
 - Use MCP shell tool `shell_execute` to execute shell commands.
-    - Examples: eza/ls, git, fd/fdfind/find, rg/grep, gh, pwd.
+- Examples: eza/ls, git, fd/fdfind/find, rg/grep, gh, pwd.
+- Be sure that the command you are running is safe. If you are unsure, ask the user.
+- Be careful with interactive commands like e.g., `git rebase -i`.
+
+## TODO
 - Always manage a TODO list while working on your task.
-    - Use the `todo_*` tools for managing the list.
+- Use the `todo_*` tools for managing the list.
 """.strip()
 
 
