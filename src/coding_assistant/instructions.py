@@ -58,10 +58,12 @@ def get_instructions(
     user_instructions: list[str],
     mcp_servers: list[MCPServer] | None = None,
 ) -> str:
-    instructions = INSTRUCTIONS.strip()
+    sections: list[str] = []
+
+    sections.append(INSTRUCTIONS.strip())
 
     if plan:
-        instructions = f"{instructions}\n\n{PLANNING_INSTRUCTIONS.strip()}"
+        sections.append(PLANNING_INSTRUCTIONS.strip())
 
     for path in [
         working_directory / ".coding_assistant" / "instructions.md",
@@ -74,19 +76,21 @@ def get_instructions(
         if not content:
             continue
 
-        if not content.startswith("# "):
-            logger.warning(f"Local instructions file {path} does not start with a top-level heading")
-
-        instructions = f"{instructions}\n\n{content}"
+        sections.append(content)
 
     for server in mcp_servers or []:
-        if server.instructions and server.instructions.strip():
-            instructions = f"{instructions}\n\n# MCP `{server.name}` instructions\n\n{server.instructions.strip()}"
+        text = getattr(server, "instructions", None)
+        if text and text.strip():
+            sections.append(f"# MCP `{server.name}` instructions\n\n{text.strip()}")
 
     if user_instructions:
-        instructions = f"{instructions}\n\n# User-provided instructions\n\n"
+        sections.append("# User-provided instructions")
         for user_instruction in user_instructions:
             if user_instruction and user_instruction.strip():
-                instructions = f"{instructions}\n\n{user_instruction.strip()}"
+                sections.append(user_instruction.strip())
 
-    return instructions
+    for section in sections:
+        if not section.startswith("# "):
+            logger.warning(f"Instruction section {section} does not start with a top-level heading")
+
+    return "\n\n".join(sections)
