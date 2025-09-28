@@ -4,8 +4,11 @@ test:
 
 
 lint:
-    uv run ruff check --fix
-    uv run mypy .
+    uv run ruff check --fix src/coding_assistant
+    uv run --directory packages/coding_assistant_mcp ruff check --fix .
+
+    uv run mypy src/coding_assistant
+    uv run --directory packages/coding_assistant_mcp .
 
 hello-world:
     ./run.fish \
