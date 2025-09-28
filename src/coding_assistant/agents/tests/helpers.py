@@ -35,7 +35,7 @@ class FakeMessage:
         content: str | None = None,
         tool_calls: list[FakeToolCall] | None = None,
         reasoning_content: str | None = None,
-    ):
+    ) -> None:
         self.role = "assistant"
         self.content = content
         self.tool_calls = tool_calls or []
@@ -43,7 +43,7 @@ class FakeMessage:
         if reasoning_content is not None:
             self.reasoning_content = reasoning_content
 
-    def model_dump(self):
+    def model_dump(self) -> dict[str, object]:
         data: dict[str, object] = {"role": self.role}
         if self.content is not None:
             data["content"] = self.content
@@ -59,16 +59,16 @@ class FakeMessage:
             data["reasoning_content"] = getattr(self, "reasoning_content")
         return data
 
-    def model_dump_json(self):
+    def model_dump_json(self) -> str:
         return json.dumps(self.model_dump())
 
 
 class FakeCompleter:
-    def __init__(self, script):
+    def __init__(self, script: Iterable[object]) -> None:
         self.script = list(script)
         self._total_tokens = 0
 
-    async def __call__(self, messages, *, model, tools, callbacks):
+    async def __call__(self, messages, *, model, tools, callbacks) -> Completion:
         if not self.script:
             raise AssertionError("FakeCompleter script exhausted")
 
@@ -128,7 +128,7 @@ def make_test_agent(
     parameters: Sequence[Parameter] | None = None,
     tools: Iterable[Tool] | None = None,
     history: list[dict] | None = None,
-):
+) -> tuple[AgentDescription, AgentState]:
     desc = AgentDescription(
         name=name,
         model=model,
