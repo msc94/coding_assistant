@@ -221,15 +221,12 @@ async def handle_tool_calls(
         )
         aws.append(task)
 
-    while True:
-        done, pending = await asyncio.wait(aws, return_when=asyncio.FIRST_COMPLETED)
+    done, pending = await asyncio.wait(aws)
+    assert len(pending) == 0
 
-        # await the task, which will throw any exceptions stored in the future.
-        for task in done:
-            await task
-
-        if not pending:
-            break
+    # await the task, which will throw any exceptions stored in the future.
+    for task in done:
+        await task
 
 
 @tracer.start_as_current_span("do_single_step")
