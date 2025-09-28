@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+
 from coding_assistant.tools.mcp import MCPServer
 
 INSTRUCTIONS = """
-# Coding Assistant global instructions
+# Global instructions
 
 ## General
 
@@ -48,6 +49,7 @@ PLANNING_INSTRUCTIONS = """
 - Use a markdown task list for the tasks, such that the tasks can be checked off.
 """.strip()
 
+
 def get_instructions(
     working_directory: Path,
     plan: bool,
@@ -57,21 +59,30 @@ def get_instructions(
     instructions = INSTRUCTIONS.strip()
 
     if plan:
-        instructions = f"{instructions}\n{PLANNING_INSTRUCTIONS.strip()}"
+        instructions = f"{instructions}\n\n{PLANNING_INSTRUCTIONS.strip()}"
 
-    local_instructions_path = working_directory / ".coding_assistant" / "instructions.md"
-    if local_instructions_path.exists():
-        instructions = f"{instructions}\n{local_instructions_path.read_text().strip()}"
+    for path in [
+        working_directory / ".coding_assistant" / "instructions.md",
+        working_directory / "AGENTS.md",
+    ]:
+        if not path.exists():
+            continue
 
-    agents_md_path = working_directory / "AGENTS.md"
-    if agents_md_path.exists():
-        instructions = f"{instructions}\n{agents_md_path.read_text().strip()}"
+        content = path.read_text().strip()
+        if not content:
+            continue
 
-    for instruction in user_instructions:
-        instructions = f"{instructions}\n{instruction.strip()}"
+        instructions = f"{instructions}\n\n{content}"
 
     for server in mcp_servers or []:
         if server.instructions:
-            instructions = f"{instructions}\n{# }{server.instructions.strip()}"
+            instructions = f"{instructions}\n\n# MCP `{server.name}` instructions\n\n{server.instructions.strip()}"
+
+    if user_instructions:
+        instructions = f"{instructions}\n\n# User-provided instructions\n\n"
+        for instruction in user_instructions:
+            if not instruction:
+                continue
+            instructions = f"{instructions}\n\n{instruction.strip()}"
 
     return instructions
