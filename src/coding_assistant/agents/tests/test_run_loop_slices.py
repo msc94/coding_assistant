@@ -344,7 +344,7 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
             ]
         )
 
-        agent = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
+        desc, state = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
         await run_agent_loop(
             AgentContext(desc=desc, state=state),
