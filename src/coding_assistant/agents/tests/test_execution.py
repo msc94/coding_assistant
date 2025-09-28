@@ -168,7 +168,7 @@ async def test_tool_call_malformed_arguments_records_error():
     assert msg["role"] == "tool"
     assert msg["name"] == "bad_tool"
     assert msg["tool_call_id"] == "bad1"
-    assert msg["content"].startswith("Error: Tool call arguments {bad are not valid JSON:"), msg["content"]
+    assert msg["content"].startswith("Error: Tool call arguments `{bad` are not valid JSON:"), msg["content"]
 
 
 @pytest.mark.asyncio
