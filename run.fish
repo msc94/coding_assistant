@@ -9,7 +9,7 @@ set mcp_json_config (printf '{"name": "coding_assistant_mcp", "command": "uv", "
 set user_instructions (string collect "
 - Prefer the tools from `coding_assistant_mcp` if other tools provide the same functionality.
 - Use MCP shell tool `shell_execute` to execute shell commands.
-    - Examples: eza/ls, git, fd/find, rg/grep, gh, pwd.
+    - Examples: eza/ls, git, fd/fdfind/find, rg/grep, gh, pwd.
 - Always manage a TODO list while working on your task.
     - Use the `todo_*` tools for managing the list.
 ")
