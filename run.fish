@@ -8,7 +8,7 @@ set mcp_json_config (printf '{"name": "coding_assistant_mcp", "command": "uv", "
 
 uv --project $project_dir run coding-assistant \
     --model "openai/gpt-5 (medium)" \
-    --expert-model "openai/gpt-5 (high)" \
+    --expert-model "openrouter/x-ai/grok-code-fast-1" \
     --readable-sandbox-directories /mnt/wsl ~/.ssh \
     --writable-sandbox-directories "$project_dir" /tmp /dev/shm \
     --mcp-servers \
