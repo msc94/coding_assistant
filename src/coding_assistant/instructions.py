@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import TYPE_CHECKING
 import logging
+from pathlib import Path
 
 from coding_assistant.tools.mcp import MCPServer
 
@@ -81,14 +80,13 @@ def get_instructions(
         instructions = f"{instructions}\n\n{content}"
 
     for server in mcp_servers or []:
-        if server.instructions:
+        if server.instructions and server.instructions.strip():
             instructions = f"{instructions}\n\n# MCP `{server.name}` instructions\n\n{server.instructions.strip()}"
 
     if user_instructions:
         instructions = f"{instructions}\n\n# User-provided instructions\n\n"
-        for instruction in user_instructions:
-            if not instruction:
-                continue
-            instructions = f"{instructions}\n\n{instruction.strip()}"
+        for user_instruction in user_instructions:
+            if user_instruction and user_instruction.strip():
+                instructions = f"{instructions}\n\n{user_instruction.strip()}"
 
     return instructions
