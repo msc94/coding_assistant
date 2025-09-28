@@ -227,7 +227,6 @@ async def handle_tool_calls(
         # await the task, which will throw any exceptions stored in the future.
         for task in done:
             await task
-            logger.info(f"[{desc.name}] Tool call '{task.get_name()}' completed.")
 
         if not pending:
             break
