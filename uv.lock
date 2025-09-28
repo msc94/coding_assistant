@@ -350,10 +350,6 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "prompt-toolkit" },
     { name = "pydantic" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-timeout" },
-    { name = "pytest-xdist" },
     { name = "requests" },
     { name = "rich" },
 ]
@@ -361,6 +357,10 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-timeout" },
+    { name = "pytest-xdist" },
     { name = "ruff" },
     { name = "types-requests" },
 ]
@@ -378,10 +378,6 @@ requires-dist = [
     { name = "opentelemetry-sdk" },
     { name = "prompt-toolkit" },
     { name = "pydantic" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-timeout" },
-    { name = "pytest-xdist" },
     { name = "requests" },
     { name = "rich" },
 ]
@@ -389,8 +385,12 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-timeout" },
+    { name = "pytest-xdist" },
     { name = "ruff" },
-    { name = "types-requests", specifier = ">=2.32.4.20250913" },
+    { name = "types-requests" },
 ]
 
 [[package]]

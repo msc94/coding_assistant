@@ -371,7 +371,7 @@ async def test_multiple_tool_calls_are_parallel():
     elapsed = time.monotonic() - start
 
     # Assert total runtime significantly less than sequential (~0.4s)
-    assert elapsed < delay + 0.1, f"Expected parallel execution (<~{delay+0.1:.2f}s) but took {elapsed:.2f}s"
+    assert elapsed < delay + 0.1, f"Expected parallel execution (<~{delay + 0.1:.2f}s) but took {elapsed:.2f}s"
 
     # Extract ordering: we expect both starts before at least one end (start1, start2, end?, end?) not start,end,start,end
     kinds = [k for (k, _, _) in events]
@@ -380,7 +380,7 @@ async def test_multiple_tool_calls_are_parallel():
     start_indices = [i for i, k in enumerate(kinds) if k == "start"]
     assert len(start_indices) == 2, "Both tools should have started"
     assert start_indices[1] < first_end_index, (
-        "Second tool did not start before the first finished; tools likely executed sequentially. Events: " f"{events}"
+        f"Second tool did not start before the first finished; tools likely executed sequentially. Events: {events}"
     )
 
     # History should contain two tool messages (order may be any); validate both present

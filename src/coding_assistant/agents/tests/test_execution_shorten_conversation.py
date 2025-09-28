@@ -50,9 +50,7 @@ async def test_shorten_conversation_resets_history():
     assert state.history[1] == {
         "role": "user",
         "content": (
-            "A summary of your conversation with the client until now:\n\n"
-            f"{summary_text}\n\n"
-            "Please continue your work."
+            f"A summary of your conversation with the client until now:\n\n{summary_text}\n\nPlease continue your work."
         ),
     }
 
