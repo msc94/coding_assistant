@@ -74,10 +74,6 @@ async def complete(
 
         completion = litellm.stream_chunk_builder(chunks)
 
-        logger.info(f"{messages=}")
-        logger.info(f"{chunks=}")
-        logger.info(f"{completion=}")
-
         return Completion(
             message=completion["choices"][0]["message"],
             tokens=completion["usage"]["total_tokens"],
