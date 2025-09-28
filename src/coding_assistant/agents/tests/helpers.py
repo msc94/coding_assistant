@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Any, cast
 from unittest.mock import AsyncMock, Mock
 
 from coding_assistant.agents.parameters import Parameter
@@ -64,8 +64,8 @@ class FakeMessage:
 
 
 class FakeCompleter:
-    def __init__(self, script: Iterable[object]) -> None:
-        self.script = list(script)
+    def __init__(self, script: Iterable["FakeMessage" | Exception]) -> None:
+        self.script: list["FakeMessage" | Exception] = list(script)
         self._total_tokens = 0
 
     async def __call__(self, messages, *, model, tools, callbacks) -> Completion:
@@ -81,7 +81,8 @@ class FakeCompleter:
         toks = len(text)
         self._total_tokens += toks
 
-        return Completion(message=action, tokens=self._total_tokens)
+        # Cast to Any since tests use FakeMessage to stand in for the model's message type
+        return Completion(message=cast(Any, action), tokens=self._total_tokens)
 
 
 def make_ui_mock(
