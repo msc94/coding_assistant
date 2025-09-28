@@ -12,7 +12,7 @@ from coding_assistant.agents.tests.helpers import (
     make_test_agent,
     make_ui_mock,
 )
-from coding_assistant.agents.types import AgentDescription, AgentState, AgentContext, TextResult, Tool, AgentOutput
+from coding_assistant.agents.types import AgentContext, TextResult, Tool, AgentOutput
 from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 

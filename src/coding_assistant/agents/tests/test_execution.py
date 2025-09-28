@@ -4,25 +4,21 @@ import time
 import pytest
 
 from coding_assistant.agents.callbacks import AgentToolCallbacks, NullProgressCallbacks, NullToolCallbacks
-from coding_assistant.agents.execution import do_single_step, handle_tool_call, handle_tool_calls
+from coding_assistant.agents.execution import handle_tool_call, handle_tool_calls
 from coding_assistant.agents.tests.helpers import (
     FakeFunction,
     FakeToolCall,
     make_test_agent,
-    make_test_context,
     make_ui_mock,
 )
 from coding_assistant.agents.types import (
     AgentContext,
-    AgentDescription,
-    AgentState,
     FinishTaskResult,
     TextResult,
     Tool,
     ToolResult,
 )
 from coding_assistant.callbacks import ConfirmationToolCallbacks
-from coding_assistant.tools.tools import FinishTaskTool, ShortenConversation
 
 
 class FakeConfirmTool(Tool):
