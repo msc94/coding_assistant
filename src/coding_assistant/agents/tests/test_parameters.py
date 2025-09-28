@@ -52,3 +52,30 @@ def test_format_parameters_multiline_list():
     assert "- two" in output
 
 
+def test_format_parameters_list_item_with_multiline_string_indentation():
+    """A list item that contains line breaks should render as a bullet with
+    continuation lines indented under the bullet text."""
+    multi = "first line of item\nsecond line continues"
+    model = ExampleSchema(name="Eve", active=True, hobbies=[multi])
+    params = parameters_from_model(model)
+    output = format_parameters(params)
+
+    # Expect the block for hobbies to include a bullet where the continuation line
+    # is indented two extra spaces relative to the bullet marker (typical Markdown style):
+    #     - first line of item
+    #       second line continues
+    expected_snippet = "\n  - Value:\n    - first line of item\n      second line continues"
+    assert expected_snippet in output
+
+
+def test_format_parameters_list_item_preserves_prefixed_bullet_and_indents_continuation():
+    """If a list item already starts with '- ', keep it and still indent continuation lines."""
+    pre_bulleted = "- already bulleted first line\ncontinuation line"
+    model = ExampleSchema(name="Zoe", active=False, hobbies=[pre_bulleted])
+    params = parameters_from_model(model)
+    output = format_parameters(params)
+
+    expected_snippet = "\n  - Value:\n    - already bulleted first line\n      continuation line"
+    assert expected_snippet in output
+
+
