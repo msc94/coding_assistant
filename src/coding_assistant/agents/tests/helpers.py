@@ -64,8 +64,8 @@ class FakeMessage:
 
 
 class FakeCompleter:
-    def __init__(self, script: Iterable["FakeMessage" | Exception]) -> None:
-        self.script: list["FakeMessage" | Exception] = list(script)
+    def __init__(self, script: Iterable[FakeMessage | Exception]) -> None:
+        self.script: list[FakeMessage | Exception] = list(script)
         self._total_tokens = 0
 
     async def __call__(self, messages, *, model, tools, callbacks) -> Completion:
