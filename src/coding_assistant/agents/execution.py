@@ -33,8 +33,9 @@ START_MESSAGE_TEMPLATE = """
 ## General
 
 - You are an agent named `{name}`.
-- You are given a parameters by your client, among which is your task.
+- You are given a parameters by your client, among which are your task and your description.
     - It is of the utmost importance that you try your best to fulfill the task as specified by the client.
+    - The task shall be done in a way which fits your description.
 - You must use at least one tool in every step.
     - Use the `finish_task` tool when you have fully finished your task, no questions should still be open.
     - Use the `ask_user` tool if you need to ask your client a question.
