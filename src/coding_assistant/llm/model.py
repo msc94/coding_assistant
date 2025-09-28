@@ -2,7 +2,7 @@ import functools
 import logging
 import re
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal, Mapping, cast
 
 import litellm
 
@@ -37,7 +37,8 @@ def _parse_model_and_reasoning(
     if effort not in ("low", "medium", "high"):
         raise ValueError(f"Invalid reasoning effort level {effort} in {model}")
 
-    return base, effort
+    effort_lit = cast(Literal["low", "medium", "high"], effort)
+    return base, effort_lit
 
 
 async def complete(
@@ -75,10 +76,16 @@ async def complete(
         callbacks.on_chunks_end()
 
         completion = litellm.stream_chunk_builder(chunks)
+        if completion is None:
+            raise RuntimeError("litellm.stream_chunk_builder returned None")
+
+        comp_dict = cast("Mapping[str, Any]", completion)
+        choices = cast("list[Any]", comp_dict["choices"])  # type: ignore[index]
+        usage = cast("Mapping[str, Any]", comp_dict["usage"])  # type: ignore[index]
 
         return Completion(
-            message=completion["choices"][0]["message"],
-            tokens=completion["usage"]["total_tokens"],
+            message=choices[0]["message"],  # type: ignore[index]
+            tokens=cast(int, usage["total_tokens"]),  # type: ignore[index]
         )
     except Exception as e:
         logger.error(f"Error during model completion: {e}, last messages: {messages[-5:]}")

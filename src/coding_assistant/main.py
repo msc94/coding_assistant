@@ -4,7 +4,7 @@ import os
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, BooleanOptionalAction
 from pathlib import Path
 
-import debugpy
+import debugpy  # type: ignore[import-untyped]
 import requests
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter

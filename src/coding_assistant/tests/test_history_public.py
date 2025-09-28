@@ -58,7 +58,8 @@ def test_orchestrator_history_roundtrip_and_trim(tmp_path: Path, monkeypatch: py
 
     # Latest file available
     latest = get_latest_orchestrator_history_file(wd)
-    assert latest is not None and latest.exists()
+    assert latest is not None
+    assert latest.exists()
     data = load_orchestrator_history(latest)
     assert isinstance(data, list) and data[-1]["content"].startswith("msg-")
 
@@ -85,5 +86,6 @@ def test_save_orchestrator_history_strips_trailing_assistant_tool_calls(tmp_path
 
     save_orchestrator_history(wd, invalid)
     latest = get_latest_orchestrator_history_file(wd)
+    assert latest is not None
     fixed = load_orchestrator_history(latest)
     assert fixed == [{"role": "user", "content": "hi"}]
