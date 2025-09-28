@@ -41,11 +41,12 @@ def test_get_instructions_appends_mcp_instructions(tmp_path: Path):
     wd = tmp_path
 
     class _FakeServer:
-        def __init__(self, instructions: str | None):
+        def __init__(self, name: str, instructions: str | None):
+            self.name = name
             self.instructions = instructions
 
-    s1 = _FakeServer("- Use server1 tools whenever possible.")
-    s2 = _FakeServer("- Server2: prefer safe operations.")
+    s1 = _FakeServer("server1", "- Use server1 tools whenever possible.")
+    s2 = _FakeServer("server2", "- Server2: prefer safe operations.")
 
     instr = get_instructions(
         working_directory=wd,
@@ -61,23 +62,20 @@ def test_get_instructions_appends_mcp_instructions(tmp_path: Path):
 def test_get_instructions_ignores_empty_or_missing_mcp_instructions(tmp_path: Path):
     wd = tmp_path
 
-    class _NoAttrServer:
-        pass
-
     class _BlankServer:
-        def __init__(self, instructions: str | None):
+        def __init__(self, name: str, instructions: str | None):
+            self.name = name
             self.instructions = instructions
 
-    s1 = _BlankServer("   ")  # only whitespace
-    s2 = _BlankServer("")  # empty
-    s3 = _BlankServer(None)  # None
-    s4 = _NoAttrServer()  # no instructions attribute
+    s1 = _BlankServer("s1", "   ")  # only whitespace
+    s2 = _BlankServer("s2", "")  # empty
+    s3 = _BlankServer("s3", None)  # None
 
     instr = get_instructions(
         working_directory=wd,
         plan=False,
         user_instructions=[],
-        mcp_servers=cast(list[MCPServer], [s1, s2, s3, s4]),
+        mcp_servers=cast(list[MCPServer], [s1, s2, s3]),
     )
 
     # Ensure baseline rule present and nothing from the servers leaked
