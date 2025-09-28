@@ -33,12 +33,12 @@ START_MESSAGE_TEMPLATE = """
 ## General
 
 - You are an agent named `{name}`.
-- You are given parameters by your client, among which are your task and your description.
+- You are given a set of parameters by your client, among which are your task and your description.
     - It is of the utmost importance that you try your best to fulfill the task as specified by the client.
     - The task shall be done in a way which fits your description.
 - You must use at least one tool in every step.
     - Use the `finish_task` tool when you have fully finished your task, no questions should still be open.
-    - Use the `ask_user` tool if you need to ask your client a question.
+    - Use the `ask_client` tool if you need to ask your client a question.
 - It can happen that you receive feedback from your client while working on your task.
     - If you receive feedback, you must address it before finishing your task.
 
@@ -202,7 +202,7 @@ async def handle_tool_calls(
             state.history,
             agent_callbacks,
             desc.name,
-            "I detected a step from you without any tool calls. This is not allowed. If you want to ask the client something, please use the `ask_user` tool. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
+            "I detected a step from you without any tool calls. This is not allowed. If you want to ask the client something, please use the `ask_client` tool. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
         )
         return
 
