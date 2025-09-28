@@ -2,6 +2,11 @@ test:
     uv run pytest -n auto -m "not slow"
     uv run --directory packages/coding_assistant_mcp pytest
 
+
+lint:
+    uv run ruff check --fix
+    uv run mypy .
+
 hello-world:
     ./run.fish \
     --no-user-feedback \
@@ -14,7 +19,3 @@ commit:
 review:
     ./run.fish \
     --task "Review changes in the current branch like a senior engineer would do. Stop if there are uncommitted changes, or the branch cannot be diffed against master. If you find issues, ask the client if you should fix them. If you fix something, commit the changes and continue reviewing. Check if there already exists a PR for the branch using the \`gh\` tool. If yes, check if the existing PR has a proper description and title. If not, change the title and description to something more appropriate, again using the \`gh\` tool."
-
-lint:
-    ./run.fish \
-    --task "First, run `uv run ruff check --fix`, fix the errors, then commit. Second, run `mypy .`, where possible fix the errors, then commit."
