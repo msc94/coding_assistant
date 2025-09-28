@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import sys
-from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, BooleanOptionalAction, SUPPRESS
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, BooleanOptionalAction
 from pathlib import Path
 
 import debugpy
@@ -16,9 +16,9 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from rich import print as rich_print
 from rich.console import Console
 from rich.logging import RichHandler
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
-from rich.markdown import Markdown
 
 from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullProgressCallbacks
 from coding_assistant.agents.types import Tool
