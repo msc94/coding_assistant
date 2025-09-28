@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import sys
-from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, BooleanOptionalAction
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, BooleanOptionalAction, SUPPRESS
 from pathlib import Path
 
 import debugpy
@@ -18,6 +18,7 @@ from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
 from rich.table import Table
+from rich.markdown import Markdown
 
 from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullProgressCallbacks
 from coding_assistant.agents.types import Tool
@@ -58,6 +59,11 @@ def parse_args():
         help="Resume from a specific orchestrator history file.",
     )
     parser.add_argument("--print-mcp-tools", action="store_true", help="Print all available tools from MCP servers.")
+    parser.add_argument(
+        "--print-instructions",
+        action="store_true",
+        help="Print the instructions that will be given to the orchestrator agent and exit.",
+    )
     parser.add_argument("--model", type=str, default="gpt-5", help="Model to use for the orchestrator agent.")
     parser.add_argument("--expert-model", type=str, default="gpt-5", help="Expert model to use.")
     parser.add_argument(
@@ -291,7 +297,9 @@ async def _main(args):
             mcp_servers=mcp_servers,
         )
 
-        logger.info(f"Final instructions:\n\n{instructions}")
+        if args.print_instructions:
+            rich_print(Panel(Markdown(instructions), title="Instructions"))
+            return
 
         if not args.task:
             raise ValueError("Task must be provided. Use --task to specify the task for the orchestrator agent.")
