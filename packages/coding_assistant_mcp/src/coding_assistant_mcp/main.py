@@ -20,7 +20,7 @@ INSTRUCTIONS = """
 - Be careful with interactive commands like e.g., `git rebase -i`.
 - Use `pwd` to determine the project you are working on.
 - Use `cp`/`mv` to copy/move files.
-- Do not use the shell to apply edits to files (e.g. via `applypatch`)
+- Do not use the shell to apply edits to files (e.g. via `applypatch`), use other tools instead.
 
 ## TODO
 - Always manage a TODO list while working on your task.
