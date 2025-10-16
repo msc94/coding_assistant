@@ -18,6 +18,9 @@ INSTRUCTIONS = """
 - Examples: eza/ls, git, fd/fdfind/find, rg/grep, gh, pwd.
 - Be sure that the command you are running is safe. If you are unsure, ask the user.
 - Be careful with interactive commands like e.g., `git rebase -i`.
+- Use `pwd` to determine the project you are working on.
+- Use `cp`/`mv` to copy/move files.
+- Do not use the shell to apply edits to files (e.g. via `applypatch`)
 
 ## TODO
 - Always manage a TODO list while working on your task.
