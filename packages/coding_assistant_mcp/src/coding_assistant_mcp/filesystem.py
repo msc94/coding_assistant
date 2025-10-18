@@ -187,7 +187,6 @@ class FilesystemManager:
     def clear_clipboard(self) -> str:
         self._entry = None
         return "Cleared clipboard."
-
     def write_file(
         self,
         path: Annotated[Path, "File path, parent directories created as needed."],
@@ -195,10 +194,11 @@ class FilesystemManager:
     ) -> str:
         old_contents = path.read_text(encoding="utf-8") if path.exists() else ""
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
-        self._last_edit = EditRecord(path, old_contents.splitlines(), content.splitlines())
+        # Enforce a trailing newline for consistency with edit operations
+        content_to_write = content if content.endswith("\n") else content + "\n"
+        path.write_text(content_to_write, encoding="utf-8")
+        self._last_edit = EditRecord(path, old_contents.splitlines(), content_to_write.splitlines())
         return _unified_diff(path, self._last_edit)
-
     def edit_file(
         self,
         path: Annotated[Path, "File path."],

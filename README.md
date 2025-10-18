@@ -76,6 +76,13 @@ uv run coding-assistant \
   --model "gpt-5" \
   --expert-model "gpt-5" \
   --mcp-servers \
+    '{"name": "coding_assistant_mcp", "command": "uv", "args": ["--project", "{working_directory}/packages/coding_assistant_mcp", "run", "coding-assistant-mcp"], "env": []}'
+```
+uv run coding-assistant \
+  --task "Say 'Hello World'" \
+  --model "gpt-5" \
+  --expert-model "gpt-5" \
+  --mcp-servers \
     '{"name": "filesystem", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "{home_directory}"]}' \
     '{"name": "fetch", "command": "uvx", "args": ["mcp-server-fetch"]}'
 ```
@@ -100,46 +107,6 @@ Notes:
 
 Run `coding-assistant --help` to see all options.
 
-## MCP Servers
-
-Pass MCP servers with repeated `--mcp-servers` flags as JSON strings:
-
-```json
-{
-  "name": "filesystem",
-  "command": "npx",
-  "args": ["-y", "@modelcontextprotocol/server-filesystem", "{home_directory}"]
-}
-```
-
-### Built-in: Coding Assistant MCP
-
-This repository includes a built-in MCP server (package `packages/coding_assistant_mcp`) that provides:
-- shell: `shell_execute` — execute shell commands (see behavior below)
-- todo: `todo_add`, `todo_list_todos`, `todo_complete` — simple in-memory TODO list
-- clipboard: `clipboard_copy_range`, `clipboard_cut_range`, `clipboard_paste`, `clipboard_undo_last_edit`, `clipboard_show_clipboard`, `clipboard_clear_clipboard` — stateful copy/cut/paste with undo
-
-When connected, tools are exposed to the agent as fully-qualified names:
-- `mcp_coding_assistant_mcp_shell_execute`
-- `mcp_coding_assistant_mcp_todo_add`
-- `mcp_coding_assistant_mcp_todo_list_todos`
-- `mcp_coding_assistant_mcp_todo_complete`
-
-The `run.fish` script starts this server automatically. You can also add it manually as shown in the "Running without run.fish" example above.
-
-### Other examples included in `run.fish`
-- filesystem: `@modelcontextprotocol/server-filesystem`
-- fetch: `mcp-server-fetch` (via `uvx`)
-- context7: `@upstash/context7-mcp`
-- tavily: `tavily-mcp` (needs `TAVILY_API_KEY`)
-
-You can print discovered tools from running MCP servers:
-
-```bash
-uv run coding-assistant --print-mcp-tools ...
-```
-
-## Sandbox
 
 When enabled (default), the assistant applies Landlock restrictions. By default it adds:
 - Readable directories: your active virtual environment and any passed via `--readable-sandbox-directories`.
