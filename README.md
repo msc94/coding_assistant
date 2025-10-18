@@ -117,6 +117,7 @@ Pass MCP servers with repeated `--mcp-servers` flags as JSON strings:
 This repository includes a built-in MCP server (package `packages/coding_assistant_mcp`) that provides:
 - shell: `shell_execute` — execute shell commands (see behavior below)
 - todo: `todo_add`, `todo_list_todos`, `todo_complete` — simple in-memory TODO list
+- clipboard: `clipboard_copy_range`, `clipboard_cut_range`, `clipboard_paste`, `clipboard_undo_last_edit`, `clipboard_show_clipboard`, `clipboard_clear_clipboard` — stateful copy/cut/paste with undo
 
 When connected, tools are exposed to the agent as fully-qualified names:
 - `mcp_coding_assistant_mcp_shell_execute`
