@@ -159,7 +159,7 @@ class FilesystemManager:
         self,
         path: Annotated[Path, "File path."],
         pattern: Annotated[str, "Regex for range."],
-        position: Annotated[str, "One of 'before', 'after' ,'replace'."],
+        position: Annotated[str, "One of 'before', 'after', 'replace'."],
         enforce_unique_match: Annotated[bool, "Fail if match is not unique."] = True,
     ) -> str:
         if not self._entry:
@@ -204,7 +204,7 @@ class FilesystemManager:
         path: Annotated[Path, "File path."],
         pattern: Annotated[str, "Regex for range."],
         text: Annotated[str, "Text to insert."],
-        position: Annotated[str, "One of 'before', 'after' ,'replace'."],
+        position: Annotated[str, "One of 'before', 'after', 'replace'."],
         enforce_unique_match: Annotated[bool, "Fail if match is not unique."] = True,
     ) -> str:
         result = _edit(path, pattern, text.splitlines(), EditMode[position.upper()], enforce_unique_match)
