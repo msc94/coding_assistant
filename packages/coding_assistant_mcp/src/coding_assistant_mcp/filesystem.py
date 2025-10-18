@@ -178,7 +178,7 @@ class FilesystemManager:
         if current_content.splitlines() != last_edit.new_lines:
             raise ValueError("Cannot undo: file contents have changed since the last edit.")
 
-        last_edit.path.write_text(_join_lines(last_edit.old_lines), encoding="utf-8")
+        last_edit.path.write_text(_join_lines(last_edit.old_lines) + "\n", encoding="utf-8")
         return _unified_diff(last_edit.path, EditRecord(last_edit.path, last_edit.new_lines, last_edit.old_lines))
 
     def show_clipboard(self) -> str:
