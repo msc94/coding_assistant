@@ -32,11 +32,11 @@ async def test_edit_file_basic_before_after_replace(tmp_path: Path):
     assert p.read_text(encoding="utf-8") == "A\nX\nB\nC\n"
 
     # AFTER: insert Y after B
-    msg2 = m.edit_file(path=p, pattern=r"^B$", text="Y", position="after")
+    m.edit_file(path=p, pattern=r"^B$", text="Y", position="after")
     assert p.read_text(encoding="utf-8") == "A\nX\nB\nY\nC\n"
 
     # REPLACE: replace Y with Z
-    msg3 = m.edit_file(path=p, pattern=r"^Y$", text="Z", position="replace")
+    m.edit_file(path=p, pattern=r"^Y$", text="Z", position="replace")
     assert p.read_text(encoding="utf-8") == "A\nX\nB\nZ\nC\n"
 
 
