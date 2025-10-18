@@ -1,5 +1,6 @@
-import pytest
 from pathlib import Path
+
+import pytest
 
 from coding_assistant_mcp.filesystem import FilesystemManager
 
@@ -26,16 +27,16 @@ async def test_edit_file_basic_before_after_replace(tmp_path: Path):
     m = FilesystemManager()
 
     # BEFORE: insert X before B
-    msg1 = m.edit_file(path=p, start=r"^B$", text="X", position="before")
+    msg1 = m.edit_file(path=p, pattern=r"^B$", text="X", position="before")
     assert "Edited with diff" in msg1
     assert p.read_text(encoding="utf-8") == "A\nX\nB\nC\n"
 
     # AFTER: insert Y after B
-    msg2 = m.edit_file(path=p, start=r"^B$", text="Y", position="after")
+    msg2 = m.edit_file(path=p, pattern=r"^B$", text="Y", position="after")
     assert p.read_text(encoding="utf-8") == "A\nX\nB\nY\nC\n"
 
     # REPLACE: replace Y with Z
-    msg3 = m.edit_file(path=p, start=r"^Y$", text="Z", position="replace")
+    msg3 = m.edit_file(path=p, pattern=r"^Y$", text="Z", position="replace")
     assert p.read_text(encoding="utf-8") == "A\nX\nB\nZ\nC\n"
 
 
@@ -47,10 +48,10 @@ async def test_edit_file_enforce_unique_and_first_match(tmp_path: Path):
     m = FilesystemManager()
     # enforce uniqueness -> error
     with pytest.raises(ValueError):
-        m.edit_file(path=p, start=r"^A$", text="X", position="before", enforce_unique_match=True)
+        m.edit_file(path=p, pattern=r"^A$", text="X", position="before", enforce_unique_match=True)
 
     # allow non-unique -> choose first occurrence
-    m.edit_file(path=p, start=r"^A$", text="X", position="after", enforce_unique_match=False)
+    m.edit_file(path=p, pattern=r"^A$", text="X", position="after", enforce_unique_match=False)
     assert p.read_text(encoding="utf-8") == "A\nX\nB\nA\nC\n"
 
 
@@ -64,7 +65,7 @@ async def test_undo_last_edit_messages(tmp_path: Path):
     assert m.undo_last_edit() == "Nothing to undo."
 
     # Make an edit and then undo successfully
-    m.edit_file(path=p, start=r"^hello$", text="WORLD", position="replace")
+    m.edit_file(path=p, pattern=r"^hello$", text="WORLD", position="replace")
     before_undo = p.read_text(encoding="utf-8")
     diff = m.undo_last_edit()
     assert diff.startswith(f"--- {p}\n+++")
@@ -112,8 +113,9 @@ async def test_path_accepts_path_type(tmp_path: Path):
     # str path
     m.write_file(path=p, content="one\n")
     # Path path on edit
-    m.edit_file(path=p, start=r"^one$", text="two", position="replace")
+    m.edit_file(path=p, pattern=r"^one$", text="two", position="replace")
     assert p.read_text(encoding="utf-8") == "two\n"
+
 
 @pytest.mark.asyncio
 async def test_copy_and_cut_and_paste_and_undo_roundtrip(tmp_path):
@@ -244,6 +246,7 @@ async def test_empty_clipboard_paste_error(tmp_path):
 
     with pytest.raises(ValueError):
         m.paste(path=p, pattern=r"^hello$", position="before")
+
 
 @pytest.mark.asyncio
 async def test_clear_clipboard_and_show_empty_error(tmp_path):

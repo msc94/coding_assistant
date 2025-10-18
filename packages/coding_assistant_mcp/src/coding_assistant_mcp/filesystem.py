@@ -5,7 +5,7 @@ import re
 from dataclasses import astuple, dataclass
 from enum import Enum, auto
 from pathlib import Path
-from typing import Annotated, Optional, Union
+from typing import Annotated, Optional
 
 from fastmcp import FastMCP
 
