@@ -261,3 +261,28 @@ async def test_clear_clipboard_and_show_empty_error(tmp_path):
     assert msg == "Cleared clipboard."
     with pytest.raises(ValueError):
         m.show_clipboard()
+
+
+@pytest.mark.asyncio
+async def test_paste_with_position_replace(tmp_path: Path):
+    p = tmp_path / "r.txt"
+    p.write_text("A\nX\nB\n", encoding="utf-8")
+
+    m = FilesystemManager()
+
+    # Copy single line and replace a different single line
+    m.copy_range(path=p, pattern=r"^X$")
+    msg = m.paste(path=p, pattern=r"^A$", position="replace")
+    assert msg.startswith("Pasted\n\n") and "with diff" in msg
+    # After replacement, first line A is replaced by X; original X remains
+    assert p.read_text(encoding="utf-8") == "X\nX\nB\n"
+
+    # Uniqueness enforcement on paste 'replace' should error when pattern matches multiple times
+    with pytest.raises(ValueError):
+        m.paste(path=p, pattern=r"^X$", position="replace", enforce_unique_match=True)
+
+    # Allow non-unique: first match is replaced
+    m.copy_range(path=p, pattern=r"^B$")
+    msg2 = m.paste(path=p, pattern=r"^X$", position="replace", enforce_unique_match=False)
+    assert msg2.startswith("Pasted\n\n")
+    assert p.read_text(encoding="utf-8") == "B\nX\nB\n"
