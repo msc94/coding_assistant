@@ -222,6 +222,7 @@ def create_filesystem_server() -> FastMCP:
     server.tool(manager.edit_file)
     server.tool(manager.undo_last_edit)
 
+    # TODO: These clipboard tools are too brittle and do not really work.
     # server.tool(manager.copy_range)
     # server.tool(manager.cut_range)
     # server.tool(manager.paste)
