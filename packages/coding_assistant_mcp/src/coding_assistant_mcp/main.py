@@ -63,7 +63,7 @@ async def _main() -> None:
 
     mcp = FastMCP("Coding Assistant MCP", instructions=INSTRUCTIONS)
     await mcp.import_server(create_todo_server(), prefix="todo")
-    # await mcp.import_server(create_filesystem_server(), prefix="filesystem")
+    await mcp.import_server(create_filesystem_server(), prefix="filesystem")
     await mcp.import_server(shell_server, prefix="shell")
     await mcp.import_server(python_server, prefix="python")
     await mcp.run_async()

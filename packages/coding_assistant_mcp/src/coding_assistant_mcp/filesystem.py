@@ -220,11 +220,12 @@ def create_filesystem_server() -> FastMCP:
 
     server.tool(manager.write_file)
     server.tool(manager.edit_file)
-    server.tool(manager.copy_range)
-    server.tool(manager.cut_range)
-    server.tool(manager.paste)
     server.tool(manager.undo_last_edit)
-    server.tool(manager.show_clipboard)
-    server.tool(manager.clear_clipboard)
+
+    # server.tool(manager.copy_range)
+    # server.tool(manager.cut_range)
+    # server.tool(manager.paste)
+    # server.tool(manager.show_clipboard)
+    # server.tool(manager.clear_clipboard)
 
     return server
