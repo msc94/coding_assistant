@@ -137,7 +137,7 @@ class FilesystemManager:
     def copy_range(
         self,
         path: Annotated[Path, "File path."],
-        pattern: Annotated[str, "Regex for range."],
+        pattern: Annotated[str, "Regex for edit range."],
         enforce_unique_match: Annotated[bool, "Fail if match is not unique."] = True,
     ) -> str:
         result = _copy_cut_range(path, pattern, enforce_unique_match, cut=False)
@@ -147,7 +147,7 @@ class FilesystemManager:
     def cut_range(
         self,
         path: Annotated[Path, "File path."],
-        pattern: Annotated[str, "Regex for range."],
+        pattern: Annotated[str, "Regex for edit range."],
         enforce_unique_match: Annotated[bool, "Fail if match is not unique."] = True,
     ) -> str:
         result = _copy_cut_range(path, pattern, enforce_unique_match, cut=True)
@@ -159,7 +159,7 @@ class FilesystemManager:
     def paste(
         self,
         path: Annotated[Path, "File path."],
-        pattern: Annotated[str, "Regex for range."],
+        pattern: Annotated[str, "Regex for edit range."],
         position: Annotated[str, "One of 'before', 'after', 'replace'."],
         enforce_unique_match: Annotated[bool, "Fail if match is not unique."] = True,
     ) -> str:
@@ -196,16 +196,15 @@ class FilesystemManager:
     ) -> str:
         old_contents = path.read_text(encoding="utf-8") if path.exists() else ""
         path.parent.mkdir(parents=True, exist_ok=True)
-        # Enforce a trailing newline for consistency with edit operations
-        content_to_write = content if content.endswith("\n") else content + "\n"
-        path.write_text(content_to_write, encoding="utf-8")
-        self._last_edit = EditRecord(path, old_contents.splitlines(), content_to_write.splitlines())
+        content = content if content.endswith("\n") else content + "\n"
+        path.write_text(content, encoding="utf-8")
+        self._last_edit = EditRecord(path, old_contents.splitlines(), content.splitlines())
         return _unified_diff(path, self._last_edit)
 
     def edit_file(
         self,
         path: Annotated[Path, "File path."],
-        pattern: Annotated[str, "Regex for range."],
+        pattern: Annotated[str, "Regex for edit range."],
         text: Annotated[str, "Text to insert."],
         position: Annotated[str, "One of 'before', 'after', 'replace'."],
         enforce_unique_match: Annotated[bool, "Fail if match is not unique."] = True,
