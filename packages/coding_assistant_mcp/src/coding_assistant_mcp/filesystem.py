@@ -28,7 +28,7 @@ async def write_file(
     async with aiofiles.open(path, "w", encoding="utf-8") as f:
         await f.write(content)
 
-    return f"Succesfully wrote file {path}"
+    return f"Successfully wrote file {path}"
 
 
 async def edit_file(

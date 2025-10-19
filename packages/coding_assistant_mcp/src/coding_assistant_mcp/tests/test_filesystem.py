@@ -10,7 +10,7 @@ async def test_write_file_creates_and_writes(tmp_path: Path):
     p = tmp_path / "a.txt"
     msg = await write_file(p, "hello")
     assert p.read_text(encoding="utf-8") == "hello"
-    assert "Succesfully wrote file" in msg and "a.txt" in msg
+    assert "Successfully wrote file" in msg and "a.txt" in msg
 
 
 @pytest.mark.asyncio
