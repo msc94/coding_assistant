@@ -52,7 +52,6 @@ INSTRUCTIONS = """
 - Use `cp` & `mv` to copy/move files. Do not memorize and write contents to copy or move.
 - Do not try to use `applypatch` to edit files. Use e.g. `sed` or `edit_file`.
 - You can use `sed` to search & replace (e.g. to rename variables).
-- Do not memorize and write full text blocks to copy/cut/paste. Use the dedicated clipboard tools provided.
 """.strip()
 
 
