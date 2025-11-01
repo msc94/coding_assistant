@@ -1,10 +1,10 @@
 import pytest
 
-from coding_assistant.config import Config
-from coding_assistant.tools.tools import OrchestratorTool
 from coding_assistant.agents.callbacks import NullProgressCallbacks, NullToolCallbacks
-from coding_assistant.ui import NullUI
+from coding_assistant.config import Config
 from coding_assistant.llm import model as llm_model
+from coding_assistant.tools.tools import OrchestratorTool
+from coding_assistant.ui import NullUI
 
 # This file contains integration tests using the real LLM API.
 
@@ -98,24 +98,21 @@ async def test_model_vision_recognizes_pink_image():
     )
     data_url = f"data:image/png;base64,{pink_png_b64}"
 
-    # Ask the model to identify the dominant color and reply with a single lower-case color word
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": (
-                        "Identify the dominant color in this image. Reply with exactly one lower-case word from this set: "
-                        "pink, red, green, blue, yellow, black, white, purple, orange, brown, gray."
-                    ),
-                },
-                {"type": "image_url", "image_url": {"url": data_url}},
-            ],
+    history = []
+    history.append({"role": "user", "content": [{"type": "image_url", "image_url": {"url": data_url}}]})
+
+    config = create_test_config()
+    tool = OrchestratorTool(
+        config=config,
+        tools=[],
+        history=history,
+        agent_callbacks=NullProgressCallbacks(),
+        ui=NullUI(),
+        tool_callbacks=NullToolCallbacks(),
+    )
+    result = await tool.execute(
+        parameters={
+            "task": "Identify the dominant color in this image. Reply with exactly one lower-case word from this set: brown, red, green, blue, yellow, pink, black, white, purple, orange, gray.",
         }
-    ]
-
-    comp = await llm_model.complete(messages=messages, model=TEST_MODEL, tools=[], callbacks=NullProgressCallbacks())
-    answer = comp.message.content.strip().lower().strip(".!?,;:")
-
-    assert answer == "pink"
+    )
+    assert result.content == "pink"
