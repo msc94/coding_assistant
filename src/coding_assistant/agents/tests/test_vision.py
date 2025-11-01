@@ -1,0 +1,54 @@
+import pytest
+
+from coding_assistant.agents.callbacks import NullProgressCallbacks, NullToolCallbacks
+from coding_assistant.config import Config
+from coding_assistant.tools.tools import OrchestratorTool
+from coding_assistant.ui import NullUI
+
+# This file contains integration tests using the real LLM API.
+
+TEST_MODEL = "openai/gpt-5-mini"
+
+
+def create_test_config() -> Config:
+    """Helper function to create a test Config with all required parameters."""
+    return Config(
+        model=TEST_MODEL,
+        expert_model=TEST_MODEL,
+        enable_user_feedback=False,
+        shorten_conversation_at_tokens=200_000,
+        enable_ask_user=False,
+    )
+
+@pytest.mark.slow
+@pytest.mark.asyncio
+async def test_model_vision_recognizes_car_image():
+    # Download the car image, encode it as a base64 data URL, and verify the model responds with 'car'.
+    import base64
+    import urllib.request
+
+    url = "https://upload.wikimedia.org/wikipedia/commons/0/01/SEAT_Leon_Mk4_IMG_4099.jpg"
+    with urllib.request.urlopen(url, timeout=30) as resp:
+        image_bytes = resp.read()
+
+    b64 = base64.b64encode(image_bytes).decode("ascii")
+    data_url = f"data:image/jpeg;base64,{b64}"
+
+    history = []
+    history.append({"role": "user", "content": [{"type": "image_url", "image_url": {"url": data_url}}]})
+
+    config = create_test_config()
+    tool = OrchestratorTool(
+        config=config,
+        tools=[],
+        history=history,
+        agent_callbacks=NullProgressCallbacks(),
+        ui=NullUI(),
+        tool_callbacks=NullToolCallbacks(),
+    )
+    result = await tool.execute(
+        parameters={
+            "task": "What is the primary object in this image? Answer with exactly one lower-case word from this set: car, bicycle, motorcycle, bus, truck, person, dog, cat, building, tree, unknown.",
+        }
+    )
+    assert result.content == "car"
