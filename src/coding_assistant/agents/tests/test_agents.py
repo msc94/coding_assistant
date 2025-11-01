@@ -112,7 +112,7 @@ async def test_model_vision_recognizes_pink_image():
     )
     result = await tool.execute(
         parameters={
-            "task": "Identify the dominant color in this image. Reply with exactly one lower-case word from this set: brown, red, green, blue, yellow, pink, black, white, purple, orange, gray.",
+            "task": "Identify the dominant color in this image. Reply with exactly one lower-case word from this set: brown, red, green, blue, yellow, pink, black, white, purple, orange, gray. If you do not have access to any of these colors, reply with 'unknown'.",
         }
     )
     assert result.content == "pink"
