@@ -1,7 +1,10 @@
+import base64
+from pathlib import Path
+
 import pytest
 
 from coding_assistant.agents.callbacks import NullProgressCallbacks, NullToolCallbacks
-from coding_assistant.config import Config
+from coding_assistant.agents.tests.test_agents import create_test_config
 from coding_assistant.tools.tools import OrchestratorTool
 from coding_assistant.ui import NullUI
 
@@ -10,26 +13,11 @@ from coding_assistant.ui import NullUI
 TEST_MODEL = "openai/gpt-5-mini"
 
 
-def create_test_config() -> Config:
-    """Helper function to create a test Config with all required parameters."""
-    return Config(
-        model=TEST_MODEL,
-        expert_model=TEST_MODEL,
-        enable_user_feedback=False,
-        shorten_conversation_at_tokens=200_000,
-        enable_ask_user=False,
-    )
-
 @pytest.mark.slow
 @pytest.mark.asyncio
 async def test_model_vision_recognizes_car_image():
-    # Download the car image, encode it as a base64 data URL, and verify the model responds with 'car'.
-    import base64
-    import urllib.request
-
-    url = "https://upload.wikimedia.org/wikipedia/commons/0/01/SEAT_Leon_Mk4_IMG_4099.jpg"
-    with urllib.request.urlopen(url, timeout=30) as resp:
-        image_bytes = resp.read()
+    image_path = Path(__file__).with_name("car.jpg")
+    image_bytes = image_path.read_bytes()
 
     b64 = base64.b64encode(image_bytes).decode("ascii")
     data_url = f"data:image/jpeg;base64,{b64}"

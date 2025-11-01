@@ -86,5 +86,3 @@ async def test_orchestrator_tool_instructions():
         }
     )
     assert result.content == "Servus, World!"
-
-
