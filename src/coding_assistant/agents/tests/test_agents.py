@@ -4,6 +4,7 @@ from coding_assistant.config import Config
 from coding_assistant.tools.tools import OrchestratorTool
 from coding_assistant.agents.callbacks import NullProgressCallbacks, NullToolCallbacks
 from coding_assistant.ui import NullUI
+from coding_assistant.llm import model as llm_model
 
 # This file contains integration tests using the real LLM API.
 
@@ -86,3 +87,35 @@ async def test_orchestrator_tool_instructions():
         }
     )
     assert result.content == "Servus, World!"
+
+
+@pytest.mark.slow
+@pytest.mark.asyncio
+async def test_model_vision_recognizes_pink_image():
+    # 8x8 pink PNG (#FFC0CB) as base64 data URL
+    pink_png_b64 = (
+        "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAE0lEQVR4nGP4f+D0f3yYYWQoAACvdOJBiEGB9QAAAABJRU5ErkJggg=="
+    )
+    data_url = f"data:image/png;base64,{pink_png_b64}"
+
+    # Ask the model to identify the dominant color and reply with a single lower-case color word
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": (
+                        "Identify the dominant color in this image. Reply with exactly one lower-case word from this set: "
+                        "pink, red, green, blue, yellow, black, white, purple, orange, brown, gray."
+                    ),
+                },
+                {"type": "image_url", "image_url": {"url": data_url}},
+            ],
+        }
+    ]
+
+    comp = await llm_model.complete(messages=messages, model=TEST_MODEL, tools=[], callbacks=NullProgressCallbacks())
+    answer = comp.message.content.strip().lower().strip(".!?,;:")
+
+    assert answer == "pink"
