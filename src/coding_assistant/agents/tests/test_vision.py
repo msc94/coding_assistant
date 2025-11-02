@@ -8,8 +8,6 @@ from coding_assistant.agents.tests.test_agents import create_test_config
 from coding_assistant.tools.tools import OrchestratorTool
 from coding_assistant.ui import NullUI
 
-# This file contains integration tests using the real LLM API.
-
 TEST_MODEL = "openai/gpt-5-mini"
 
 
