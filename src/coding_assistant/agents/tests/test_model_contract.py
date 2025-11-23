@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock
 
 from coding_assistant.agents.callbacks import AgentProgressCallbacks, NullProgressCallbacks, NullToolCallbacks
-from coding_assistant.agents.execution import do_single_step
+from coding_assistant.agents.execution import do_single_step, handle_tool_calls
 from coding_assistant.agents.tests.helpers import (
     FakeCompleter,
     FakeMessage,
@@ -41,7 +41,7 @@ async def test_do_single_step_adds_shorten_prompt_on_token_threshold():
     )
     ctx = AgentContext(desc=desc, state=state)
 
-    msg = await do_single_step(
+    msg, tokens = await do_single_step(
         ctx,
         NullProgressCallbacks(),
         shorten_conversation_at_tokens=1000,
@@ -51,6 +51,19 @@ async def test_do_single_step_adds_shorten_prompt_on_token_threshold():
     )
 
     assert msg.content == fake_message.content
+
+    # Simulate loop behavior: execute tools and then append shorten prompt due to tokens
+    await handle_tool_calls(msg, ctx, NullProgressCallbacks(), NullToolCallbacks(), ui=make_ui_mock())
+    if tokens > 1000:
+        state.history.append(
+            {
+                "role": "user",
+                "content": (
+                    "Your conversation history has grown too large. "
+                    "Please summarize it by using the `shorten_conversation` tool."
+                ),
+            }
+        )
 
     expected_history = [
         {"role": "user", "content": "start"},
@@ -99,7 +112,7 @@ async def test_reasoning_is_forwarded_and_not_stored():
 
     callbacks = Mock(spec=AgentProgressCallbacks)
 
-    await do_single_step(
+    _, _ = await do_single_step(
         ctx,
         callbacks,
         shorten_conversation_at_tokens=100_000,

@@ -252,16 +252,18 @@ async def do_single_step(
     completer: Completer,
     ui: UI,
     tool_callbacks: AgentToolCallbacks,
-    enable_chat_mode: bool = False,
+    require_finish_tool: bool = True,
+    require_shorten_tool: bool = True,
 ):
     desc = ctx.desc
     state = ctx.state
     trace.get_current_span().set_attribute("agent.name", desc.name)
 
-    # Validate agent tools when not in chat mode
-    if not enable_chat_mode:
+    # Validate agent tools
+    if require_finish_tool:
         if not any(tool.name() == "finish_task" for tool in desc.tools):
             raise RuntimeError("Agent needs to have a `finish_task` tool in order to run a step.")
+    if require_shorten_tool:
         if not any(tool.name() == "shorten_conversation" for tool in desc.tools):
             raise RuntimeError("Agent needs to have a `shorten_conversation` tool in order to run a step.")
 
@@ -290,26 +292,8 @@ async def do_single_step(
 
     append_assistant_message(state.history, agent_callbacks, desc.name, message)
 
-    # In non-chat mode, execute tool calls immediately
-    if not enable_chat_mode:
-        await handle_tool_calls(
-            message,
-            ctx,
-            agent_callbacks,
-            tool_callbacks,
-            ui=ui,
-        )
+    return message, completion.tokens
 
-    # Check conversation length and request shortening if needed
-    if completion.tokens > shorten_conversation_at_tokens:
-        append_user_message(
-            state.history,
-            agent_callbacks,
-            desc.name,
-            "Your conversation history has grown too large. Please summarize it by using the `shorten_conversation` tool.",
-        )
-
-    return message
 
 
 @tracer.start_as_current_span("run_agent_loop")
@@ -342,14 +326,15 @@ async def run_agent_loop(
         while state.output is None:
             section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
             with section_cls() as interruptible_section:
-                message = await do_single_step(
+                message, tokens = await do_single_step(
                     ctx,
                     agent_callbacks,
                     shorten_conversation_at_tokens,
                     completer=completer,
                     ui=ui,
                     tool_callbacks=tool_callbacks,
-                    enable_chat_mode=False,
+                    require_finish_tool=True,
+                    require_shorten_tool=True,
                 )
 
             if interruptible_section.was_interrupted:
@@ -360,13 +345,28 @@ async def run_agent_loop(
                 )
                 append_user_message(state.history, agent_callbacks, desc.name, formatted_feedback)
             else:
-                if not getattr(message, "tool_calls", []):
+                if getattr(message, "tool_calls", []):
+                    await handle_tool_calls(
+                        message,
+                        ctx,
+                        agent_callbacks,
+                        tool_callbacks,
+                        ui=ui,
+                    )
+                else:
                     # Handle assistant steps without tool calls: inject corrective message
                     append_user_message(
                         state.history,
                         agent_callbacks,
                         desc.name,
                         "I detected a step from you without any tool calls. This is not allowed. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
+                    )
+                if tokens > shorten_conversation_at_tokens:
+                    append_user_message(
+                        state.history,
+                        agent_callbacks,
+                        desc.name,
+                        "Your conversation history has grown too large. Please summarize it by using the `shorten_conversation` tool.",
                     )
 
         assert state.output is not None, "Agent did not produce output"
@@ -417,14 +417,15 @@ async def run_chat_loop(
     while True:
         section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
         with section_cls() as interruptible_section:
-            message = await do_single_step(
+            message, tokens = await do_single_step(
                 ctx,
                 agent_callbacks,
                 shorten_conversation_at_tokens,
                 completer=completer,
                 ui=ui,
                 tool_callbacks=tool_callbacks,
-                enable_chat_mode=True,
+                require_finish_tool=False,
+                require_shorten_tool=False,
             )
         if interruptible_section.was_interrupted:
             # In chat mode, SIGINT opens the user chat prompt
@@ -443,6 +444,13 @@ async def run_chat_loop(
                 # If assistant replied without tool calls, prompt the user
                 answer = await ui.ask(f"Reply to {desc.name}:", default="")
                 append_user_message(state.history, agent_callbacks, desc.name, answer)
+            if tokens > shorten_conversation_at_tokens:
+                append_user_message(
+                    state.history,
+                    agent_callbacks,
+                    desc.name,
+                    "Your conversation history has grown too large. Please summarize it by using the `shorten_conversation` tool.",
+                )
         iterations += 1
         if max_iterations is not None and iterations >= max_iterations:
             break
