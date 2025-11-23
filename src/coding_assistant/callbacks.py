@@ -238,7 +238,10 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         print()
         # Print tool name and arguments
         args_str = self._format_arguments(arguments) if arguments else ""
-        print(f"[bold yellow]▸[/bold yellow] {tool_name}({args_str})")
+        if args_str:
+            print(f"[bold yellow]▸[/bold yellow] {tool_name}{args_str}")
+        else:
+            print(f"[bold yellow]▸[/bold yellow] {tool_name}")
 
         # Remember what we printed
         self._last_tool_info = (tool_name, args_str)
@@ -249,7 +252,10 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         if self._printed_since_tool_start and self._last_tool_info:
             tool_name_stored, args_str_stored = self._last_tool_info
             print()
-            print(f"[bold yellow]▸[/bold yellow] {tool_name_stored}({args_str_stored})")
+            if args_str_stored:
+                print(f"[bold yellow]▸[/bold yellow] {tool_name_stored}{args_str_stored}")
+            else:
+                print(f"[bold yellow]▸[/bold yellow] {tool_name_stored}")
 
         # Print result summary (just line count)
         line_count = self._count_lines(result)
