@@ -295,7 +295,6 @@ async def do_single_step(
     return message, completion.tokens
 
 
-
 @tracer.start_as_current_span("run_agent_loop")
 async def run_agent_loop(
     ctx: AgentContext,
@@ -444,13 +443,7 @@ async def run_chat_loop(
                 # If assistant replied without tool calls, prompt the user
                 answer = await ui.ask(f"Reply to {desc.name}:", default="")
                 append_user_message(state.history, agent_callbacks, desc.name, answer)
-            if tokens > shorten_conversation_at_tokens:
-                append_user_message(
-                    state.history,
-                    agent_callbacks,
-                    desc.name,
-                    "Your conversation history has grown too large. Please summarize it by using the `shorten_conversation` tool.",
-                )
+
         iterations += 1
         if max_iterations is not None and iterations >= max_iterations:
             break
