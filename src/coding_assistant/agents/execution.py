@@ -36,8 +36,6 @@ START_MESSAGE_TEMPLATE = """
   - The task shall be done in a way which fits your description.
 - You must use at least one tool call in every step.
   - Use the `finish_task` tool when you have fully finished your task, no questions should still be open.
-- It can happen that you receive feedback from your client while working on your task.
-  - If you receive feedback, you must address it before finishing your task.
 
 ## Parameters
 
@@ -57,15 +55,6 @@ CHAT_START_MESSAGE_TEMPLATE = """
 Your client has provided the following parameters for your session:
 
 {parameters}
-""".strip()
-
-FEEDBACK_TEMPLATE = """
-Your client has provided the following feedback on your work:
-
-{feedback}
-
-Please rework your result to address the feedback.
-Afterwards, call the `finish_task` tool again to signal that you are done.
 """.strip()
 
 

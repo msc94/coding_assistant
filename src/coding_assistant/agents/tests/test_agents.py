@@ -15,7 +15,6 @@ def create_test_config() -> Config:
     return Config(
         model=TEST_MODEL,
         expert_model=TEST_MODEL,
-        enable_user_feedback=False,
         shorten_conversation_at_tokens=200_000,
         enable_ask_user=False,
     )

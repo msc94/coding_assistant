@@ -246,8 +246,7 @@ async def test_assistant_message_without_tool_calls_prompts_correction(monkeypat
 
 
 @pytest.mark.asyncio
-async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
-    # Fake InterruptibleSection that signals one interruption, then none
+async def test_interrupt_signals_do_not_change_outcome(monkeypatch):
     class FakeInterruptOnce:
         _count = 0
 
@@ -262,30 +261,20 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
         def was_interrupted(self):
             return self._count == 1
 
-    # Patch the execution module to use our fake
     from coding_assistant.agents import execution as execution_module
 
     monkeypatch.setattr(execution_module, "InterruptibleSection", FakeInterruptOnce)
 
-    echo_call = FakeToolCall("1", FakeFunction("fake.echo", json.dumps({"text": "first"})))
     finish_call = FakeToolCall(
-        "2",
+        "1",
         FakeFunction(
             "finish_task",
             json.dumps({"result": "done", "summary": "sum"}),
         ),
     )
+    completer = FakeCompleter([FakeMessage(tool_calls=[finish_call])])
 
-    completer = FakeCompleter(
-        [
-            FakeMessage(tool_calls=[echo_call]),  # interrupted after this step
-            FakeMessage(tool_calls=[finish_call]),
-        ]
-    )
-
-    echo_tool = FakeEchoTool()
-    agent = make_test_agent(tools=[echo_tool, FinishTaskTool(), ShortenConversation()])
-    desc, state = agent
+    desc, state = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
 
     await run_agent_loop(
         AgentContext(desc=desc, state=state),
@@ -297,55 +286,6 @@ async def test_interrupt_feedback_injected_and_loop_continues(monkeypatch):
     )
     assert state.output is not None
     assert state.output.result == "done"
-    desc, state = agent
-
-    @pytest.mark.asyncio
-    async def test_interrupt_disabled_skips_feedback(monkeypatch):
-        # Fake InterruptibleSection that would signal interruption, but we disable it
-        class FakeInterruptAlways:
-            def __enter__(self):
-                return self
-
-            def __exit__(self, exc_type, exc, tb):
-                return False
-
-            @property
-            def was_interrupted(self):
-                return True
-
-        from coding_assistant.agents import execution as execution_module
-
-        monkeypatch.setattr(execution_module, "InterruptibleSection", FakeInterruptAlways)
-
-        finish_call = FakeToolCall(
-            "1",
-            FakeFunction(
-                "finish_task",
-                json.dumps({"result": "done", "summary": "sum"}),
-            ),
-        )
-        completer = FakeCompleter(
-            [
-                FakeMessage(tool_calls=[finish_call]),
-            ]
-        )
-
-        desc, state = make_test_agent(tools=[FinishTaskTool(), ShortenConversation()])
-
-        await run_agent_loop(
-            AgentContext(desc=desc, state=state),
-            agent_callbacks=NullProgressCallbacks(),
-            tool_callbacks=NullToolCallbacks(),
-            shorten_conversation_at_tokens=200_000,
-            completer=completer,
-            ui=make_ui_mock(),
-        )
-        assert state.output is not None
-        assert state.output.result == "done"
-        # Ensure no feedback prompt injected
-        assert not any(
-            "Feedback on your work" in (m.get("content") or "") for m in state.history if m.get("role") == "user"
-        )
 
 
 @pytest.mark.asyncio

@@ -93,7 +93,7 @@ Notes:
 - `--instructions` Provide extra instructions that are composed with defaults.
 - `--print-chunks`/`--print-reasoning` Control live stream and reasoning display in the TUI.
 - `--print-instructions` Print the final instruction bundle that will be given to the agent and exit.
-- `--user-feedback` Enable/disable user feedback prompts; `--ask-user` Allow the agent to ask the user questions.
+- `--ask-user` Allow the agent to ask the user questions (defaults to on).
 - `--shell-confirmation-patterns` Ask for confirmation before running matching shell commands.
 - `--tool-confirmation-patterns` Ask for confirmation before running matching tools.
 - `--wait-for-debugger` Wait for a debugger (debugpy) to attach on port 1234.
