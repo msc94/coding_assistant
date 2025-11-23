@@ -386,7 +386,7 @@ async def run_chat_loop(
                 ui=ui,
             )
         else:
-            answer = await ui.prompt(default="")
+            answer = await ui.prompt()
             # User command handling (e.g., /exit)
             if answer.strip() == "/exit":
                 break
