@@ -230,9 +230,9 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         lines = []
         for key, value in formatted.items():
             value_json = json.dumps(value)
-            lines.append(f"\n    {key}={value_json}")
+            lines.append(f"[dim]\n    {key}={value_json}[/dim]")
 
-        return "".join(lines) + "\n"
+        return "".join(lines)
 
     def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict | None):
         print()
@@ -259,7 +259,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
 
         # Print result summary (just line count)
         line_count = self._count_lines(result)
-        print(f"[dim]  → {line_count} lines[/dim]")
+        print(f" [dim]→ {line_count} lines[/dim]")
 
         # Reset state
         self._last_tool_info = None
