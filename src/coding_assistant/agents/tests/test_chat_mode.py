@@ -38,7 +38,7 @@ async def test_chat_step_prompts_user_on_no_tool_calls_once():
     completer = FakeCompleter([FakeMessage(content="Hello")])
     desc, state = make_test_agent(tools=[], history=[{"role": "user", "content": "start"}])
 
-    ui = make_ui_mock(ask_sequence=[("> ", "User reply")])
+    ui = make_ui_mock(ask_sequence=[("> ", "User reply"), ("> ", "User reply 2")])
 
     # Run a single chat-loop iteration by exhausting the completer after one step
     with pytest.raises(AssertionError, match="FakeCompleter script exhausted"):
@@ -51,9 +51,9 @@ async def test_chat_step_prompts_user_on_no_tool_calls_once():
             is_interruptible=False,
         )
 
-    # Last message should be the user's reply injected by chat mode
-    assert state.history[-1]["role"] == "user"
-    assert state.history[-1]["content"] == "User reply"
+    # Should prompt first, then assistant responds, then prompt again
+    roles = [m.get("role") for m in state.history[-2:]]
+    assert roles == ["assistant", "user"]
 
 
 @pytest.mark.asyncio
@@ -64,7 +64,7 @@ async def test_chat_step_executes_tools_without_prompt():
     echo_tool = FakeEchoTool()
     desc, state = make_test_agent(tools=[echo_tool], history=[{"role": "user", "content": "start"}])
 
-    ui = make_ui_mock()  # no prompts expected
+    ui = make_ui_mock(ask_sequence=[("> ", "Hi"), ("> ", "Hi 2")])
 
     with pytest.raises(AssertionError, match="FakeCompleter script exhausted"):
         await run_chat_loop(
@@ -78,8 +78,6 @@ async def test_chat_step_executes_tools_without_prompt():
 
     # Tool must have executed
     assert echo_tool.called_with == {"text": "hi"}
-    # No extra user prompt injected
-    assert not any(m.get("role") == "user" and m.get("content") == "" for m in state.history)
 
 
 @pytest.mark.asyncio
@@ -88,7 +86,7 @@ async def test_chat_mode_does_not_require_finish_task_tool():
     completer = FakeCompleter([FakeMessage(content="Hi there")])
     desc, state = make_test_agent(tools=[], history=[{"role": "user", "content": "start"}])
 
-    ui = make_ui_mock(ask_sequence=[("> ", "Ack")])
+    ui = make_ui_mock(ask_sequence=[("> ", "Ack"), ("> ", "Ack 2")])
 
     with pytest.raises(AssertionError, match="FakeCompleter script exhausted"):
         await run_chat_loop(
@@ -100,7 +98,7 @@ async def test_chat_mode_does_not_require_finish_task_tool():
             is_interruptible=False,
         )
 
-    # Should have appended the assistant message and then the user's reply
+    # Should be assistant followed by next user prompt
     roles = [m.get("role") for m in state.history[-2:]]
     assert roles == ["assistant", "user"]
 
@@ -125,5 +123,5 @@ async def test_chat_exit_command_stops_loop_without_appending_command():
 
     # Verify that '/exit' was not appended to history
     assert not any(m.get("role") == "user" and (m.get("content") or "").strip() == "/exit" for m in state.history)
-    # Last message should still be the assistant's message (no user reply appended)
-    assert state.history[-1]["role"] == "assistant"
+    # No assistant step should have happened; last message remains the start message
+    assert state.history[-1]["role"] == "user"

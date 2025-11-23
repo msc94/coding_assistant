@@ -372,6 +372,12 @@ async def run_chat_loop(
     append_user_message(state.history, agent_callbacks, desc.name, start_message)
 
     while True:
+        # Always let the user go first in chat mode
+        answer = await ui.prompt()
+        if answer.strip() == "/exit":
+            break
+        append_user_message(state.history, agent_callbacks, desc.name, answer)
+
         message, _tokens = await do_single_step(
             ctx,
             agent_callbacks,
@@ -385,9 +391,4 @@ async def run_chat_loop(
                 tool_callbacks,
                 ui=ui,
             )
-        else:
-            answer = await ui.prompt()
-            # User command handling (e.g., /exit)
-            if answer.strip() == "/exit":
-                break
-            append_user_message(state.history, agent_callbacks, desc.name, answer)
+        # If there were no tool calls, simply continue to next user prompt
