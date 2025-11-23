@@ -382,21 +382,15 @@ async def run_chat_loop(
                 agent_callbacks,
                 completer=completer,
             )
-        needs_user_input = False
-        if interruptible_section.was_interrupted:
-            needs_user_input = True
+        if not interruptible_section.was_interrupted and getattr(message, "tool_calls", []):
+            await handle_tool_calls(
+                message,
+                ctx,
+                agent_callbacks,
+                tool_callbacks,
+                ui=ui,
+            )
         else:
-            if getattr(message, "tool_calls", []):
-                await handle_tool_calls(
-                    message,
-                    ctx,
-                    agent_callbacks,
-                    tool_callbacks,
-                    ui=ui,
-                )
-            else:
-                needs_user_input = True
-        if needs_user_input:
             answer = await ui.ask("> ", default="")
             append_user_message(state.history, agent_callbacks, desc.name, answer)
 
