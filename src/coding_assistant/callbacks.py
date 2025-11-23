@@ -8,6 +8,7 @@ from typing import Any, Optional
 
 from rich import print
 from rich.console import Console, Group
+from rich.live import Live
 from rich.markdown import Markdown
 from rich.padding import Padding
 from rich.panel import Panel
@@ -274,14 +275,22 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
 
     def on_chunks_start(self):
         print()
-        print("[bold green]◉[/bold green] ", end="", flush=True)
+        print("[bold green]◉[/bold green] ")
         self._printed_since_tool_start = True
+        self._chunk_buffer = ""
+        self._live = Live("", console=self._console, refresh_per_second=10, auto_refresh=True)
+        self._live.start()
 
     def on_chunk(self, chunk: str):
-        # Stream chunks as plain text
-        print(chunk, end="", flush=True)
+        # Buffer and render markdown in real-time
+        self._chunk_buffer += chunk
+        if self._live:
+            self._live.update(Markdown(self._chunk_buffer))
 
     def on_chunks_end(self):
+        if self._live:
+            self._live.stop()
+            self._live = None
         print()  # Newline after chunks
 
 
