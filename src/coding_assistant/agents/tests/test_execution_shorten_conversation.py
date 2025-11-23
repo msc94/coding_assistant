@@ -75,7 +75,6 @@ async def test_shorten_conversation_resets_history():
     msg, _ = await do_single_step(
         ctx,
         callbacks,
-        shorten_conversation_at_tokens=200_000,
         completer=completer,
         ui=make_ui_mock(),
         tool_callbacks=NullToolCallbacks(),

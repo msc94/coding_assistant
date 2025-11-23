@@ -247,25 +247,14 @@ async def handle_tool_calls(
 async def do_single_step(
     ctx: AgentContext,
     agent_callbacks: AgentProgressCallbacks,
-    shorten_conversation_at_tokens: int,
     *,
     completer: Completer,
     ui: UI,
     tool_callbacks: AgentToolCallbacks,
-    require_finish_tool: bool = True,
-    require_shorten_tool: bool = True,
 ):
     desc = ctx.desc
     state = ctx.state
     trace.get_current_span().set_attribute("agent.name", desc.name)
-
-    # Validate agent tools
-    if require_finish_tool:
-        if not any(tool.name() == "finish_task" for tool in desc.tools):
-            raise RuntimeError("Agent needs to have a `finish_task` tool in order to run a step.")
-    if require_shorten_tool:
-        if not any(tool.name() == "shorten_conversation" for tool in desc.tools):
-            raise RuntimeError("Agent needs to have a `shorten_conversation` tool in order to run a step.")
 
     tools = await get_tools(desc.tools)
     trace.get_current_span().set_attribute("agent.tools", json.dumps(tools))
@@ -317,6 +306,12 @@ async def run_agent_loop(
     parameters_json = json.dumps([dataclasses.asdict(p) for p in desc.parameters])
     trace.get_current_span().set_attribute("agent.parameter_description", parameters_json)
 
+    # Validate tools required for the agent loop
+    if not any(tool.name() == "finish_task" for tool in desc.tools):
+        raise RuntimeError("Agent needs to have a `finish_task` tool in order to run.")
+    if not any(tool.name() == "shorten_conversation" for tool in desc.tools):
+        raise RuntimeError("Agent needs to have a `shorten_conversation` tool in order to run.")
+
     start_message = _create_start_message(desc)
     agent_callbacks.on_agent_start(desc.name, desc.model, is_resuming=bool(state.history))
     append_user_message(state.history, agent_callbacks, desc.name, start_message)
@@ -328,12 +323,9 @@ async def run_agent_loop(
                 message, tokens = await do_single_step(
                     ctx,
                     agent_callbacks,
-                    shorten_conversation_at_tokens,
                     completer=completer,
                     ui=ui,
                     tool_callbacks=tool_callbacks,
-                    require_finish_tool=True,
-                    require_shorten_tool=True,
                 )
 
             if interruptible_section.was_interrupted:
@@ -419,12 +411,9 @@ async def run_chat_loop(
             message, tokens = await do_single_step(
                 ctx,
                 agent_callbacks,
-                shorten_conversation_at_tokens,
                 completer=completer,
                 ui=ui,
                 tool_callbacks=tool_callbacks,
-                require_finish_tool=False,
-                require_shorten_tool=False,
             )
         if interruptible_section.was_interrupted:
             # In chat mode, SIGINT opens the user chat prompt
