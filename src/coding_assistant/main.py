@@ -265,7 +265,6 @@ async def run_chat_session(
             tool_callbacks=tool_callbacks,
             completer=complete,
             ui=PromptToolkitUI(),
-            shorten_conversation_at_tokens=config.shorten_conversation_at_tokens,
             is_interruptible=True,
         )
     finally:

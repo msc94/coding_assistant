@@ -48,7 +48,6 @@ async def test_chat_step_prompts_user_on_no_tool_calls_once():
             tool_callbacks=NullToolCallbacks(),
             completer=completer,
             ui=ui,
-            shorten_conversation_at_tokens=10_000,
             is_interruptible=False,
         )
 
@@ -74,7 +73,6 @@ async def test_chat_step_executes_tools_without_prompt():
             tool_callbacks=NullToolCallbacks(),
             completer=completer,
             ui=ui,
-            shorten_conversation_at_tokens=10_000,
             is_interruptible=False,
         )
 
@@ -99,7 +97,6 @@ async def test_chat_mode_does_not_require_finish_task_tool():
             tool_callbacks=NullToolCallbacks(),
             completer=completer,
             ui=ui,
-            shorten_conversation_at_tokens=10_000,
             is_interruptible=False,
         )
 
@@ -123,7 +120,6 @@ async def test_chat_exit_command_stops_loop_without_appending_command():
         tool_callbacks=NullToolCallbacks(),
         completer=completer,
         ui=ui,
-        shorten_conversation_at_tokens=10_000,
         is_interruptible=False,
     )
 

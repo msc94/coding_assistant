@@ -358,7 +358,6 @@ async def run_chat_loop(
     tool_callbacks: AgentToolCallbacks,
     completer: Completer,
     ui: UI,
-    shorten_conversation_at_tokens: int = 200_000,
     is_interruptible: bool = True,
 ):
     desc = ctx.desc
