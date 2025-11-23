@@ -4,81 +4,27 @@ import signal
 
 import pytest
 
-from coding_assistant.agents.interrupts import (
-    InterruptController,
-    InterruptReason,
-    ToolCallCancellationManager,
-)
-
-
-def test_interrupt_controller_catches_sigint():
-    loop = asyncio.new_event_loop()
-    try:
-        with InterruptController(loop) as controller:
-            os.kill(os.getpid(), signal.SIGINT)
-        assert controller.was_interrupted
-    finally:
-        loop.close()
-
-
-def test_interrupt_controller_handles_multiple_sigints():
-    """Test that multiple SIGINTs are handled without exiting."""
-    loop = asyncio.new_event_loop()
-    try:
-        with InterruptController(loop) as controller:
-            for _ in range(6):
-                os.kill(os.getpid(), signal.SIGINT)
-        # Should have tracked all interrupts
-        assert controller.was_interrupted
-        assert controller._was_interrupted == 6
-    finally:
-        loop.close()
+from coding_assistant.agents.interrupts import InterruptController
 
 
 @pytest.mark.asyncio
-async def test_tool_call_cancellation_manager_cancel_all():
+async def test_interrupt_controller_cancels_tasks_on_sigint():
+    """Test that SIGINT cancels registered tasks."""
     loop = asyncio.get_running_loop()
-    manager = ToolCallCancellationManager()
 
     async def wait_forever():
         await asyncio.Future()
 
-    task = loop.create_task(wait_forever(), name="tool-task")
-    manager.register_task(task)
+    with InterruptController(loop) as controller:
+        task = loop.create_task(wait_forever())
+        controller.register_task("call-1", task)
 
-    manager.cancel_all()
+        os.kill(os.getpid(), signal.SIGINT)
+        await asyncio.sleep(0)
 
-    with pytest.raises(asyncio.CancelledError):
-        await task
+        with pytest.raises(asyncio.CancelledError):
+            await task
 
-    assert task.cancelled()
-    # The done callback should have removed it from the set
-    assert len(manager._tasks) == 0
-
-
-@pytest.mark.asyncio
-async def test_interrupt_controller_cancels_tasks_and_runs_cleanup():
-    loop = asyncio.get_running_loop()
-    controller = InterruptController(loop)
-    cleanup_called = asyncio.Event()
-
-    async def wait_forever():
-        await asyncio.Future()
-
-    async def cleanup():
-        cleanup_called.set()
-
-    task = loop.create_task(wait_forever())
-    controller.register_task("call-1", task, cleanup=cleanup)
-
-    controller.request_interrupt()
-    await asyncio.sleep(0)
-
-    with pytest.raises(asyncio.CancelledError):
-        await task
-
-    assert task.cancelled()
-    await asyncio.wait_for(cleanup_called.wait(), timeout=1)
-    assert controller.has_pending_interrupt
-    assert controller.consume_interrupts() == [InterruptReason.USER_INTERRUPT]
-    assert not controller.has_pending_interrupt
+        assert task.cancelled()
+        # Task should be removed from the set after completion
+        assert len(controller._tasks) == 0

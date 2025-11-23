@@ -1,11 +1,12 @@
 import asyncio
 import json
+import os
+import signal
+
 import pytest
-from unittest.mock import patch
 
 from coding_assistant.agents.callbacks import NullProgressCallbacks, NullToolCallbacks
 from coding_assistant.agents.execution import run_chat_loop
-from coding_assistant.agents.interrupts import InterruptController
 from coding_assistant.agents.tests.helpers import (
     FakeCompleter,
     FakeFunction,
@@ -79,38 +80,28 @@ async def test_interrupt_during_tool_execution_prompts_for_user_input():
 
     ctx = AgentContext(desc=desc, state=state)
 
-    # Capture interrupt controller via patch
-    captured_controller = []
-
-    original_init = InterruptController.__init__
-
-    def capture_init(self, loop):
-        captured_controller.append(self)
-        original_init(self, loop)
-
-    with patch.object(InterruptController, "__init__", capture_init):
-        # Run chat loop and trigger interrupt when tool starts
-        async def run_with_interrupt():
-            task = asyncio.create_task(
-                run_chat_loop(
-                    ctx,
-                    agent_callbacks=NullProgressCallbacks(),
-                    tool_callbacks=NullToolCallbacks(),
-                    completer=completer,
-                    ui=ui,
-                )
+    # Run chat loop and trigger interrupt when tool starts
+    async def run_with_interrupt():
+        task = asyncio.create_task(
+            run_chat_loop(
+                ctx,
+                agent_callbacks=NullProgressCallbacks(),
+                tool_callbacks=NullToolCallbacks(),
+                completer=completer,
+                ui=ui,
             )
+        )
 
-            # Wait for interrupt signal from tool
-            await interrupt_event.wait()
+        # Wait for interrupt signal from tool
+        await interrupt_event.wait()
 
-            # Request interrupt
-            if captured_controller:
-                captured_controller[0].request_interrupt()
+        # Send SIGINT
+        os.kill(os.getpid(), signal.SIGINT)
+        await asyncio.sleep(0)
 
-            await task
+        await task
 
-        await run_with_interrupt()
+    await run_with_interrupt()
 
     # Verify tool was cancelled
     assert tool.called
@@ -148,38 +139,28 @@ async def test_interrupt_during_do_single_step():
 
     ctx = AgentContext(desc=desc, state=state)
 
-    captured_controller = []
-
-    original_init = InterruptController.__init__
-
-    def capture_init(self, loop):
-        captured_controller.append(self)
-        original_init(self, loop)
-
-    with patch.object(InterruptController, "__init__", capture_init):
-
-        async def run_with_interrupt():
-            task = asyncio.create_task(
-                run_chat_loop(
-                    ctx,
-                    agent_callbacks=NullProgressCallbacks(),
-                    tool_callbacks=NullToolCallbacks(),
-                    completer=completer,
-                    ui=ui,
-                )
+    async def run_with_interrupt():
+        task = asyncio.create_task(
+            run_chat_loop(
+                ctx,
+                agent_callbacks=NullProgressCallbacks(),
+                tool_callbacks=NullToolCallbacks(),
+                completer=completer,
+                ui=ui,
             )
+        )
 
-            # Wait for interrupt event from tool (midway through execution)
-            await interrupt_event.wait()
+        # Wait for interrupt event from tool (midway through execution)
+        await interrupt_event.wait()
 
-            # Trigger interrupt
-            if captured_controller:
-                captured_controller[0].request_interrupt()
+        # Send SIGINT
+        os.kill(os.getpid(), signal.SIGINT)
+        await asyncio.sleep(0)
 
-            # Allow completion
-            await task
+        # Allow completion
+        await task
 
-        await run_with_interrupt()
+    await run_with_interrupt()
 
     # Verify tool was cancelled due to interrupt
     assert tool.cancelled
@@ -217,35 +198,26 @@ async def test_multiple_tool_calls_with_interrupt():
 
     ctx = AgentContext(desc=desc, state=state)
 
-    captured_controller = []
-
-    original_init = InterruptController.__init__
-
-    def capture_init(self, loop):
-        captured_controller.append(self)
-        original_init(self, loop)
-
-    with patch.object(InterruptController, "__init__", capture_init):
-
-        async def run_with_interrupt():
-            task = asyncio.create_task(
-                run_chat_loop(
-                    ctx,
-                    agent_callbacks=NullProgressCallbacks(),
-                    tool_callbacks=NullToolCallbacks(),
-                    completer=completer,
-                    ui=ui,
-                )
+    async def run_with_interrupt():
+        task = asyncio.create_task(
+            run_chat_loop(
+                ctx,
+                agent_callbacks=NullProgressCallbacks(),
+                tool_callbacks=NullToolCallbacks(),
+                completer=completer,
+                ui=ui,
             )
+        )
 
-            await interrupt_event.wait()
+        await interrupt_event.wait()
 
-            if captured_controller:
-                captured_controller[0].request_interrupt()
+        # Send SIGINT
+        os.kill(os.getpid(), signal.SIGINT)
+        await asyncio.sleep(0)
 
-            await task
+        await task
 
-        await run_with_interrupt()
+    await run_with_interrupt()
 
     # At least one tool should have been cancelled
     assert tool1.cancelled or tool2.cancelled
@@ -320,35 +292,26 @@ async def test_interrupt_recovery_continues_conversation():
 
     ctx = AgentContext(desc=desc, state=state)
 
-    captured_controller = []
-
-    original_init = InterruptController.__init__
-
-    def capture_init(self, loop):
-        captured_controller.append(self)
-        original_init(self, loop)
-
-    with patch.object(InterruptController, "__init__", capture_init):
-
-        async def run_with_interrupt():
-            task = asyncio.create_task(
-                run_chat_loop(
-                    ctx,
-                    agent_callbacks=NullProgressCallbacks(),
-                    tool_callbacks=NullToolCallbacks(),
-                    completer=completer,
-                    ui=ui,
-                )
+    async def run_with_interrupt():
+        task = asyncio.create_task(
+            run_chat_loop(
+                ctx,
+                agent_callbacks=NullProgressCallbacks(),
+                tool_callbacks=NullToolCallbacks(),
+                completer=completer,
+                ui=ui,
             )
+        )
 
-            await interrupt_event.wait()
+        await interrupt_event.wait()
 
-            if captured_controller:
-                captured_controller[0].request_interrupt()
+        # Send SIGINT
+        os.kill(os.getpid(), signal.SIGINT)
+        await asyncio.sleep(0)
 
-            await task
+        await task
 
-        await run_with_interrupt()
+    await run_with_interrupt()
 
     # Verify tool was cancelled
     assert tool.cancelled
@@ -392,37 +355,27 @@ async def test_interrupt_during_second_tool_call():
 
     ctx = AgentContext(desc=desc, state=state)
 
-    captured_controller = []
-
-    original_init = InterruptController.__init__
-
-    def capture_init(self, loop):
-        captured_controller.append(self)
-        original_init(self, loop)
-
-    with patch.object(InterruptController, "__init__", capture_init):
-
-        async def run_with_interrupt():
-            task = asyncio.create_task(
-                run_chat_loop(
-                    ctx,
-                    agent_callbacks=NullProgressCallbacks(),
-                    tool_callbacks=NullToolCallbacks(),
-                    completer=completer,
-                    ui=ui,
-                )
+    async def run_with_interrupt():
+        task = asyncio.create_task(
+            run_chat_loop(
+                ctx,
+                agent_callbacks=NullProgressCallbacks(),
+                tool_callbacks=NullToolCallbacks(),
+                completer=completer,
+                ui=ui,
             )
+        )
 
-            # Wait for at least one tool to start
-            await interrupt_event.wait()
+        # Wait for at least one tool to start
+        await interrupt_event.wait()
 
-            # Trigger interrupt
-            if captured_controller:
-                captured_controller[0].request_interrupt()
+        # Send SIGINT
+        os.kill(os.getpid(), signal.SIGINT)
+        await asyncio.sleep(0)
 
-            await task
+        await task
 
-        await run_with_interrupt()
+    await run_with_interrupt()
 
     # Tool should have been cancelled
     assert tool.cancelled
@@ -519,38 +472,28 @@ async def test_interrupt_during_llm_call():
         ]
     )
 
-    captured_controller = []
-
-    original_init = InterruptController.__init__
-
-    def capture_init(self, loop):
-        captured_controller.append(self)
-        original_init(self, loop)
-
-    with patch.object(InterruptController, "__init__", capture_init):
-
-        async def run_with_interrupt():
-            task = asyncio.create_task(
-                run_chat_loop(
-                    ctx,
-                    agent_callbacks=NullProgressCallbacks(),
-                    tool_callbacks=NullToolCallbacks(),
-                    completer=slow_completer,
-                    ui=ui,
-                )
+    async def run_with_interrupt():
+        task = asyncio.create_task(
+            run_chat_loop(
+                ctx,
+                agent_callbacks=NullProgressCallbacks(),
+                tool_callbacks=NullToolCallbacks(),
+                completer=slow_completer,
+                ui=ui,
             )
+        )
 
-            # Wait for LLM to start
-            await llm_started.wait()
-            await asyncio.sleep(0.1)
+        # Wait for LLM to start
+        await llm_started.wait()
+        await asyncio.sleep(0.1)
 
-            # Send interrupt while LLM is processing
-            if captured_controller:
-                captured_controller[0].request_interrupt()
+        # Send SIGINT while LLM is processing
+        os.kill(os.getpid(), signal.SIGINT)
+        await asyncio.sleep(0)
 
-            await task
+        await task
 
-        await run_with_interrupt()
+    await run_with_interrupt()
 
     # Verify LLM call was cancelled - no assistant message with "Response from LLM"
     assistant_messages = [m for m in state.history if m.get("role") == "assistant"]
