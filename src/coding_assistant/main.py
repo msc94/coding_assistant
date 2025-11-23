@@ -21,9 +21,8 @@ from coding_assistant.llm.model import complete
 from coding_assistant.agents.execution import run_chat_loop
 from coding_assistant.agents.parameters import Parameter
 from coding_assistant.agents.types import AgentContext, AgentDescription, AgentState, Tool
-from coding_assistant.callbacks import ConfirmationToolCallbacks, RichAgentProgressCallbacks
+from coding_assistant.callbacks import ConfirmationToolCallbacks, DenseProgressCallbacks, RichAgentProgressCallbacks
 from coding_assistant.config import Config, MCPServerConfig
-from coding_assistant.dense_callbacks import DenseProgressCallbacks
 from coding_assistant.history import (
     get_conversation_summaries,
     get_latest_orchestrator_history_file,
