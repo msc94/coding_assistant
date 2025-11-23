@@ -275,15 +275,12 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         self._chunk_buffer = ""
 
     def on_chunk(self, chunk: str):
-        # Buffer chunks for markdown rendering
+        # Stream chunks as markdown on the fly
         self._chunk_buffer += chunk
+        self._console.print(Markdown(chunk), end="")
 
     def on_chunks_end(self):
-        # Render buffered markdown
-        if self._chunk_buffer:
-            self._console.print(Markdown(self._chunk_buffer))
-        else:
-            print()  # Newline if no content
+        print()  # Newline after chunks
 
 
 class ConfirmationToolCallbacks(AgentToolCallbacks):
