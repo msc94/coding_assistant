@@ -289,13 +289,16 @@ async def do_single_step(
         del message.reasoning_content
 
     append_assistant_message(state.history, agent_callbacks, desc.name, message)
-    await handle_tool_calls(
-        message,
-        ctx,
-        agent_callbacks,
-        tool_callbacks,
-        ui=ui,
-    )
+
+    # In non-chat mode, execute tool calls immediately
+    if not enable_chat_mode:
+        await handle_tool_calls(
+            message,
+            ctx,
+            agent_callbacks,
+            tool_callbacks,
+            ui=ui,
+        )
 
     # Check conversation length and request shortening if needed
     if completion.tokens > shorten_conversation_at_tokens:
@@ -357,8 +360,8 @@ async def run_agent_loop(
                 )
                 append_user_message(state.history, agent_callbacks, desc.name, formatted_feedback)
             else:
-                # Handle assistant steps without tool calls: inject corrective message
                 if not getattr(message, "tool_calls", []):
+                    # Handle assistant steps without tool calls: inject corrective message
                     append_user_message(
                         state.history,
                         agent_callbacks,
@@ -428,8 +431,16 @@ async def run_chat_loop(
             answer = await ui.ask(f"Reply to {desc.name}:", default="")
             append_user_message(state.history, agent_callbacks, desc.name, answer)
         else:
-            # If assistant replied without tool calls, prompt the user
-            if not getattr(message, "tool_calls", []):
+            if getattr(message, "tool_calls", []):
+                await handle_tool_calls(
+                    message,
+                    ctx,
+                    agent_callbacks,
+                    tool_callbacks,
+                    ui=ui,
+                )
+            else:
+                # If assistant replied without tool calls, prompt the user
                 answer = await ui.ask(f"Reply to {desc.name}:", default="")
                 append_user_message(state.history, agent_callbacks, desc.name, answer)
         iterations += 1
