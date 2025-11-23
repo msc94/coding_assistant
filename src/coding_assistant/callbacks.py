@@ -261,7 +261,8 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
 
         # Print result summary (just line count)
         line_count = self._count_lines(result)
-        print(f" [dim]→ {line_count} lines[/dim]")
+        if line_count > 0:
+            print(f" [dim]→ {line_count} lines[/dim]")
 
         # Reset state
         self._last_tool_info = None
