@@ -248,23 +248,23 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
 
     def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None, result: str):
         # If we printed something between start and end, reprint the tool info
-        printed_between = self._last_tool_info is None
-        if printed_between and self._last_tool_info:
-            stored_call_id, tool_name_stored, args_str_stored = self._last_tool_info
+        if self._last_tool_info is None:
+            # Something was printed, need to show tool info again
             print()
-            if args_str_stored:
-                print(f"[bold yellow]▸[/bold yellow] {tool_name_stored} [dim]({stored_call_id})[/dim]{args_str_stored}")
+            args_str = self._format_arguments(arguments) if arguments else ""
+            if args_str:
+                print(f"[bold yellow]▸[/bold yellow] {tool_name} [dim]({tool_call_id})[/dim]{args_str}")
             else:
-                print(f"[bold yellow]▸[/bold yellow] {tool_name_stored} [dim]({stored_call_id})[/dim]")
+                print(f"[bold yellow]▸[/bold yellow] {tool_name} [dim]({tool_call_id})[/dim]")
 
         # Print result summary (line count only, no call ID if nothing printed between)
         line_count = self._count_lines(result)
         if line_count > 0:
-            if printed_between:
+            if self._last_tool_info is None:
                 print(f" [dim]({tool_call_id}) → {line_count} lines[/dim]")
             else:
                 print(f" [dim]→ {line_count} lines[/dim]")
-        elif printed_between:
+        elif self._last_tool_info is None:
             print(f" [dim]({tool_call_id})[/dim]")
 
         # Reset state
