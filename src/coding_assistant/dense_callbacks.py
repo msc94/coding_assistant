@@ -16,19 +16,24 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
 
     def on_agent_start(self, agent_name: str, model: str, is_resuming: bool = False):
         status = "resuming" if is_resuming else "starting"
+        print()
         print(f"[bold red]▸[/bold red] Agent {agent_name} ({model}) {status}")
 
     def on_agent_end(self, agent_name: str, result: str, summary: str):
+        print()
         print(f"[bold red]◂[/bold red] Agent {agent_name} complete")
         print(f"[dim]Summary: {summary}[/dim]")
 
     def on_user_message(self, agent_name: str, content: str):
+        print()
         print(f"[bold blue]◉[/bold blue] User: {content}")
 
     def on_assistant_message(self, agent_name: str, content: str):
+        print()
         print(f"[bold green]◉[/bold green] Assistant: {content}")
 
     def on_assistant_reasoning(self, agent_name: str, content: str):
+        print()
         print(f"[dim cyan]💭 {content}[/dim cyan]")
 
     def _count_lines(self, text: str) -> int:
@@ -47,6 +52,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         return json.dumps(formatted, indent=None)
 
     def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
+        print()
         # Print tool name and arguments
         args_str = self._format_arguments(arguments) if arguments else "{}"
         print(f"[bold yellow]▸[/bold yellow] {tool_name}({args_str})")
