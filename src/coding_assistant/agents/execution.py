@@ -382,10 +382,9 @@ async def run_chat_loop(
                 agent_callbacks,
                 completer=completer,
             )
+        needs_user_input = False
         if interruptible_section.was_interrupted:
-            # In chat mode, SIGINT opens the user chat prompt
-            answer = await ui.ask(f"Reply to {desc.name}:", default="")
-            append_user_message(state.history, agent_callbacks, desc.name, answer)
+            needs_user_input = True
         else:
             if getattr(message, "tool_calls", []):
                 await handle_tool_calls(
@@ -396,9 +395,10 @@ async def run_chat_loop(
                     ui=ui,
                 )
             else:
-                # If assistant replied without tool calls, prompt the user
-                answer = await ui.ask(f"Reply to {desc.name}:", default="")
-                append_user_message(state.history, agent_callbacks, desc.name, answer)
+                needs_user_input = True
+        if needs_user_input:
+            answer = await ui.ask("> ", default="")
+            append_user_message(state.history, agent_callbacks, desc.name, answer)
 
         iterations += 1
         if max_iterations is not None and iterations >= max_iterations:

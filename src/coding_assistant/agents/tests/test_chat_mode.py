@@ -38,7 +38,7 @@ async def test_chat_step_prompts_user_on_no_tool_calls_once():
     completer = FakeCompleter([FakeMessage(content="Hello")])
     desc, state = make_test_agent(tools=[], history=[{"role": "user", "content": "start"}])
 
-    ui = make_ui_mock(ask_sequence=[(f"Reply to {desc.name}:", "User reply")])
+    ui = make_ui_mock(ask_sequence=[("> ", "User reply")])
 
     # Run a single chat-loop iteration
     await run_chat_loop(
@@ -90,7 +90,7 @@ async def test_chat_mode_does_not_require_finish_task_tool():
     completer = FakeCompleter([FakeMessage(content="Hi there")])
     desc, state = make_test_agent(tools=[], history=[{"role": "user", "content": "start"}])
 
-    ui = make_ui_mock(ask_sequence=[(f"Reply to {desc.name}:", "Ack")])
+    ui = make_ui_mock(ask_sequence=[("> ", "Ack")])
 
     await run_chat_loop(
         AgentContext(desc=desc, state=state),
