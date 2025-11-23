@@ -36,12 +36,12 @@ class AgentProgressCallbacks(ABC):
         pass
 
     @abstractmethod
-    def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict | None):
+    def on_tool_start(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None):
         """Handle tool start events."""
         pass
 
     @abstractmethod
-    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
+    def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None, result: str):
         """Handle messages with role: tool."""
         pass
 
@@ -79,10 +79,10 @@ class NullProgressCallbacks(AgentProgressCallbacks):
     def on_assistant_reasoning(self, agent_name: str, content: str):
         pass
 
-    def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict | None):
+    def on_tool_start(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None):
         pass
 
-    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
+    def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None, result: str):
         pass
 
     def on_chunks_start(self):

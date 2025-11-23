@@ -144,7 +144,7 @@ class RichAgentProgressCallbacks(AgentProgressCallbacks):
 
         return Group(*parts)
 
-    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
+    def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None, result: str):
         parts: list[Any] = [Markdown(f"Name: `{tool_name}`")]
 
         if arguments is not None:
@@ -161,7 +161,7 @@ class RichAgentProgressCallbacks(AgentProgressCallbacks):
             ),
         )
 
-    def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict | None):
+    def on_tool_start(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None):
         pass  # Default implementation does nothing
 
     def on_chunks_start(self):
@@ -180,7 +180,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
     """Dense progress callbacks with minimal formatting."""
 
     def __init__(self):
-        self._last_tool_info: tuple[str, str] | None = None  # (tool_name, args_str)
+        self._last_tool_info: tuple[str, str, str] | None = None  # (tool_call_id, tool_name, args_str)
         self._printed_since_tool_start = False
         self._chunk_buffer = ""
         self._console = Console()
@@ -236,33 +236,35 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
 
         return "".join(lines)
 
-    def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict | None):
+    def on_tool_start(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None):
         print()
-        # Print tool name and arguments
+        # Print tool name and arguments with call ID
         args_str = self._format_arguments(arguments) if arguments else ""
         if args_str:
-            print(f"[bold yellow]▸[/bold yellow] {tool_name}{args_str}")
+            print(f"[bold yellow]▸[/bold yellow] [dim]{tool_call_id}[/dim] {tool_name}{args_str}")
         else:
-            print(f"[bold yellow]▸[/bold yellow] {tool_name}")
+            print(f"[bold yellow]▸[/bold yellow] [dim]{tool_call_id}[/dim] {tool_name}")
 
         # Remember what we printed
-        self._last_tool_info = (tool_name, args_str)
+        self._last_tool_info = (tool_call_id, tool_name, args_str)
         self._printed_since_tool_start = False
 
-    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
+    def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None, result: str):
         # If we printed something between start and end, reprint the tool info
         if self._printed_since_tool_start and self._last_tool_info:
-            tool_name_stored, args_str_stored = self._last_tool_info
+            stored_call_id, tool_name_stored, args_str_stored = self._last_tool_info
             print()
             if args_str_stored:
-                print(f"[bold yellow]▸[/bold yellow] {tool_name_stored}{args_str_stored}")
+                print(f"[bold yellow]▸[/bold yellow] [dim]{stored_call_id}[/dim] {tool_name_stored}{args_str_stored}")
             else:
-                print(f"[bold yellow]▸[/bold yellow] {tool_name_stored}")
+                print(f"[bold yellow]▸[/bold yellow] [dim]{stored_call_id}[/dim] {tool_name_stored}")
 
-        # Print result summary (just line count)
+        # Print result summary (just call ID and line count)
         line_count = self._count_lines(result)
         if line_count > 0:
-            print(f" [dim]→ {line_count} lines[/dim]")
+            print(f" [dim]{tool_call_id} → {line_count} lines[/dim]")
+        else:
+            print(f" [dim]{tool_call_id}[/dim]")
 
         # Reset state
         self._last_tool_info = None

@@ -10,7 +10,7 @@ def append_tool_message(
     function_args: dict | None,
     function_call_result: str,
 ):
-    callbacks.on_tool_message(agent_name, function_name, function_args, function_call_result)
+    callbacks.on_tool_message(agent_name, tool_call_id, function_name, function_args, function_call_result)
 
     history.append(
         {
