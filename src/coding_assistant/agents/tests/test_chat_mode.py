@@ -9,7 +9,7 @@ from coding_assistant.agents.tests.helpers import (
     make_test_agent,
     make_ui_mock,
 )
-from coding_assistant.agents.execution import do_single_step, run_chat_loop
+from coding_assistant.agents.execution import run_chat_loop
 from coding_assistant.agents.types import Tool, TextResult, AgentContext
 from coding_assistant.agents.callbacks import NullProgressCallbacks, NullToolCallbacks
 
