@@ -340,7 +340,7 @@ async def _main(args):
         # Set up callbacks based on mode
         if args.dense:
             agent_callbacks = DenseProgressCallbacks()
-            # In dense mode, chunks are always printed, reasoning is never printed
+            # In dense mode, chunks are always printed
         else:
             agent_callbacks = RichAgentProgressCallbacks(
                 print_chunks=args.print_chunks,

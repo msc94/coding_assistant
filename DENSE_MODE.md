@@ -18,10 +18,10 @@ coding-assistant --dense --chat-mode
 
 ### Minimal Formatting
 - ✅ No panels - just plain text
-- ✅ Unicode markers instead of boxes (▸, ◂, ◉)
+- ✅ Unicode markers instead of boxes (▸, ◂, ◉, 💭)
 - ✅ Compact tool call output
 - ✅ Chunks always printed (no flag needed)
-- ✅ Reasoning never printed
+- ✅ Reasoning printed with 💭 marker
 
 ### Tool Call Output
 Instead of verbose panels, tool calls show:
@@ -49,8 +49,8 @@ Example:
 | Panels | ✅ Rich panels | ❌ Plain text |
 | Tool results | Full output | Line count only |
 | Chunks | Optional (--print-chunks) | Always on |
-| Reasoning | Optional (--print-reasoning) | Always off |
-| Markers | Panel borders | Unicode (▸ ◂ ◉) |
+| Reasoning | Optional (--print-reasoning) | Always on |
+| Markers | Panel borders | Unicode (▸ ◂ ◉ 💭) |
 | Scrollback | Works | Works |
 
 ## When to Use Dense Mode
@@ -76,13 +76,14 @@ Dense mode uses `DenseProgressCallbacks` which:
 - Truncates long arguments (shows `<N chars>` instead)
 - Counts result lines instead of showing full output
 - Always enables chunks
-- Never shows reasoning
+- Shows reasoning with 💭 marker
 
 ## Example Output
 
 ```
 ▸ Agent Orchestrator (gpt-5) starting
 ◉ User: Create a Python script to calculate fibonacci numbers
+💭 I need to create a Python file with fibonacci implementation
 ◉ Assistant: I'll create a fibonacci calculator script.
 ▸ mcp_coding_assistant_mcp_filesystem_write({"path": "fibonacci.py", "content": "<143 chars>"})
   → 1 lines

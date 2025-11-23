@@ -29,8 +29,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         print(f"[bold green]◉[/bold green] Assistant: {content}")
 
     def on_assistant_reasoning(self, agent_name: str, content: str):
-        # Don't print reasoning in dense mode
-        pass
+        print(f"[dim cyan]💭 {content}[/dim cyan]")
 
     def _count_lines(self, text: str) -> int:
         """Count number of lines in text."""
