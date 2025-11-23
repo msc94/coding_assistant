@@ -161,6 +161,12 @@ class RichAgentProgressCallbacks(AgentProgressCallbacks):
             ),
         )
 
+    def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict | None):
+        pass  # Default implementation does nothing
+
+    def on_chunks_start(self):
+        pass  # Default implementation does nothing
+
     def on_chunk(self, chunk: str):
         if self._print_chunks:
             print(chunk, end="", flush=True)

@@ -51,15 +51,20 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
                 formatted[key] = value
         return json.dumps(formatted, indent=None)
 
-    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
+    def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict | None):
         print()
         # Print tool name and arguments
         args_str = self._format_arguments(arguments) if arguments else "{}"
         print(f"[bold yellow]▸[/bold yellow] {tool_name}({args_str})")
 
+    def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
         # Print result summary (just line count)
         line_count = self._count_lines(result)
         print(f"[dim]  → {line_count} lines[/dim]")
+
+    def on_chunks_start(self):
+        print()
+        print("[bold green]◉[/bold green] ", end="", flush=True)
 
     def on_chunk(self, chunk: str):
         # Always print chunks in dense mode
