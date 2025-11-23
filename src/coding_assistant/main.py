@@ -17,6 +17,7 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 
 from coding_assistant.agents.callbacks import AgentProgressCallbacks
+from coding_assistant.llm.model import complete
 from coding_assistant.agents.execution import run_chat_loop
 from coding_assistant.agents.parameters import Parameter
 from coding_assistant.agents.types import AgentContext, AgentDescription, AgentState, Tool
@@ -235,8 +236,6 @@ async def run_chat_session(
     agent_callbacks: AgentProgressCallbacks,
     tool_callbacks: ConfirmationToolCallbacks,
 ):
-    from coding_assistant.llm.model import complete
-
     # Build a simple root agent for chat mode (no finish_task, no ask_client)
     params: list[Parameter] = []
     if instructions:
