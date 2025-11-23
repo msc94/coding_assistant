@@ -25,7 +25,13 @@ class _CB(AgentProgressCallbacks):
     def on_assistant_reasoning(self, agent_name: str, content: str):
         self.reasoning.append(content)
 
+    def on_tool_start(self, agent_name: str, tool_name: str, arguments: dict | None):
+        pass
+
     def on_tool_message(self, agent_name: str, tool_name: str, arguments: dict | None, result: str):
+        pass
+
+    def on_chunks_start(self):
         pass
 
     def on_chunk(self, chunk: str):
