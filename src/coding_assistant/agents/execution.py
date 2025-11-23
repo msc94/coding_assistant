@@ -8,7 +8,7 @@ from opentelemetry import trace
 
 from coding_assistant.agents.callbacks import AgentProgressCallbacks, AgentToolCallbacks
 from coding_assistant.agents.history import append_assistant_message, append_tool_message, append_user_message
-from coding_assistant.agents.interrupts import InterruptibleSection, NonInterruptibleSection
+from coding_assistant.agents.interrupts import InterruptibleSection, NonInterruptibleSection  # noqa: F401
 from coding_assistant.agents.parameters import format_parameters
 from coding_assistant.agents.types import (
     AgentContext,
