@@ -179,7 +179,6 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
 
     def __init__(self):
         self._last_tool_info: tuple[str, str, str] | None = None  # (tool_call_id, tool_name, args_str)
-        self._printed_since_tool_start = False
         self._chunk_buffer = ""
         self._console = Console()
         self._live: Live | None = None
@@ -188,18 +187,18 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         status = "resuming" if is_resuming else "starting"
         print()
         print(f"[bold red]▸[/bold red] Agent {agent_name} ({model}) {status}")
-        self._printed_since_tool_start = True
+        self._last_tool_info = None
 
     def on_agent_end(self, agent_name: str, result: str, summary: str):
         print()
         print(f"[bold red]◂[/bold red] Agent {agent_name} complete")
         print(f"[dim]Summary: {summary}[/dim]")
-        self._printed_since_tool_start = True
+        self._last_tool_info = None
 
     def on_user_message(self, agent_name: str, content: str):
         print()
         print(f"[bold blue]◉[/bold blue] User: {content}")
-        self._printed_since_tool_start = True
+        self._last_tool_info = None
 
     def on_assistant_message(self, agent_name: str, content: str):
         # Don't print - content is already printed via chunks
@@ -208,7 +207,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
     def on_assistant_reasoning(self, agent_name: str, content: str):
         print()
         print(f"[dim cyan]💭 {content}[/dim cyan]")
-        self._printed_since_tool_start = True
+        self._last_tool_info = None
 
     def _count_lines(self, text: str) -> int:
         """Count number of lines in text."""
@@ -246,11 +245,11 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
 
         # Remember what we printed
         self._last_tool_info = (tool_call_id, tool_name, args_str)
-        self._printed_since_tool_start = False
 
     def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None, result: str):
         # If we printed something between start and end, reprint the tool info
-        if self._printed_since_tool_start and self._last_tool_info:
+        printed_between = self._last_tool_info is None
+        if printed_between and self._last_tool_info:
             stored_call_id, tool_name_stored, args_str_stored = self._last_tool_info
             print()
             if args_str_stored:
@@ -261,23 +260,22 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         # Print result summary (line count only, no call ID if nothing printed between)
         line_count = self._count_lines(result)
         if line_count > 0:
-            if self._printed_since_tool_start:
+            if printed_between:
                 print(f" [dim]({tool_call_id}) → {line_count} lines[/dim]")
             else:
                 print(f" [dim]→ {line_count} lines[/dim]")
-        elif self._printed_since_tool_start:
+        elif printed_between:
             print(f" [dim]({tool_call_id})[/dim]")
 
         # Reset state
         self._last_tool_info = None
-        self._printed_since_tool_start = True
 
     def on_chunk(self, chunk: str):
         # Start live display on first non-empty chunk
         if not self._live and chunk:
             print()
             print("[bold green]◉[/bold green] ")
-            self._printed_since_tool_start = True
+            self._last_tool_info = None
             self._live = Live("", console=self._console, refresh_per_second=10, auto_refresh=True)
             self._live.start()
 
