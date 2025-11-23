@@ -182,6 +182,8 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
     def __init__(self):
         self._last_tool_info: tuple[str, str] | None = None  # (tool_name, args_str)
         self._printed_since_tool_start = False
+        self._chunk_buffer = ""
+        self._console = Console()
 
     def on_agent_start(self, agent_name: str, model: str, is_resuming: bool = False):
         status = "resuming" if is_resuming else "starting"
@@ -230,7 +232,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         lines = []
         for key, value in formatted.items():
             value_json = json.dumps(value)
-            lines.append(f"[dim]\n    {key}={value_json}[/dim]")
+            lines.append(f"\n    {key}={value_json}")
 
         return "".join(lines)
 
@@ -269,13 +271,18 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         print()
         print("[bold green]◉[/bold green] ", end="", flush=True)
         self._printed_since_tool_start = True
+        self._chunk_buffer = ""
 
     def on_chunk(self, chunk: str):
-        # Always print chunks in dense mode
-        print(chunk, end="", flush=True)
+        # Buffer chunks for markdown rendering
+        self._chunk_buffer += chunk
 
     def on_chunks_end(self):
-        print()  # Newline after chunks
+        # Render buffered markdown
+        if self._chunk_buffer:
+            self._console.print(Markdown(self._chunk_buffer))
+        else:
+            print()  # Newline if no content
 
 
 class ConfirmationToolCallbacks(AgentToolCallbacks):
