@@ -40,17 +40,17 @@ async def test_chat_step_prompts_user_on_no_tool_calls_once():
 
     ui = make_ui_mock(ask_sequence=[("> ", "User reply")])
 
-    # Run a single chat-loop iteration
-    await run_chat_loop(
-        AgentContext(desc=desc, state=state),
-        agent_callbacks=NullProgressCallbacks(),
-        tool_callbacks=NullToolCallbacks(),
-        completer=completer,
-        ui=ui,
-        shorten_conversation_at_tokens=10_000,
-        is_interruptible=False,
-        max_iterations=1,
-    )
+    # Run a single chat-loop iteration by exhausting the completer after one step
+    with pytest.raises(AssertionError, match="FakeCompleter script exhausted"):
+        await run_chat_loop(
+            AgentContext(desc=desc, state=state),
+            agent_callbacks=NullProgressCallbacks(),
+            tool_callbacks=NullToolCallbacks(),
+            completer=completer,
+            ui=ui,
+            shorten_conversation_at_tokens=10_000,
+            is_interruptible=False,
+        )
 
     # Last message should be the user's reply injected by chat mode
     assert state.history[-1]["role"] == "user"
@@ -67,16 +67,16 @@ async def test_chat_step_executes_tools_without_prompt():
 
     ui = make_ui_mock()  # no prompts expected
 
-    await run_chat_loop(
-        AgentContext(desc=desc, state=state),
-        agent_callbacks=NullProgressCallbacks(),
-        tool_callbacks=NullToolCallbacks(),
-        completer=completer,
-        ui=ui,
-        shorten_conversation_at_tokens=10_000,
-        is_interruptible=False,
-        max_iterations=1,
-    )
+    with pytest.raises(AssertionError, match="FakeCompleter script exhausted"):
+        await run_chat_loop(
+            AgentContext(desc=desc, state=state),
+            agent_callbacks=NullProgressCallbacks(),
+            tool_callbacks=NullToolCallbacks(),
+            completer=completer,
+            ui=ui,
+            shorten_conversation_at_tokens=10_000,
+            is_interruptible=False,
+        )
 
     # Tool must have executed
     assert echo_tool.called_with == {"text": "hi"}
@@ -92,6 +92,31 @@ async def test_chat_mode_does_not_require_finish_task_tool():
 
     ui = make_ui_mock(ask_sequence=[("> ", "Ack")])
 
+    with pytest.raises(AssertionError, match="FakeCompleter script exhausted"):
+        await run_chat_loop(
+            AgentContext(desc=desc, state=state),
+            agent_callbacks=NullProgressCallbacks(),
+            tool_callbacks=NullToolCallbacks(),
+            completer=completer,
+            ui=ui,
+            shorten_conversation_at_tokens=10_000,
+            is_interruptible=False,
+        )
+
+    # Should have appended the assistant message and then the user's reply
+    roles = [m.get("role") for m in state.history[-2:]]
+    assert roles == ["assistant", "user"]
+
+
+@pytest.mark.asyncio
+async def test_chat_exit_command_stops_loop_without_appending_command():
+    # Assistant sends a normal message, user replies with /exit which should stop the loop
+    completer = FakeCompleter([FakeMessage(content="Hello chat")])
+    desc, state = make_test_agent(tools=[], history=[{"role": "user", "content": "start"}])
+
+    ui = make_ui_mock(ask_sequence=[("> ", "/exit")])
+
+    # Should return cleanly without exhausting the completer further
     await run_chat_loop(
         AgentContext(desc=desc, state=state),
         agent_callbacks=NullProgressCallbacks(),
@@ -100,9 +125,9 @@ async def test_chat_mode_does_not_require_finish_task_tool():
         ui=ui,
         shorten_conversation_at_tokens=10_000,
         is_interruptible=False,
-        max_iterations=1,
     )
 
-    # Should have appended the assistant message and then the user's reply
-    roles = [m.get("role") for m in state.history[-2:]]
-    assert roles == ["assistant", "user"]
+    # Verify that '/exit' was not appended to history
+    assert not any(m.get("role") == "user" and (m.get("content") or "").strip() == "/exit" for m in state.history)
+    # Last message should still be the assistant's message (no user reply appended)
+    assert state.history[-1]["role"] == "assistant"

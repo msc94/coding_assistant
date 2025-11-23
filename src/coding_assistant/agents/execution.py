@@ -360,7 +360,6 @@ async def run_chat_loop(
     ui: UI,
     shorten_conversation_at_tokens: int = 200_000,
     is_interruptible: bool = True,
-    max_iterations: int | None = None,
 ):
     desc = ctx.desc
     state = ctx.state
@@ -373,7 +372,6 @@ async def run_chat_loop(
     agent_callbacks.on_agent_start(desc.name, desc.model, is_resuming=bool(state.history))
     append_user_message(state.history, agent_callbacks, desc.name, start_message)
 
-    iterations = 0
     while True:
         section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
         with section_cls() as interruptible_section:
@@ -392,8 +390,7 @@ async def run_chat_loop(
             )
         else:
             answer = await ui.ask("> ", default="")
+            # User command handling (e.g., /exit)
+            if answer.strip() == "/exit":
+                break
             append_user_message(state.history, agent_callbacks, desc.name, answer)
-
-        iterations += 1
-        if max_iterations is not None and iterations >= max_iterations:
-            break
