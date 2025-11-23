@@ -241,9 +241,9 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         # Print tool name and arguments with call ID
         args_str = self._format_arguments(arguments) if arguments else ""
         if args_str:
-            print(f"[bold yellow]▸[/bold yellow] [dim]{tool_call_id}[/dim] {tool_name}{args_str}")
+            print(f"[bold yellow]▸[/bold yellow] {tool_name} [dim]({tool_call_id})[/dim]{args_str}")
         else:
-            print(f"[bold yellow]▸[/bold yellow] [dim]{tool_call_id}[/dim] {tool_name}")
+            print(f"[bold yellow]▸[/bold yellow] {tool_name} [dim]({tool_call_id})[/dim]")
 
         # Remember what we printed
         self._last_tool_info = (tool_call_id, tool_name, args_str)
@@ -255,16 +255,19 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
             stored_call_id, tool_name_stored, args_str_stored = self._last_tool_info
             print()
             if args_str_stored:
-                print(f"[bold yellow]▸[/bold yellow] [dim]{stored_call_id}[/dim] {tool_name_stored}{args_str_stored}")
+                print(f"[bold yellow]▸[/bold yellow] {tool_name_stored} [dim]({stored_call_id})[/dim]{args_str_stored}")
             else:
-                print(f"[bold yellow]▸[/bold yellow] [dim]{stored_call_id}[/dim] {tool_name_stored}")
+                print(f"[bold yellow]▸[/bold yellow] {tool_name_stored} [dim]({stored_call_id})[/dim]")
 
-        # Print result summary (just call ID and line count)
+        # Print result summary (line count only, no call ID if nothing printed between)
         line_count = self._count_lines(result)
         if line_count > 0:
-            print(f" [dim]{tool_call_id} → {line_count} lines[/dim]")
-        else:
-            print(f" [dim]{tool_call_id}[/dim]")
+            if self._printed_since_tool_start:
+                print(f" [dim]({tool_call_id}) → {line_count} lines[/dim]")
+            else:
+                print(f" [dim]→ {line_count} lines[/dim]")
+        elif self._printed_since_tool_start:
+            print(f" [dim]({tool_call_id})[/dim]")
 
         # Reset state
         self._last_tool_info = None
