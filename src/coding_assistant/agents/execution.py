@@ -47,6 +47,19 @@ Your client has provided the following parameters for your task:
 {parameters}
 """.strip()
 
+CHAT_START_MESSAGE_TEMPLATE = """
+## General
+
+- You are an agent named `{name}`.
+- You are in chat mode. You may converse without using tools. When you do not know what to do next, reply without any tool calls to return control to the user. Use tools only when they materially advance the work.
+
+## Parameters
+
+Your client has provided the following parameters for your session:
+
+{parameters}
+""".strip()
+
 FEEDBACK_TEMPLATE = """
 Your client has provided the following feedback on your work:
 
@@ -64,6 +77,15 @@ def _create_start_message(desc: AgentDescription) -> str:
         parameters=parameters_str,
     )
 
+    return message
+
+
+def _create_chat_start_message(desc: AgentDescription) -> str:
+    parameters_str = format_parameters(desc.parameters)
+    message = CHAT_START_MESSAGE_TEMPLATE.format(
+        name=desc.name,
+        parameters=parameters_str,
+    )
     return message
 
 
@@ -191,17 +213,23 @@ async def handle_tool_calls(
     tool_callbacks: AgentToolCallbacks,
     *,
     ui: UI,
+    enable_chat_mode: bool = False,
 ):
     desc = ctx.desc
     state = ctx.state
     tool_calls = message.tool_calls
     if not tool_calls:
-        append_user_message(
-            state.history,
-            agent_callbacks,
-            desc.name,
-            "I detected a step from you without any tool calls. This is not allowed. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
-        )
+        if enable_chat_mode:
+            # Transfer control back to user via chat prompt
+            answer = await ui.ask(f"Reply to {desc.name}:", default="")
+            append_user_message(state.history, agent_callbacks, desc.name, answer)
+        else:
+            append_user_message(
+                state.history,
+                agent_callbacks,
+                desc.name,
+                "I detected a step from you without any tool calls. This is not allowed. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
+            )
         return
 
     trace.get_current_span().set_attribute("message.tool_calls", [x.model_dump_json() for x in tool_calls])
@@ -237,16 +265,18 @@ async def do_single_step(
     completer: Completer,
     ui: UI,
     tool_callbacks: AgentToolCallbacks,
+    enable_chat_mode: bool = False,
 ):
     desc = ctx.desc
     state = ctx.state
     trace.get_current_span().set_attribute("agent.name", desc.name)
 
-    # Validate agent tools
-    if not any(tool.name() == "finish_task" for tool in desc.tools):
-        raise RuntimeError("Agent needs to have a `finish_task` tool in order to run a step.")
-    if not any(tool.name() == "shorten_conversation" for tool in desc.tools):
-        raise RuntimeError("Agent needs to have a `shorten_conversation` tool in order to run a step.")
+    # Validate agent tools when not in chat mode
+    if not enable_chat_mode:
+        if not any(tool.name() == "finish_task" for tool in desc.tools):
+            raise RuntimeError("Agent needs to have a `finish_task` tool in order to run a step.")
+        if not any(tool.name() == "shorten_conversation" for tool in desc.tools):
+            raise RuntimeError("Agent needs to have a `shorten_conversation` tool in order to run a step.")
 
     tools = await get_tools(desc.tools)
     trace.get_current_span().set_attribute("agent.tools", json.dumps(tools))
@@ -278,6 +308,7 @@ async def do_single_step(
         agent_callbacks,
         tool_callbacks,
         ui=ui,
+        enable_chat_mode=enable_chat_mode,
     )
 
     # Check conversation length and request shortening if needed
@@ -329,6 +360,7 @@ async def run_agent_loop(
                     completer=completer,
                     ui=ui,
                     tool_callbacks=tool_callbacks,
+                    enable_chat_mode=False,
                 )
 
             if interruptible_section.was_interrupted:
@@ -358,3 +390,44 @@ async def run_agent_loop(
             break
 
     assert state.output is not None
+
+
+@tracer.start_as_current_span("run_chat_loop")
+async def run_chat_loop(
+    ctx: AgentContext,
+    *,
+    agent_callbacks: AgentProgressCallbacks,
+    tool_callbacks: AgentToolCallbacks,
+    completer: Completer,
+    ui: UI,
+    shorten_conversation_at_tokens: int = 200_000,
+    is_interruptible: bool = True,
+):
+    desc = ctx.desc
+    state = ctx.state
+
+    trace.get_current_span().set_attribute("agent.name", desc.name)
+    parameters_json = json.dumps([dataclasses.asdict(p) for p in desc.parameters])
+    trace.get_current_span().set_attribute("agent.parameter_description", parameters_json)
+
+    start_message = _create_chat_start_message(desc)
+    agent_callbacks.on_agent_start(desc.name, desc.model, is_resuming=bool(state.history))
+    append_user_message(state.history, agent_callbacks, desc.name, start_message)
+
+    while True:
+        section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
+        with section_cls() as interruptible_section:
+            await do_single_step(
+                ctx,
+                agent_callbacks,
+                shorten_conversation_at_tokens,
+                completer=completer,
+                ui=ui,
+                tool_callbacks=tool_callbacks,
+                enable_chat_mode=True,
+            )
+        if interruptible_section.was_interrupted:
+            # In chat mode, SIGINT opens the user chat prompt
+            answer = await ui.ask(f"Reply to {desc.name}:", default="")
+            append_user_message(state.history, agent_callbacks, desc.name, answer)
+            # Continue loop open-ended
