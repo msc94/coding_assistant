@@ -274,14 +274,19 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         self._printed_since_tool_start = True
 
     def on_chunks_start(self):
-        print()
-        print("[bold green]◉[/bold green] ")
-        self._printed_since_tool_start = True
+        # Reset state for new chunk stream
         self._chunk_buffer = ""
-        self._live = Live("", console=self._console, refresh_per_second=10, auto_refresh=True)
-        self._live.start()
+        self._live = None
 
     def on_chunk(self, chunk: str):
+        # Start live display on first non-empty chunk
+        if not self._live and chunk:
+            print()
+            print("[bold green]◉[/bold green] ")
+            self._printed_since_tool_start = True
+            self._live = Live("", console=self._console, refresh_per_second=10, auto_refresh=True)
+            self._live.start()
+
         # Buffer and render markdown in real-time
         self._chunk_buffer += chunk
         if self._live:
