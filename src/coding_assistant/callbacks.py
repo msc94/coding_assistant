@@ -278,7 +278,8 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         self._printed_since_tool_start = True
 
     def on_chunk(self, chunk: str):
-        self._console.print(Markdown(chunk), end="")
+        # Stream chunks as plain text
+        print(chunk, end="", flush=True)
 
     def on_chunks_end(self):
         print()  # Newline after chunks
