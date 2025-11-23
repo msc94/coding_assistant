@@ -23,6 +23,7 @@ from coding_assistant.agents.parameters import Parameter
 from coding_assistant.agents.types import AgentContext, AgentDescription, AgentState, Tool
 from coding_assistant.callbacks import ConfirmationToolCallbacks, RichAgentProgressCallbacks
 from coding_assistant.config import Config, MCPServerConfig
+from coding_assistant.dense_callbacks import DenseProgressCallbacks
 from coding_assistant.history import (
     get_conversation_summaries,
     get_latest_orchestrator_history_file,
@@ -142,6 +143,12 @@ def parse_args():
         action=BooleanOptionalAction,
         default=False,
         help="Wait for a debugger to attach.",
+    )
+    parser.add_argument(
+        "--dense",
+        action=BooleanOptionalAction,
+        default=False,
+        help="Use dense output mode (no panels, compact formatting, chunks enabled by default).",
     )
 
     return parser.parse_args()
@@ -330,10 +337,15 @@ async def _main(args):
             rich_print(Panel(Markdown(instructions), title="Instructions"))
             return
 
-        agent_callbacks = RichAgentProgressCallbacks(
-            print_chunks=args.print_chunks,
-            print_reasoning=args.print_reasoning,
-        )
+        # Set up callbacks based on mode
+        if args.dense:
+            agent_callbacks = DenseProgressCallbacks()
+            # In dense mode, chunks are always printed, reasoning is never printed
+        else:
+            agent_callbacks = RichAgentProgressCallbacks(
+                print_chunks=args.print_chunks,
+                print_reasoning=args.print_reasoning,
+            )
 
         tool_callbacks = ConfirmationToolCallbacks(
             tool_confirmation_patterns=args.tool_confirmation_patterns,
