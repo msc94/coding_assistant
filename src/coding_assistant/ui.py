@@ -1,7 +1,9 @@
 import logging
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 from prompt_toolkit import PromptSession
+from prompt_toolkit.history import FileHistory
 from prompt_toolkit.shortcuts import create_confirm_session
 from rich.console import Console
 
@@ -23,11 +25,17 @@ class UI(ABC):
 
 
 class PromptToolkitUI(UI):
+    def __init__(self):
+        history_dir = Path.home() / ".coding_assistant"
+        history_dir.mkdir(exist_ok=True)
+        history_file = history_dir / "history"
+        self._session = PromptSession(history=FileHistory(str(history_file)))
+
     async def ask(self, prompt_text: str, default: str | None = None) -> str:
         Console().bell()
         print()
         print(prompt_text)
-        return await PromptSession().prompt_async("> ", default=default or "")
+        return await self._session.prompt_async("> ", default=default or "")
 
     async def confirm(self, prompt_text: str) -> bool:
         Console().bell()
@@ -37,7 +45,7 @@ class PromptToolkitUI(UI):
     async def prompt(self) -> str:
         Console().bell()
         print()
-        return await PromptSession().prompt_async("> ")
+        return await self._session.prompt_async("> ")
 
 
 class DefaultAnswerUI(UI):
