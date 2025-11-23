@@ -16,7 +16,7 @@ from coding_assistant.agents.types import (
 )
 from coding_assistant.config import Config
 from coding_assistant.llm.model import complete
-from coding_assistant.ui import UI, DefaultAnswerUI
+from coding_assistant.ui import DefaultAnswerUI, UI
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,6 @@ class OrchestratorTool(Tool):
                     NullProgressCallbacks(),
                     self._tool_callbacks,
                 ),
-                AskClientTool(self._config.enable_ask_user, ui=self._ui),
                 *self._tools,
             ],
         )
@@ -188,40 +187,6 @@ class AgentTool(Tool):
         )
         assert state.output is not None, "Agent did not produce output"
         return TextResult(content=state.output.result)
-
-
-class AskClientSchema(BaseModel):
-    question: str = Field(description="The question to ask the client.")
-    default_answer: str | None = Field(default=None, description="A sensible default answer to the question.")
-
-
-class AskClientTool(Tool):
-    def __init__(self, enabled: bool, ui: UI):
-        self.enabled = enabled
-        self._ui = ui
-
-    def name(self) -> str:
-        return "ask_client"
-
-    def description(self) -> str:
-        return "Ask the client for input."
-
-    def parameters(self) -> dict:
-        return AskClientSchema.model_json_schema()
-
-    async def execute(self, parameters: dict) -> TextResult:
-        assert "question" in parameters
-
-        if not self.enabled:
-            return TextResult(
-                "Client input is disabled for this session. Please continue as if the client had given the most sensible answer to your question."
-            )
-
-        question = parameters["question"]
-        default_answer = parameters.get("default_answer")
-
-        answer = await self._ui.ask(question, default=default_answer or "")
-        return TextResult(content=str(answer))
 
 
 class FinishTaskSchema(BaseModel):

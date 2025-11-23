@@ -66,12 +66,6 @@ def parse_args():
     parser.add_argument("--model", type=str, default="gpt-5", help="Model to use for the orchestrator agent.")
     parser.add_argument("--expert-model", type=str, default="gpt-5", help="Expert model to use.")
     parser.add_argument(
-        "--ask-user",
-        action=BooleanOptionalAction,
-        default=True,
-        help="Whether the agent can ask the user questions.",
-    )
-    parser.add_argument(
         "--chat-mode",
         action=BooleanOptionalAction,
         default=True,
@@ -158,7 +152,6 @@ def create_config_from_args(args) -> Config:
         model=args.model,
         expert_model=args.expert_model,
         shorten_conversation_at_tokens=args.shorten_conversation_at_tokens,
-        enable_ask_user=args.ask_user,
         enable_chat_mode=args.chat_mode,
     )
 
@@ -229,7 +222,7 @@ async def run_chat_session(
     agent_callbacks: AgentProgressCallbacks,
     tool_callbacks: ConfirmationToolCallbacks,
 ):
-    # Build a simple root agent for chat mode (no finish_task, no ask_client)
+    # Build a simple root agent for chat mode (no finish_task)
     params: list[Parameter] = []
     if instructions:
         params.append(

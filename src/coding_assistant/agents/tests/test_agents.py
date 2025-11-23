@@ -16,7 +16,6 @@ def create_test_config() -> Config:
         model=TEST_MODEL,
         expert_model=TEST_MODEL,
         shorten_conversation_at_tokens=200_000,
-        enable_ask_user=False,
     )
 
 
