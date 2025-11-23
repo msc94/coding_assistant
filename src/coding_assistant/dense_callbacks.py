@@ -29,8 +29,8 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         print(f"[bold blue]◉[/bold blue] User: {content}")
 
     def on_assistant_message(self, agent_name: str, content: str):
-        print()
-        print(f"[bold green]◉[/bold green] Assistant: {content}")
+        # Don't print - content is already printed via chunks
+        pass
 
     def on_assistant_reasoning(self, agent_name: str, content: str):
         print()
