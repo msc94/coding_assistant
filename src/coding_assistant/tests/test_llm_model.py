@@ -31,9 +31,6 @@ class _CB(AgentProgressCallbacks):
     def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None, result: str):
         pass
 
-    def on_chunks_start(self):
-        pass
-
     def on_chunk(self, chunk: str):
         self.chunks.append(chunk)
 

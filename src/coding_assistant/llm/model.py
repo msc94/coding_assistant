@@ -59,7 +59,6 @@ async def complete(
         )
 
         chunks = []
-        callbacks.on_chunks_start()
 
         async for chunk in response:
             if (

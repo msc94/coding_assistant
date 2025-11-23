@@ -46,11 +46,6 @@ class AgentProgressCallbacks(ABC):
         pass
 
     @abstractmethod
-    def on_chunks_start(self):
-        """Handle start of LLM chunks."""
-        pass
-
-    @abstractmethod
     def on_chunk(self, chunk: str):
         """Handle LLM chunks."""
         pass
@@ -83,9 +78,6 @@ class NullProgressCallbacks(AgentProgressCallbacks):
         pass
 
     def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None, result: str):
-        pass
-
-    def on_chunks_start(self):
         pass
 
     def on_chunk(self, chunk: str):

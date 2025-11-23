@@ -165,9 +165,6 @@ class RichAgentProgressCallbacks(AgentProgressCallbacks):
     def on_tool_start(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None):
         pass  # Default implementation does nothing
 
-    def on_chunks_start(self):
-        pass  # Default implementation does nothing
-
     def on_chunk(self, chunk: str):
         if self._print_chunks:
             print(chunk, end="", flush=True)
@@ -183,7 +180,9 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
     def __init__(self):
         self._last_tool_info: tuple[str, str, str] | None = None  # (tool_call_id, tool_name, args_str)
         self._printed_since_tool_start = False
+        self._chunk_buffer = ""
         self._console = Console()
+        self._live: Live | None = None
 
     def on_agent_start(self, agent_name: str, model: str, is_resuming: bool = False):
         status = "resuming" if is_resuming else "starting"
@@ -272,11 +271,6 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         # Reset state
         self._last_tool_info = None
         self._printed_since_tool_start = True
-
-    def on_chunks_start(self):
-        # Reset state for new chunk stream
-        self._chunk_buffer = ""
-        self._live = None
 
     def on_chunk(self, chunk: str):
         # Start live display on first non-empty chunk
