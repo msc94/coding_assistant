@@ -182,7 +182,6 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
     def __init__(self):
         self._last_tool_info: tuple[str, str, str] | None = None  # (tool_call_id, tool_name, args_str)
         self._printed_since_tool_start = False
-        self._chunk_buffer = ""
         self._console = Console()
 
     def on_agent_start(self, agent_name: str, model: str, is_resuming: bool = False):
@@ -277,11 +276,8 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         print()
         print("[bold green]◉[/bold green] ", end="", flush=True)
         self._printed_since_tool_start = True
-        self._chunk_buffer = ""
 
     def on_chunk(self, chunk: str):
-        # Stream chunks as markdown on the fly
-        self._chunk_buffer += chunk
         self._console.print(Markdown(chunk), end="")
 
     def on_chunks_end(self):

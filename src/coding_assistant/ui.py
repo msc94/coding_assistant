@@ -26,8 +26,8 @@ class UI(ABC):
 
 class PromptToolkitUI(UI):
     def __init__(self):
-        history_dir = Path.home() / ".coding_assistant"
-        history_dir.mkdir(exist_ok=True)
+        history_dir = Path.home() / ".cache" / "coding_assistant"
+        history_dir.mkdir(parents=True, exist_ok=True)
         history_file = history_dir / "history"
         self._session = PromptSession(history=FileHistory(str(history_file)))
 
