@@ -9,7 +9,7 @@ from coding_assistant.agents.tests.helpers import (
     make_test_agent,
     make_ui_mock,
 )
-from coding_assistant.agents.execution import do_single_step
+from coding_assistant.agents.execution import do_single_step, run_chat_loop
 from coding_assistant.agents.types import Tool, TextResult, AgentContext
 from coding_assistant.agents.callbacks import NullProgressCallbacks, NullToolCallbacks
 
@@ -40,14 +40,16 @@ async def test_chat_step_prompts_user_on_no_tool_calls_once():
 
     ui = make_ui_mock(ask_sequence=[(f"Reply to {desc.name}:", "User reply")])
 
-    await do_single_step(
-        ctx=AgentContext(desc=desc, state=state),
+    # Run a single chat-loop iteration
+    await run_chat_loop(
+        AgentContext(desc=desc, state=state),
         agent_callbacks=NullProgressCallbacks(),
-        shorten_conversation_at_tokens=10_000,
+        tool_callbacks=NullToolCallbacks(),
         completer=completer,
         ui=ui,
-        tool_callbacks=NullToolCallbacks(),
-        enable_chat_mode=True,
+        shorten_conversation_at_tokens=10_000,
+        is_interruptible=False,
+        max_iterations=1,
     )
 
     # Last message should be the user's reply injected by chat mode
@@ -65,14 +67,15 @@ async def test_chat_step_executes_tools_without_prompt():
 
     ui = make_ui_mock()  # no prompts expected
 
-    await do_single_step(
-        ctx=AgentContext(desc=desc, state=state),
+    await run_chat_loop(
+        AgentContext(desc=desc, state=state),
         agent_callbacks=NullProgressCallbacks(),
-        shorten_conversation_at_tokens=10_000,
+        tool_callbacks=NullToolCallbacks(),
         completer=completer,
         ui=ui,
-        tool_callbacks=NullToolCallbacks(),
-        enable_chat_mode=True,
+        shorten_conversation_at_tokens=10_000,
+        is_interruptible=False,
+        max_iterations=1,
     )
 
     # Tool must have executed
@@ -89,14 +92,15 @@ async def test_chat_mode_does_not_require_finish_task_tool():
 
     ui = make_ui_mock(ask_sequence=[(f"Reply to {desc.name}:", "Ack")])
 
-    await do_single_step(
-        ctx=AgentContext(desc=desc, state=state),
+    await run_chat_loop(
+        AgentContext(desc=desc, state=state),
         agent_callbacks=NullProgressCallbacks(),
-        shorten_conversation_at_tokens=10_000,
+        tool_callbacks=NullToolCallbacks(),
         completer=completer,
         ui=ui,
-        tool_callbacks=NullToolCallbacks(),
-        enable_chat_mode=True,
+        shorten_conversation_at_tokens=10_000,
+        is_interruptible=False,
+        max_iterations=1,
     )
 
     # Should have appended the assistant message and then the user's reply

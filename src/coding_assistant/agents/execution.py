@@ -213,23 +213,10 @@ async def handle_tool_calls(
     tool_callbacks: AgentToolCallbacks,
     *,
     ui: UI,
-    enable_chat_mode: bool = False,
 ):
-    desc = ctx.desc
-    state = ctx.state
     tool_calls = message.tool_calls
+
     if not tool_calls:
-        if enable_chat_mode:
-            # Transfer control back to user via chat prompt
-            answer = await ui.ask(f"Reply to {desc.name}:", default="")
-            append_user_message(state.history, agent_callbacks, desc.name, answer)
-        else:
-            append_user_message(
-                state.history,
-                agent_callbacks,
-                desc.name,
-                "I detected a step from you without any tool calls. This is not allowed. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
-            )
         return
 
     trace.get_current_span().set_attribute("message.tool_calls", [x.model_dump_json() for x in tool_calls])
@@ -308,7 +295,6 @@ async def do_single_step(
         agent_callbacks,
         tool_callbacks,
         ui=ui,
-        enable_chat_mode=enable_chat_mode,
     )
 
     # Check conversation length and request shortening if needed
@@ -353,7 +339,7 @@ async def run_agent_loop(
         while state.output is None:
             section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
             with section_cls() as interruptible_section:
-                await do_single_step(
+                message = await do_single_step(
                     ctx,
                     agent_callbacks,
                     shorten_conversation_at_tokens,
@@ -370,6 +356,15 @@ async def run_agent_loop(
                     feedback=textwrap.indent(feedback, "> "),
                 )
                 append_user_message(state.history, agent_callbacks, desc.name, formatted_feedback)
+            else:
+                # Handle assistant steps without tool calls: inject corrective message
+                if not getattr(message, "tool_calls", []):
+                    append_user_message(
+                        state.history,
+                        agent_callbacks,
+                        desc.name,
+                        "I detected a step from you without any tool calls. This is not allowed. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
+                    )
 
         assert state.output is not None, "Agent did not produce output"
 
@@ -402,6 +397,7 @@ async def run_chat_loop(
     ui: UI,
     shorten_conversation_at_tokens: int = 200_000,
     is_interruptible: bool = True,
+    max_iterations: int | None = None,
 ):
     desc = ctx.desc
     state = ctx.state
@@ -414,10 +410,11 @@ async def run_chat_loop(
     agent_callbacks.on_agent_start(desc.name, desc.model, is_resuming=bool(state.history))
     append_user_message(state.history, agent_callbacks, desc.name, start_message)
 
+    iterations = 0
     while True:
         section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
         with section_cls() as interruptible_section:
-            await do_single_step(
+            message = await do_single_step(
                 ctx,
                 agent_callbacks,
                 shorten_conversation_at_tokens,
@@ -430,4 +427,11 @@ async def run_chat_loop(
             # In chat mode, SIGINT opens the user chat prompt
             answer = await ui.ask(f"Reply to {desc.name}:", default="")
             append_user_message(state.history, agent_callbacks, desc.name, answer)
-            # Continue loop open-ended
+        else:
+            # If assistant replied without tool calls, prompt the user
+            if not getattr(message, "tool_calls", []):
+                answer = await ui.ask(f"Reply to {desc.name}:", default="")
+                append_user_message(state.history, agent_callbacks, desc.name, answer)
+        iterations += 1
+        if max_iterations is not None and iterations >= max_iterations:
+            break
