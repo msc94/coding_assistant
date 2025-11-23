@@ -372,14 +372,12 @@ async def run_chat_loop(
     append_user_message(state.history, agent_callbacks, desc.name, start_message)
 
     while True:
-        section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
-        with section_cls() as interruptible_section:
-            message, tokens = await do_single_step(
-                ctx,
-                agent_callbacks,
-                completer=completer,
-            )
-        if not interruptible_section.was_interrupted and getattr(message, "tool_calls", []):
+        message, _tokens = await do_single_step(
+            ctx,
+            agent_callbacks,
+            completer=completer,
+        )
+        if getattr(message, "tool_calls", []):
             await handle_tool_calls(
                 message,
                 ctx,
