@@ -274,6 +274,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         # Start live display on first non-empty chunk
         if not self._live and chunk:
             print()
+            print("[bold green]◉[/bold green] ", end="")
             self._last_tool_info = None
             self._live = Live("", console=self._console, refresh_per_second=10, auto_refresh=True)
             self._live.start()
@@ -281,8 +282,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         # Buffer and render markdown in real-time
         self._chunk_buffer += chunk
         if self._live:
-            content = Group("[bold green]◉[/bold green] ", Markdown(self._chunk_buffer))
-            self._live.update(content)
+            self._live.update(Markdown(self._chunk_buffer))
 
     def on_chunks_end(self):
         if self._live:
