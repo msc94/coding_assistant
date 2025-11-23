@@ -76,8 +76,6 @@ async def test_shorten_conversation_resets_history():
         ctx,
         callbacks,
         completer=completer,
-        ui=make_ui_mock(),
-        tool_callbacks=NullToolCallbacks(),
     )
 
     await handle_tool_calls(msg, ctx, callbacks, NullToolCallbacks(), ui=make_ui_mock())

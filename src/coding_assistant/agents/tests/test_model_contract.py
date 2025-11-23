@@ -45,8 +45,6 @@ async def test_do_single_step_adds_shorten_prompt_on_token_threshold():
         ctx,
         NullProgressCallbacks(),
         completer=completer,
-        ui=make_ui_mock(),
-        tool_callbacks=NullToolCallbacks(),
     )
 
     assert msg.content == fake_message.content
@@ -115,8 +113,6 @@ async def test_reasoning_is_forwarded_and_not_stored():
         ctx,
         callbacks,
         completer=completer,
-        ui=make_ui_mock(),
-        tool_callbacks=NullToolCallbacks(),
     )
 
     # Assert reasoning was forwarded via callback
@@ -146,7 +142,6 @@ async def test_requires_finish_tool():
             completer=FakeCompleter([FakeMessage(content="hi")]),
             ui=make_ui_mock(),
             shorten_conversation_at_tokens=1000,
-            enable_user_feedback=False,
         )
 
 
@@ -166,7 +161,6 @@ async def test_requires_shorten_tool():
             completer=FakeCompleter([FakeMessage(content="hi")]),
             ui=make_ui_mock(),
             shorten_conversation_at_tokens=1000,
-            enable_user_feedback=False,
         )
 
 
@@ -180,6 +174,4 @@ async def test_requires_non_empty_history():
             ctx,
             NullProgressCallbacks(),
             completer=FakeCompleter([FakeMessage(content="hi")]),
-            ui=make_ui_mock(),
-            tool_callbacks=NullToolCallbacks(),
         )

@@ -99,10 +99,8 @@ class OrchestratorTool(Tool):
                 agent_callbacks=self._agent_callbacks,
                 tool_callbacks=self._tool_callbacks,
                 shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
-                enable_user_feedback=self._config.enable_user_feedback,
                 completer=complete,
                 ui=self._ui,
-                is_interruptible=True,
             )
             assert state.output is not None, "Agent did not produce output"
             self.summary = state.output.summary
@@ -185,9 +183,7 @@ class AgentTool(Tool):
             agent_callbacks=self._agent_callbacks,
             tool_callbacks=self._tool_callbacks,
             shorten_conversation_at_tokens=self._config.shorten_conversation_at_tokens,
-            enable_user_feedback=False,
             completer=complete,
-            is_interruptible=False,
             ui=self._ui,
         )
         assert state.output is not None, "Agent did not produce output"

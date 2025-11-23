@@ -2,7 +2,6 @@ import asyncio
 import dataclasses
 import json
 import logging
-import textwrap
 from json import JSONDecodeError
 
 from opentelemetry import trace
@@ -249,8 +248,6 @@ async def do_single_step(
     agent_callbacks: AgentProgressCallbacks,
     *,
     completer: Completer,
-    ui: UI,
-    tool_callbacks: AgentToolCallbacks,
 ):
     desc = ctx.desc
     state = ctx.state
@@ -293,8 +290,6 @@ async def run_agent_loop(
     completer: Completer,
     ui: UI,
     shorten_conversation_at_tokens: int = 200_000,
-    enable_user_feedback: bool = False,
-    is_interruptible: bool = False,
 ):
     desc = ctx.desc
     state = ctx.state
@@ -316,69 +311,43 @@ async def run_agent_loop(
     agent_callbacks.on_agent_start(desc.name, desc.model, is_resuming=bool(state.history))
     append_user_message(state.history, agent_callbacks, desc.name, start_message)
 
-    while True:
-        while state.output is None:
-            section_cls = InterruptibleSection if is_interruptible else NonInterruptibleSection
-            with section_cls() as interruptible_section:
-                message, tokens = await do_single_step(
-                    ctx,
-                    agent_callbacks,
-                    completer=completer,
-                    ui=ui,
-                    tool_callbacks=tool_callbacks,
-                )
+    while state.output is None:
+        message, tokens = await do_single_step(
+            ctx,
+            agent_callbacks,
+            completer=completer,
+        )
 
-            if interruptible_section.was_interrupted:
-                logger.info(f"Agent '{desc.name}' was interrupted during execution.")
-                feedback = await ui.ask("Feedback: ")
-                formatted_feedback = FEEDBACK_TEMPLATE.format(
-                    feedback=textwrap.indent(feedback, "> "),
-                )
-                append_user_message(state.history, agent_callbacks, desc.name, formatted_feedback)
-            else:
-                if getattr(message, "tool_calls", []):
-                    await handle_tool_calls(
-                        message,
-                        ctx,
-                        agent_callbacks,
-                        tool_callbacks,
-                        ui=ui,
-                    )
-                else:
-                    # Handle assistant steps without tool calls: inject corrective message
-                    append_user_message(
-                        state.history,
-                        agent_callbacks,
-                        desc.name,
-                        "I detected a step from you without any tool calls. This is not allowed. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
-                    )
-                if tokens > shorten_conversation_at_tokens:
-                    append_user_message(
-                        state.history,
-                        agent_callbacks,
-                        desc.name,
-                        "Your conversation history has grown too large. Please summarize it by using the `shorten_conversation` tool.",
-                    )
-
-        assert state.output is not None, "Agent did not produce output"
-
-        trace.get_current_span().set_attribute("agent.result", state.output.result)
-        trace.get_current_span().set_attribute("agent.summary", state.output.summary)
-
-        agent_callbacks.on_agent_end(desc.name, state.output.result, state.output.summary)
-
-        user_feedback: str = "Ok"
-        if enable_user_feedback:
-            user_feedback = await ui.ask(f"Feedback for {desc.name}", default="Ok")
-
-        if user_feedback != "Ok":
-            formatted_feedback = FEEDBACK_TEMPLATE.format(feedback=textwrap.indent(user_feedback, "> "))
-            append_user_message(state.history, agent_callbacks, desc.name, formatted_feedback)
-            state.output = None  # continue loop
+        if getattr(message, "tool_calls", []):
+            await handle_tool_calls(
+                message,
+                ctx,
+                agent_callbacks,
+                tool_callbacks,
+                ui=ui,
+            )
         else:
-            break
+            # Handle assistant steps without tool calls: inject corrective message
+            append_user_message(
+                state.history,
+                agent_callbacks,
+                desc.name,
+                "I detected a step from you without any tool calls. This is not allowed. If you are done with your task, please call the `finish_task` tool to signal that you are done. Otherwise, continue your work.",
+            )
+        if tokens > shorten_conversation_at_tokens:
+            append_user_message(
+                state.history,
+                agent_callbacks,
+                desc.name,
+                "Your conversation history has grown too large. Please summarize it by using the `shorten_conversation` tool.",
+            )
 
     assert state.output is not None
+
+    trace.get_current_span().set_attribute("agent.result", state.output.result)
+    trace.get_current_span().set_attribute("agent.summary", state.output.summary)
+
+    agent_callbacks.on_agent_end(desc.name, state.output.result, state.output.summary)
 
 
 @tracer.start_as_current_span("run_chat_loop")
@@ -412,8 +381,6 @@ async def run_chat_loop(
                 ctx,
                 agent_callbacks,
                 completer=completer,
-                ui=ui,
-                tool_callbacks=tool_callbacks,
             )
         if interruptible_section.was_interrupted:
             # In chat mode, SIGINT opens the user chat prompt
