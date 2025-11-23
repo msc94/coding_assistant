@@ -64,7 +64,7 @@ async def test_chat_step_executes_tools_without_prompt():
     echo_tool = FakeEchoTool()
     desc, state = make_test_agent(tools=[echo_tool], history=[{"role": "user", "content": "start"}])
 
-    ui = make_ui_mock(ask_sequence=[("> ", "Hi"), ("> ", "Hi 2")])
+    ui = make_ui_mock(ask_sequence=[("> ", "Hi")])
 
     with pytest.raises(AssertionError, match="FakeCompleter script exhausted"):
         await run_chat_loop(

@@ -371,12 +371,13 @@ async def run_chat_loop(
     agent_callbacks.on_agent_start(desc.name, desc.model, is_resuming=bool(state.history))
     append_user_message(state.history, agent_callbacks, desc.name, start_message)
 
+    ask_user_next = True  # user goes first
     while True:
-        # Always let the user go first in chat mode
-        answer = await ui.prompt()
-        if answer.strip() == "/exit":
-            break
-        append_user_message(state.history, agent_callbacks, desc.name, answer)
+        if ask_user_next:
+            answer = await ui.prompt()
+            if answer.strip() == "/exit":
+                break
+            append_user_message(state.history, agent_callbacks, desc.name, answer)
 
         message, _tokens = await do_single_step(
             ctx,
@@ -391,4 +392,6 @@ async def run_chat_loop(
                 tool_callbacks,
                 ui=ui,
             )
-        # If there were no tool calls, simply continue to next user prompt
+            ask_user_next = False
+        else:
+            ask_user_next = True
