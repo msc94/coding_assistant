@@ -371,9 +371,10 @@ async def run_chat_loop(
     agent_callbacks.on_agent_start(desc.name, desc.model, is_resuming=bool(state.history))
     append_user_message(state.history, agent_callbacks, desc.name, start_message)
 
-    ask_user_next = True  # user goes first
+    need_user_input = True
+
     while True:
-        if ask_user_next:
+        if need_user_input:
             answer = await ui.prompt()
             if answer.strip() == "/exit":
                 break
@@ -384,6 +385,7 @@ async def run_chat_loop(
             agent_callbacks,
             completer=completer,
         )
+
         if getattr(message, "tool_calls", []):
             await handle_tool_calls(
                 message,
@@ -392,6 +394,6 @@ async def run_chat_loop(
                 tool_callbacks,
                 ui=ui,
             )
-            ask_user_next = False
+            need_user_input = False
         else:
-            ask_user_next = True
+            need_user_input = True
