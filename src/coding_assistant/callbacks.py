@@ -176,7 +176,7 @@ class RichAgentProgressCallbacks(AgentProgressCallbacks):
 class DenseProgressCallbacks(AgentProgressCallbacks):
     """Dense progress callbacks with minimal formatting."""
 
-    def __init__(self, *, full_result_tools: set[str] | None = None):
+    def __init__(self):
         self._last_printed_tool_id: str | None = None
         self._chunk_buffer = ""
         self._console = Console()
