@@ -25,8 +25,8 @@ def test_complete(manager: TodoManager):
     manager.add(["Implement feature"])  # type: ignore[arg-type]
     manager.add(["Write docs"])  # type: ignore[arg-type]
     complete_res = manager.complete(1)
-    assert complete_res.startswith("Task 1: Implement feature marked complete.\n")
-    assert "- [x] 1: Implement feature" in complete_res
+    assert complete_res.startswith("- [x] 1: Implement feature")
+    assert complete_res.count("Implement feature") == 1
     assert "- [ ] 2: Write docs" in complete_res
     # After completion, listing should show the completed task with an x (independently via list_todos)
     text = manager.list_todos()
@@ -39,9 +39,6 @@ def test_complete_with_result(manager: TodoManager):
     manager.add(["Prepare release notes"])  # type: ignore[arg-type]
     res = manager.complete(1, result="Throughput +12% vs baseline")
 
-    lines = res.splitlines()
-    # Output should include completion message with result inline
-    assert lines[0] == "Task 1: Run benchmarks marked complete. Result: Throughput +12% vs baseline"
     # Listing shows the result inline with an arrow (single line)
     listing = manager.list_todos()
     assert "- [x] 1: Run benchmarks -> Throughput +12% vs baseline" in listing
@@ -50,11 +47,11 @@ def test_complete_with_result(manager: TodoManager):
 
 def test_complete_invalid(manager: TodoManager):
     # No tasks yet
-    res = manager.complete(1)
-    assert res.startswith("TODO 1 not found.")
+    with pytest.raises(ValueError):
+        manager.complete(1)
     manager.add(["Something"])  # type: ignore[arg-type]
-    res2 = manager.complete(99)
-    assert res2.startswith("TODO 99 not found.")
+    with pytest.raises(ValueError):
+        manager.complete(99)
 
 
 def test_add_multiple_and_invalid(manager: TodoManager):
@@ -72,9 +69,7 @@ def test_add_multiple_and_invalid(manager: TodoManager):
 def test_complete_ignores_empty_result(manager: TodoManager):
     manager.add(["Do something"])  # type: ignore[arg-type]
     res = manager.complete(1, result="")  # empty result should be ignored
-    # Completion line should not show 'with result:' when empty
-    first_line = res.splitlines()[0]
-    assert first_line == "Task 1: Do something marked complete."
+    assert res.startswith("- [x] 1: Do something")
     listing = manager.list_todos()
     # List line should not have arrow because result ignored
     assert "- [x] 1: Do something ->" not in listing
