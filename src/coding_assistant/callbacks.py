@@ -234,12 +234,8 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         if not arguments:
             return ""
 
-        lines = []
-        for key, value in arguments.items():
-            value_json = json.dumps(value)
-            lines.append(f"\n    {key}={value_json}")
-
-        return "".join(lines)
+        formatted = ", ".join(f"{key}={json.dumps(value)}" for key, value in arguments.items())
+        return f"({formatted})"
 
     def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict, result: str):
         if self._last_printed_tool_id is None or self._last_printed_tool_id != tool_call_id:
