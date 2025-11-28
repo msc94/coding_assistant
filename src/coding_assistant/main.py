@@ -234,8 +234,6 @@ async def run_chat_session(
 async def _main(args):
     logger.info(f"Starting Coding Assistant with arguments {args}")
 
-    setup_tracing(args)
-
     config = create_config_from_args(args)
     logger.info(f"Using configuration from command line arguments: {config}")
 

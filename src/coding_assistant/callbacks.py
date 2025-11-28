@@ -217,9 +217,6 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         self._last_printed_tool_id = tool_call_id
 
     def _special_handle_full_result(self, tool_call_id: str, tool_name: str, result: str) -> bool:
-        if result.startswith("Error calling tool"):
-            return False
-
         left_padding = (0, 0, 0, 1)
         if tool_name == "mcp_coding_assistant_mcp_filesystem_edit_file":
             diff_body = result.strip("\n")
