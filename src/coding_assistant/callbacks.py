@@ -220,16 +220,12 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         left_padding = (0, 0, 0, 1)
         if tool_name == "mcp_coding_assistant_mcp_filesystem_edit_file":
             diff_body = result.strip("\n")
-            if diff_body:
-                rendered_result = Markdown(f"```diff\n{diff_body}\n```")
-            else:
-                rendered_result = Markdown("_No diff produced_")
+            rendered_result = Markdown(f"```diff\n{diff_body}\n```")
             print(Padding(rendered_result, left_padding))
             return True
-        if tool_name.startswith("mcp_coding_assistant_mcp_todo_"):
+        elif tool_name.startswith("mcp_coding_assistant_mcp_todo_"):
             print(Padding(Markdown(result), left_padding))
             return True
-
         return False
 
     def _format_arguments(self, arguments: dict) -> str:
