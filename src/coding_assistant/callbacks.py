@@ -145,11 +145,10 @@ class RichAgentProgressCallbacks(AgentProgressCallbacks):
 
         return Group(*parts)
 
-    def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None, result: str):
+    def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict, result: str):
         parts: list[Any] = [Markdown(f"Name: `{tool_name}`")]
 
-        if arguments is not None:
-            parts.append(self._format_arguments(arguments, tool_name))
+        parts.append(self._format_arguments(arguments, tool_name))
 
         parts.append(Padding(self._format_tool_result(tool_name, result), (1, 0, 0, 0)))
 
@@ -162,7 +161,7 @@ class RichAgentProgressCallbacks(AgentProgressCallbacks):
             ),
         )
 
-    def on_tool_start(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None):
+    def on_tool_start(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict):
         pass  # Default implementation does nothing
 
     def on_chunk(self, chunk: str):
@@ -209,8 +208,15 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         print(f"[dim cyan]💭 {content}[/dim cyan]")
         self._last_tool_info = None
 
-    def _should_show_full_result(self, tool_name: str) -> bool:
-        return tool_name in self._full_result_tools
+    def _special_handle_full_result(self, tool_call_id: str, tool_name: str, result: str) -> bool:
+        if tool_name not in self._full_result_tools or not result:
+            return False
+
+        if self._last_tool_info is None:
+            print(f" [dim]({tool_call_id})[/dim]")
+
+        self._print_full_result(result)
+        return True
 
     def _print_full_result(self, result: str):
         print(" [dim]→ result:[/dim]")
@@ -234,10 +240,10 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
 
         return "".join(lines)
 
-    def on_tool_start(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None):
+    def on_tool_start(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict):
         print()
         # Print tool name and arguments with call ID
-        args_str = self._format_arguments(arguments) if arguments else ""
+        args_str = self._format_arguments(arguments)
         if args_str:
             print(f"[bold yellow]▸[/bold yellow] {tool_name} [dim]({tool_call_id})[/dim]{args_str}")
         else:
@@ -246,20 +252,20 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         # Remember what we printed
         self._last_tool_info = (tool_call_id, tool_name, args_str)
 
-    def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict | None, result: str):
+    def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict, result: str):
         # If we printed something between start and end, reprint the tool info
         if self._last_tool_info is None:
             # Something was printed, need to show tool info again
             print()
-            args_str = self._format_arguments(arguments) if arguments else ""
+            args_str = self._format_arguments(arguments)
             if args_str:
                 print(f"[bold yellow]▸[/bold yellow] {tool_name} [dim]({tool_call_id})[/dim]{args_str}")
             else:
                 print(f"[bold yellow]▸[/bold yellow] {tool_name} [dim]({tool_call_id})[/dim]")
+            # Treat the reprinted info as the latest output to avoid duplicate call IDs
+            self._last_tool_info = (tool_call_id, tool_name, args_str)
 
-        if self._should_show_full_result(tool_name) and result:
-            self._print_full_result(result)
-        else:
+        if not self._special_handle_full_result(tool_call_id, tool_name, result):
             # Print result summary (line count only, no call ID if nothing printed between)
             line_count = self._count_lines(result)
             if line_count > 0:
@@ -274,7 +280,6 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         self._last_tool_info = None
 
     def on_chunk(self, chunk: str):
-        # Start live display on first non-empty chunk
         if not self._live and chunk:
             print()
             self._last_tool_info = None
