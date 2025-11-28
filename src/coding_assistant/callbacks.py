@@ -209,7 +209,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
 
     def _print_tool_start(self, tool_call_id: str, tool_name: str, arguments: dict):
         args_str = self._format_arguments(arguments)
-        print(f"[bold yellow]▸[/bold yellow] {tool_name} [dim]({tool_call_id})[/dim]{args_str}")
+        print(f"[bold yellow]▸[/bold yellow] {tool_name}{args_str} [dim]({tool_call_id})[/dim]")
 
     def on_tool_start(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict):
         print()
