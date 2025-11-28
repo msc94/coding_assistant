@@ -177,7 +177,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
     """Dense progress callbacks with minimal formatting."""
 
     def __init__(self, *, full_result_tools: set[str] | None = None):
-        self._last_printed_tool_id: str | None = None  
+        self._last_printed_tool_id: str | None = None
         self._chunk_buffer = ""
         self._console = Console()
         self._live: Live | None = None
@@ -217,8 +217,9 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         self._last_printed_tool_id = tool_call_id
 
     def _special_handle_full_result(self, tool_call_id: str, tool_name: str, result: str) -> bool:
-        if tool_name == "mcp_coding_assistant_mcp_todo_complete":
-            print(Markdown(result))
+        left_padding = (0, 0, 0, 1)
+        if tool_name.startswith("mcp_coding_assistant_mcp_todo_"):
+            print(Padding(Markdown(result), left_padding))
             return True
 
         return False
@@ -257,10 +258,15 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         if self._live:
             self._live.update(Markdown(self._chunk_buffer))
 
+        self._last_printed_tool_id = None
+
     def on_chunks_end(self):
         if self._live:
             self._live.stop()
             self._live = None
+
+        self._last_printed_tool_id = None
+
 
 class ConfirmationToolCallbacks(AgentToolCallbacks):
     def __init__(
