@@ -208,38 +208,6 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         print(f"[dim cyan]💭 {content}[/dim cyan]")
         self._last_tool_info = None
 
-    def _special_handle_full_result(self, tool_call_id: str, tool_name: str, result: str) -> bool:
-        if tool_name not in self._full_result_tools or not result:
-            return False
-
-        if self._last_tool_info is None:
-            print(f" [dim]({tool_call_id})[/dim]")
-
-        self._print_full_result(result)
-        return True
-
-    def _print_full_result(self, result: str):
-        print(" [dim]→ result:[/dim]")
-        lines = result.splitlines() or [""]
-        for line in lines:
-            print(f"    {line}")
-
-    def _count_lines(self, text: str) -> int:
-        """Count number of lines in text."""
-        return len(text.splitlines())
-
-    def _format_arguments(self, arguments: dict) -> str:
-        """Format arguments with each on a separate line."""
-        if not arguments:
-            return ""
-
-        lines = []
-        for key, value in arguments.items():
-            value_json = json.dumps(value)
-            lines.append(f"\n    {key}={value_json}")
-
-        return "".join(lines)
-
     def on_tool_start(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict):
         print()
         # Print tool name and arguments with call ID
@@ -297,6 +265,35 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
             self._live.stop()
             self._live = None
 
+    def _special_handle_full_result(self, tool_call_id: str, tool_name: str, result: str) -> bool:
+        if tool_name not in self._full_result_tools or not result:
+            return False
+
+        if self._last_tool_info is None:
+            print(f" [dim]({tool_call_id})[/dim]")
+
+        self._print_full_result(result)
+        return True
+
+    def _print_full_result(self, result: str):
+        print(" [dim]→ result:[/dim]")
+        lines = result.splitlines() or [""]
+        for line in lines:
+            print(f"    {line}")
+
+    def _count_lines(self, text: str) -> int:
+        return len(text.splitlines())
+
+    def _format_arguments(self, arguments: dict) -> str:
+        if not arguments:
+            return ""
+
+        lines = []
+        for key, value in arguments.items():
+            value_json = json.dumps(value)
+            lines.append(f"\n    {key}={value_json}")
+
+        return "".join(lines)
 
 class ConfirmationToolCallbacks(AgentToolCallbacks):
     def __init__(
