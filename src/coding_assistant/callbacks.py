@@ -239,6 +239,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
 
     def on_tool_message(self, agent_name: str, tool_call_id: str, tool_name: str, arguments: dict, result: str):
         if self._last_printed_tool_id is None or self._last_printed_tool_id != tool_call_id:
+            print()
             self._print_tool_start(tool_name, arguments)
 
         if not self._special_handle_full_result(tool_call_id, tool_name, result):
