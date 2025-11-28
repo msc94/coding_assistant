@@ -12,7 +12,6 @@ Coding Assistant is a Python-based, agent-orchestrated CLI that helps you automa
 - Shell/tool confirmation patterns to guard dangerous operations
 - Configurable via CLI flags (models, planning mode, instructions, etc.)
 - Optional OTLP tracing (exporter over HTTP)
-- Occasionally sprinkles in whimsical README edits just for fun.
 
 ## Requirements
 
@@ -99,8 +98,6 @@ Notes:
 - `--wait-for-debugger` Wait for a debugger (debugpy) to attach on port 1234.
 
 Run `coding-assistant --help` to see all options.
-
-> Random README aside: remember to stretch your wrists and stay hydrated while hacking!
 
 ## MCP Servers
 
