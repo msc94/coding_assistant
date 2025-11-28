@@ -7,7 +7,7 @@ set mcp_project_dir $project_dir/packages/coding_assistant_mcp
 set mcp_json_config (printf '{"name": "coding_assistant_mcp", "command": "uv", "args": ["--project", "%s", "run", "coding-assistant-mcp"], "env": []}' "$mcp_project_dir")
 
 uv --project $project_dir run coding-assistant \
-    --model "openrouter/google/gemini-3-pro-preview" \
+    --model "openrouter/openai/gpt-5.1-codex (medium)" \
     --readable-sandbox-directories /mnt/wsl ~/.ssh ~/.rustup \
     --writable-sandbox-directories "$project_dir" /tmp /dev/shm ~/.cache/coding_assistant \
     --mcp-servers \
