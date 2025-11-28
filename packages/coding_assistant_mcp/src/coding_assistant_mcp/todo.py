@@ -51,10 +51,10 @@ class TodoManager:
         task_id: Annotated[int, "ID of the TODO to mark complete"],
         result: Annotated[str | None, "Optional result text (one line) to attach"] = None,
     ) -> str:
-        """Mark a task complete and return the updated list."""
+        """Mark a task complete and return the updated list (or an error)."""
         todo = self._todos.get(task_id)
         if not todo:
-            raise ValueError(f"TODO {task_id} not found.")
+            return f"TODO {task_id} not found."
 
         todo.completed = True
         if result is not None and result != "":

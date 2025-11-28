@@ -47,11 +47,9 @@ def test_complete_with_result(manager: TodoManager):
 
 def test_complete_invalid(manager: TodoManager):
     # No tasks yet
-    with pytest.raises(ValueError):
-        manager.complete(1)
+    assert manager.complete(1) == "TODO 1 not found."
     manager.add(["Something"])  # type: ignore[arg-type]
-    with pytest.raises(ValueError):
-        manager.complete(99)
+    assert manager.complete(99) == "TODO 99 not found."
 
 
 def test_add_multiple_and_invalid(manager: TodoManager):
