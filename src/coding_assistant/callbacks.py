@@ -204,6 +204,7 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         pass
 
     def on_assistant_reasoning(self, agent_name: str, content: str):
+        print()
         print(f"[dim cyan]💭 {content}[/dim cyan]")
         self._last_tool_info = None
 
@@ -272,10 +273,9 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         # Start live display on first non-empty chunk
         if not self._live and chunk:
             print()
-            print("[bold green]◉[/bold green] ", end="")
             self._last_tool_info = None
             self._chunk_buffer = ""
-            self._live = Live("", console=self._console, refresh_per_second=10, auto_refresh=True)
+            self._live = Live(self._chunk_buffer, console=self._console, refresh_per_second=10, auto_refresh=True)
             self._live.start()
 
         # Buffer and render markdown in real-time
@@ -287,7 +287,6 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         if self._live:
             self._live.stop()
             self._live = None
-        print()  # Newline after chunks
 
 
 class ConfirmationToolCallbacks(AgentToolCallbacks):
