@@ -177,11 +177,12 @@ class RichAgentProgressCallbacks(AgentProgressCallbacks):
 class DenseProgressCallbacks(AgentProgressCallbacks):
     """Dense progress callbacks with minimal formatting."""
 
-    def __init__(self):
+    def __init__(self, *, full_result_tools: set[str] | None = None):
         self._last_tool_info: tuple[str, str, str] | None = None  # (tool_call_id, tool_name, args_str)
         self._chunk_buffer = ""
         self._console = Console()
         self._live: Live | None = None
+        self._full_result_tools = full_result_tools or {"mcp_coding_assistant_mcp_todo_complete"}
 
     def on_agent_start(self, agent_name: str, model: str, is_resuming: bool = False):
         status = "resuming" if is_resuming else "starting"
@@ -208,26 +209,26 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
         print(f"[dim cyan]💭 {content}[/dim cyan]")
         self._last_tool_info = None
 
+    def _should_show_full_result(self, tool_name: str) -> bool:
+        return tool_name in self._full_result_tools
+
+    def _print_full_result(self, result: str):
+        print(" [dim]→ result:[/dim]")
+        lines = result.splitlines() or [""]
+        for line in lines:
+            print(f"    {line}")
+
     def _count_lines(self, text: str) -> int:
         """Count number of lines in text."""
         return len(text.splitlines())
 
     def _format_arguments(self, arguments: dict) -> str:
         """Format arguments with each on a separate line."""
-        # For large arguments, show count instead of full content
-        formatted = {}
-        for key, value in arguments.items():
-            if isinstance(value, str) and len(value) > 100:
-                formatted[key] = f"<{len(value)} chars>"
-            else:
-                formatted[key] = value
-
-        # Format with each argument on a separate line
-        if not formatted:
+        if not arguments:
             return ""
 
         lines = []
-        for key, value in formatted.items():
+        for key, value in arguments.items():
             value_json = json.dumps(value)
             lines.append(f"\n    {key}={value_json}")
 
@@ -256,15 +257,18 @@ class DenseProgressCallbacks(AgentProgressCallbacks):
             else:
                 print(f"[bold yellow]▸[/bold yellow] {tool_name} [dim]({tool_call_id})[/dim]")
 
-        # Print result summary (line count only, no call ID if nothing printed between)
-        line_count = self._count_lines(result)
-        if line_count > 0:
-            if self._last_tool_info is None:
-                print(f" [dim]({tool_call_id}) → {line_count} lines[/dim]")
-            else:
-                print(f" [dim]→ {line_count} lines[/dim]")
-        elif self._last_tool_info is None:
-            print(f" [dim]({tool_call_id})[/dim]")
+        if self._should_show_full_result(tool_name) and result:
+            self._print_full_result(result)
+        else:
+            # Print result summary (line count only, no call ID if nothing printed between)
+            line_count = self._count_lines(result)
+            if line_count > 0:
+                if self._last_tool_info is None:
+                    print(f" [dim]({tool_call_id}) → {line_count} lines[/dim]")
+                else:
+                    print(f" [dim]→ {line_count} lines[/dim]")
+            elif self._last_tool_info is None:
+                print(f" [dim]({tool_call_id})[/dim]")
 
         # Reset state
         self._last_tool_info = None
